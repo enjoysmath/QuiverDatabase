@@ -1,1 +1,10 @@
+django
+gunicorn
+django-heroku
+requests
+neomodel
+django-neomodel
+dj-database-url
+whitenoise
+psycopg2
 djangorestframework
