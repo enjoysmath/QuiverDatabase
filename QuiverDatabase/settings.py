@@ -45,6 +45,8 @@ if os.environ.get('ON_HEROKU', '0') == '0':
     DEBUG = True
 else:
     DEBUG = False
+    
+DEBUG = True    # TODO comment out
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
