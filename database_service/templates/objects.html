@@ -1,0 +1,9 @@
+{% if objects %}
+    <ul>
+    {% for object in objects %}
+        <li>{{ object.name }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No objects are available.</p>
+{% endif %}
