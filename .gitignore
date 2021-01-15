@@ -1,3 +1,4 @@
 *.pyc
 *.wpu
 *.wpr
+/db.sqlite3
