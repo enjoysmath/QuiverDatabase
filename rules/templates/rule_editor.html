@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+{% csrf_token %}  <!-- BUGFIX. it doesn't work without this -->
+
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
@@ -41,9 +43,9 @@
 						<h1>
 							<strong>Category:</strong>
 							<a id="key-category-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'edit_rule_key_category' %}", 
+								data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
 								data-title="Result Category" style="border:none">
-								Any category of left R-modules
+								{{ key_cat }}
 							</a>
 						</h1>
 					</div>
@@ -79,9 +81,9 @@
 						<h1>
 							<strong>Category:</strong>
 							<a id="result-category-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'edit_rule_result_category' %}", 
+								data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
 								data-title="Result Category" style="border:none">
-								Any category of left R-modules
+								{{ result_cat }}
 							</a>
 						</h1>
 					</div>
@@ -123,9 +125,9 @@
 						<h1>
 							<strong>Rule:</strong>
 							<a id="rule-title-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'edit_rule_title' %}", 
+								data-pk="1" href="#" data-url="{% url 'set_rule_title' %}", 
 								data-title="Rule Title" style="border:none">
-								(Click to change)
+								{{ rule_title }}
 							</a>
 						</h1>
 					</div>
@@ -153,6 +155,24 @@
 		$(document).ready(function() {
 			$('#result-category-edit').editable();
 		});
+		
+		$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
+			data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+		});		
+		
+		$(document).ready(function() {
+			$.fn.editable.defaults.mode = 'inline';   
+			$('#key-category-edit').editable({	
+				url: "{% url 'set_rule_key_category' %}",
+				error: function(response, newValue) {
+					return response.responseText;
+				},
+				success: function(response, newValue) {
+					if(!response.success) return response.error_msg;
+				}
+			});
+		});
+		
 	</script>
 	
   </body>
