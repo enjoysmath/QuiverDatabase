@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'database_service.apps.DatabaseServiceConfig',
     'whitenoise.runserver_nostatic',
+    'crispy_forms',
+    'rules.apps.RulesConfig',
 ]
 
 MIDDLEWARE = [
@@ -96,6 +98,14 @@ TEMPLATES = [
             ],
         },
     },
+    {
+        "BACKEND": "django.template.backends.jinja2.Jinja2",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        'OPTIONS': {
+            "environment": "QuiverDatabase.jinja2.environment",
+        },
+    },    
 ]
 
 WSGI_APPLICATION = 'QuiverDatabase.wsgi.application'
@@ -159,6 +169,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR,'QuiverDatabase/static'),
     os.path.join(BASE_DIR, 'static'),    
     # ^^^ BUGFIX: this fixes a lot of issues such as KaTeX load error
+    os.path.join(BASE_DIR, 'static/quiver/src'),
+    os.path.join(BASE_DIR, 'static/quiver/src/icons'),
+    
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -188,3 +201,8 @@ django_heroku.settings(locals())
 
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 MEDIA_URL = '/media/'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+TITLE_MAX_LENGTH = 200
+NAME_MAX_LENGTH = 100

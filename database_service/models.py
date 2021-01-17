@@ -1,8 +1,7 @@
 from django.db import models
 from neomodel import *
 from django_neomodel import DjangoNode
-
-NAME_MAX_LENGTH = 100
+from QuiverDatabase.settings import NAME_MAX_LENGTH, TITLE_MAX_LENGTH
 
 # Create your models here.
 
@@ -14,15 +13,17 @@ class Functor(Morphism):
     pass
 
 class Object(StructuredNode):
-    category = RelationshipTo('Category', 'IN', cardinality=One)
     morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)
     name = StringProperty(max_length=NAME_MAX_LENGTH, required=True)
     
-    class Meta:
-        app_label = 'category'     #? TODO (how do Django forms work?)
     
 class Category(Object):
     objects = RelationshipTo('Object', 'CONTAINS')
+    title = StringProperty(max_length=TITLE_MAX_LENGTH, required=True)
     
-
+class Diagram(Category):
+    category = RelationshipTo('Category', 'IN', cardinality=One)
+    COMMUTES = { 'C' : 'Commutes', 'NC' : "Non-Commutative" }
+    commutes = StringProperty(choices=COMMUTES)
+    
     

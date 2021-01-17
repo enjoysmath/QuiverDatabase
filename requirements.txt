@@ -8,3 +8,4 @@ dj-database-url
 whitenoise
 psycopg2
 djangorestframework
+django-crispy-forms

@@ -1,0 +1,36 @@
+
+{% load crispy_forms_tags %}
+
+<div class="modal fade" id="rule-title-modal" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rule-title-edit-title">
+                    Edit Rule Title
+                </h5> 
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+            
+              <form method="post" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-success">Save person</button>
+              </form>
+
+                <!--<form id="rule-title-form" method="post">-->
+                    <!--{% csrf_token %}-->
+                    <!--<table>{{ form.as_table }}</table>-->
+                    <!--{{ form|crispy }}-->
+                    <!--<div class="modal-footer">-->
+                        <!--<button type="submit" class="btn btn-primary" form="">Save</button> -->
+                        <!--<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>-->
+                    <!--</div>-->
+                <!--</form>-->
+            </div>
+        </div>      
+    </div>    
+</div>
+
