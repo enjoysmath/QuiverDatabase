@@ -194,7 +194,7 @@ from neomodel import config   # BUGFIX: had to do it this way
 config.MAX_POOL_SIZE = 50  # TODO: what does this affect?
 
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+#LOGOUT_REDIRECT_URL = 'home'
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
@@ -207,6 +207,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 TITLE_MAX_LENGTH = 200
 NAME_MAX_LENGTH = 100
 
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_DOMAIN = 'localhost'
+#CSRF_USE_SESSIONS = False
+#CSRF_COOKIE_HTTPONLY = False
+#CSRF_COOKIE_DOMAIN = 'localhost'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

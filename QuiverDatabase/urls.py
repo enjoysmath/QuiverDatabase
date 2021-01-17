@@ -23,6 +23,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('db/', include('database_service.urls')),
     path('rules/', include('rules.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
