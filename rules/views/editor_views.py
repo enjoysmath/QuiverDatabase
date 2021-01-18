@@ -19,7 +19,7 @@ def rule_editor(request):
             rule_id,
             key={'name': 'Key Diagram'},
             key_cat={'name': 'Any'},
-            res={'name': 'Res Diagram'},
+            res={'name': 'Result Diagram'},
             res_cat={'name': 'Any'},
             title='Rule Title')
     
