@@ -173,7 +173,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR,'QuiverDatabase/static'),
     # ^^^ BUGFIX: this fixes a lot of issues such as KaTeX load error
     os.path.join(BASE_DIR, 'static/quiver/src'),
-    os.path.join(BASE_DIR, 'static/quiver/src/icons'),    
+    os.path.join(BASE_DIR, 'static/quiver/src/icons'),
+    os.path.join(BASE_DIR, 'static/quiver/src/KaTeX'),
+    os.path.join(BASE_DIR, 'static/quiver/src/KaTeX/contrib'),
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
