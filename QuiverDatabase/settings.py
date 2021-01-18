@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'rules.apps.RulesConfig',
     'accounts.apps.AccountsConfig',
+    'diagram_editor.apps.DiagramEditorConfig',
 ]
 
 MIDDLEWARE = [
@@ -167,12 +168,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR,'QuiverDatabase/static'),
+    os.path.join(BASE_DIR, 'diagram_editor/static'),
     os.path.join(BASE_DIR, 'static'),    
+    os.path.join(BASE_DIR,'QuiverDatabase/static'),
     # ^^^ BUGFIX: this fixes a lot of issues such as KaTeX load error
     os.path.join(BASE_DIR, 'static/quiver/src'),
-    os.path.join(BASE_DIR, 'static/quiver/src/icons'),
-    
+    os.path.join(BASE_DIR, 'static/quiver/src/icons'),    
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

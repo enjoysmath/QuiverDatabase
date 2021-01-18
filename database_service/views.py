@@ -6,11 +6,10 @@ from rest_framework.decorators import api_view
 
 # Create your views here.
 
-@csrf_exempt       # TODO: how do we do this /with/ CSRF?
 @api_view(['POST'])
 def save_to_database(request):
     print(request.POST)
-    return HttpResponse(request.POST)
+    return HttpResponse(repr(request.POST))
 
 def get_objects(request):
     context = {

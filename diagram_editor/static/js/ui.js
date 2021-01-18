@@ -5300,6 +5300,8 @@ class Toolbar {
 
                 let headers = new Headers();
                 
+
+                
                 headers.append('Content-Type', 'application/json');
                 headers.append('Accept', 'application/json');
                 // headers.append('Authorization', 'Basic ' + base64.encode(username + ":" +  password));

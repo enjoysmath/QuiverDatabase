@@ -156,9 +156,8 @@ def set_key_diagram_name(request):
             key = rule.key_diagram.single()
             
             if key.name != diagram_name:
-                new_key = get_diagram(cat=key.category.single(), name=diagram_name)
-                rule.key_diagram.reconnect(key, new_key)
-                rule.save()
+                key.name = diagram_name
+                key.save()
             # else: current diagram name is correct
             
             return JsonResponse({'success': True})
@@ -184,9 +183,8 @@ def set_result_diagram_name(request):
             res = rule.result_diagram.single()
             
             if res.name != diagram_name:
-                new_res = get_diagram(cat=res.category.single(), name=diagram_name)
-                rule.key_diagram.reconnect(res, new_res)
-                rule.save()
+                res.name = diagram_name
+                res.save()
             # else: current diagram name is correct
             
             return JsonResponse({'success': True})

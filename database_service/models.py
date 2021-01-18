@@ -15,6 +15,7 @@ class Functor(Morphism):
 
 
 class Object(StructuredNode):
+    uid = UniqueIdProperty()
     morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)
     name = StringProperty(max_length=NAME_MAX_LENGTH, required=True)
     
