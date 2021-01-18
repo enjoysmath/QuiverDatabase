@@ -28,15 +28,28 @@ def get_category(obs=None, **kwargs):
         
     return cat
 
+
+def get_diagram(cat=None, obs=None, **kwargs):
+    diagram = None
     
-def get_diagram(cat, obs=None, **kwargs):
-    diagram = Diagram(**kwargs).save()
-    diagram.category.connect(cat)
+    if 'uid' in kwargs and 'uid' is not None:
+        diagram = Diagram.nodes.get_or_none(**kwargs)
+        del kwargs['uid']
+        
+    if diagram is None:
+        diagram = Diagram(**kwargs).save()
+        if cat is None:
+            cat = get_category()
+        elif isinstance(cat, dict):
+            cat = get_category(**cat)
+        #else we already have a category passed in
+        
+        diagram.category.connect(cat)
+        diagram.save()
     
     if obs:
         for ob in obs:  
             diagram.objects.connect(ob)
-    
-    diagram.save()
+        diagram.save()
         
     return diagram

@@ -2,27 +2,36 @@ from django.shortcuts import render, HttpResponse, Http404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from database_service.models import Diagram
+from database_service.factory import get_diagram
 # Create your views here.
 
 @login_required
 @user_passes_test(is_editor)
-def diagram_editor(request, diagram_id):
+def diagram_editor(request, diagram_id=None):
     try:
         if request.method == 'GET':
-            diagram = Diagram.nodes.get(uid=diagram_id)
             
-            if diagram is None:
-                return Http404("Diagram ID: " + str(diagram_id) + " not found in DB.")       
+            diagram = get_diagram()
             
-            if diagram.is_checked_out:
-                return HttpResponse("The diagram " + str(diagram.name) + " is already checked out.")
-        
-            context = {
-                'diagram_name' : diagram.name,
-            }
+            if diagram_id is not None:
+                diagram = Diagram.nodes.get(uid=diagram_id)
+                
+                if diagram is None:
+                    return Http404("Diagram ID: " + str(diagram_id) + " not found in DB.")       
+                
+                if diagram.is_checked_out:
+                    return HttpResponse("The diagram " + str(diagram.name) + " is already checked out.")
+            
+                context = {
+                    'diagram_name' : diagram.name,
+                }
+                
+            else:
+                diagram = get
             
             return render(request, 'diagram_editor.html', context)  
-        
+            
+            
         
         #rule_id = request.session.get('rule_id', None)
         

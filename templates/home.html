@@ -2,8 +2,20 @@
 
 {% load static %}
 
-{% block content %}
-  <h1>Quiver Database</h1>
-  <p>Welcome, website developed by <em>Avi and Dan</em>!</p>
- 
+{% block content %}   
+    <div class="container-fluid">
+    <div class="row" style="align-items:center; justify-content:space-around; display:flex">
+        <div class="col-md-4">
+            {% if user.is_authenticated %}
+                <p>Welcome to <strong>Quiver Database</strong>, a website developed by 
+                    <em>Avi and Dan</em>!
+                </p>
+                <a href="{% url 'rule_editor' %}"  class="btn btn-success" type="button">
+                    Rule Editor
+                </a>
+            {% endif %}             
+        </div>
+    </div>
+    </div>
+    
 {% endblock %}

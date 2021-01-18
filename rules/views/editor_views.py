@@ -6,6 +6,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from ..factory import get_rule_by_id
 from database_service.factory import get_diagram, get_category
+from python_tools import full_qualname
+from neomodel.exceptions import DeflateError
+from QuiverDatabase.settings import MAX_NAME_LENGTH
 
 # Create your views here.
 
@@ -15,14 +18,7 @@ def rule_editor(request):
     try:    
         rule_id = request.session.get('rule_id', None)
         
-        rule = get_rule_by_id(
-            rule_id,
-            key={'name': 'Key Diagram'},
-            key_cat={'name': 'Any'},
-            res={'name': 'Result Diagram'},
-            res_cat={'name': 'Any'},
-            title='Rule Title')
-    
+        rule = get_rule_by_id(rule_id)
         key = rule.key_diagram.single()
         key_cat = key.category.single()
         res = rule.result_diagram.single()
@@ -39,13 +35,13 @@ def rule_editor(request):
         }
         
         return render(request, 'rule_editor.html', context)  
-            
+    
     except Exception as e:
         if 'editing_rule' in request.session:
             request.session['editing_rule'] = False
         if 'rule_id' in request.session:
             del request.session['rule_id']
-        return redirect('error', str(e))
+        return redirect('error', full_qualname(e) + ': ' + str(e))
 
 
 @login_required   
@@ -58,6 +54,10 @@ def set_rule_title(request):
                 return JsonResponse(data)
             
             rule_title = request.POST['value']           
+            
+            if len(rule_title) > MAX_NAME_LENGTH:
+                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})
+            
             rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
             
             if rule.title != rule_title:
@@ -66,11 +66,11 @@ def set_rule_title(request):
             # else: current rule title is correct
             
             return JsonResponse({'success': True})
-        
+            
         except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'Exception: {e}'})
+            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
     else:
-        return JsonResponse({'succes': False, 'error_msg': 'Settable only in rule editor.'})
+        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
 
 
 @login_required   
@@ -88,6 +88,9 @@ def set_rule_key_category(request):
                 return JsonResponse(data)
             
             cat_name = request.POST['value']
+
+            if len(cat_name) > MAX_NAME_LENGTH:
+                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
             
             rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
             key = rule.key_diagram.single()
@@ -102,9 +105,10 @@ def set_rule_key_category(request):
             return JsonResponse({'success': True})
         
         except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'Exception: {e}'})
+            return JsonResponse(
+                {'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
     else:
-        return JsonResponse({'succes': False, 'error_msg': 'Settable only in rule editor.'})
+        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
 
 
 @login_required   
@@ -116,7 +120,10 @@ def set_rule_result_category(request):
                 data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
                 return JsonResponse(data)
             
-            cat_name = request.POST['value']
+            cat_name = request.POST['value']            
+
+            if len(cat_name) > MAX_NAME_LENGTH:
+                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
             
             rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
             res = rule.result_diagram.single()
@@ -131,9 +138,9 @@ def set_rule_result_category(request):
             return JsonResponse({'success': True})
         
         except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'Exception: {e}'})
+            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
     else:
-        return JsonResponse({'succes': False, 'error_msg': 'Settable only in rule editor.'})
+        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
     
     
 @login_required   
@@ -152,6 +159,9 @@ def set_key_diagram_name(request):
             
             diagram_name = request.POST['value']
             
+            if len(diagram_name) > MAX_NAME_LENGTH:
+                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
+            
             rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
             key = rule.key_diagram.single()
             
@@ -163,9 +173,9 @@ def set_key_diagram_name(request):
             return JsonResponse({'success': True})
         
         except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'Exception: {e}'})
+            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}:{e}'})
     else:
-        return JsonResponse({'succes': False, 'error_msg': 'Settable only in rule editor.'})
+        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
 
 
 @login_required   
@@ -178,6 +188,9 @@ def set_result_diagram_name(request):
                 return JsonResponse(data)
             
             diagram_name = request.POST['value']
+
+            if len(diagram_name) > MAX_NAME_LENGTH:
+                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
             
             rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
             res = rule.result_diagram.single()
@@ -190,6 +203,6 @@ def set_result_diagram_name(request):
             return JsonResponse({'success': True})
         
         except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'Exception: {e}'})
+            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
     else:
-        return JsonResponse({'succes': False, 'error_msg': 'Settable only in rule editor.'})
+        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})

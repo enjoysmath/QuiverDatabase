@@ -1,14 +1,14 @@
 from django.db import models
 from neomodel import *
 from django_neomodel import DjangoNode
-from QuiverDatabase.settings import TITLE_MAX_LENGTH
+from QuiverDatabase.settings import MAX_NAME_LENGTH
 from database_service.models import Diagram
 
 # Create your models here.
 
 class DiagramRule(StructuredNode):
     uid = UniqueIdProperty()
-    title = StringProperty(max_length=TITLE_MAX_LENGTH, required=True)
+    title = StringProperty(max_length=MAX_NAME_LENGTH, required=True)
     key_diagram = RelationshipTo('Diagram', 'KEY', cardinality=One)
     result_diagram = RelationshipTo('Diagram', 'RESULT', cardinality=One)
     

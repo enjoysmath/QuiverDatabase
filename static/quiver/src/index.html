@@ -1,7 +1,4 @@
 <!doctype html>
-
-{% load static %}
-
 <html>
 <head>
     <meta charset="utf-8">
@@ -20,30 +17,30 @@
     <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Preload images that we want to display immediately. -->
-    <link rel="preload" href="{% static 'icons/quiver-blue.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/about.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/centre-view.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/delete.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/deselect-all.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/hide-grid.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/redo.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/reset-zoom.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/save.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/select-all.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/shortcuts.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/show-hints.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/show-queue.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/undo.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/zoom-in.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/zoom-out.svg' %}" as="image">
+    <link rel="preload" href="quiver-blue.svg" as="image">
+    <link rel="preload" href="icons/about.svg" as="image">
+    <link rel="preload" href="icons/centre-view.svg" as="image">
+    <link rel="preload" href="icons/delete.svg" as="image">
+    <link rel="preload" href="icons/deselect-all.svg" as="image">
+    <link rel="preload" href="icons/hide-grid.svg" as="image">
+    <link rel="preload" href="icons/redo.svg" as="image">
+    <link rel="preload" href="icons/reset-zoom.svg" as="image">
+    <link rel="preload" href="icons/save.svg" as="image">
+    <link rel="preload" href="icons/select-all.svg" as="image">
+    <link rel="preload" href="icons/shortcuts.svg" as="image">
+    <link rel="preload" href="icons/show-hints.svg" as="image">
+    <link rel="preload" href="icons/show-queue.svg" as="image">
+    <link rel="preload" href="icons/undo.svg" as="image">
+    <link rel="preload" href="icons/zoom-in.svg" as="image">
+    <link rel="preload" href="icons/zoom-out.svg" as="image">
     <!-- Style sheets and scrips -->
-    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'main.css' %}">
-    <script type="text/javascript" src="{% static 'js/ds.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/dom.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/quiver.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/bezier.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/arrow.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/ui.js' %}"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css">
+    <script type="text/javascript" src="ds.js"></script>
+    <script type="text/javascript" src="dom.js"></script>
+    <script type="text/javascript" src="quiver.js"></script>
+    <script type="text/javascript" src="bezier.js"></script>
+    <script type="text/javascript" src="arrow.js"></script>
+    <script type="text/javascript" src="ui.js"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-24316761-3"></script>
     <script>
@@ -71,7 +68,7 @@
             document.addEventListener("keyup", cancel);
 
             const loading_screen = new DOM.Div({ class: "loading-screen" })
-                .add(new DOM.Element("img", { src: "{% static 'quiver-blue.svg' %}", class: "logo" }))
+                .add(new DOM.Element("img", { src: "quiver-blue.svg", class: "logo" }))
                 .add(new DOM.Element("span").add("Loading diagram..."))
                 // Prevent pointer events effected during loading from taking place after loading
                 // has completed.

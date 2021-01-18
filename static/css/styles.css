@@ -29,3 +29,14 @@
       }
       .row.content {height:auto;} 
     }
+    
+    .edit {
+    width:300px;
+    height:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+    }
+    .edit:focus {
+        text-overflow: clip;
+    }

@@ -1,254 +1,210 @@
-<!DOCTYPE html>
+{% extends 'base_generic.html' %}
+
 {% csrf_token %}  <!-- BUGFIX. it doesn't work without this -->
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		
-		<title>Quiver Database</title>
-	
-		<meta name="description" content="Source code generated using layoutit.com">
-		<meta name="author" content="Avi and Dan">
-	
-		{% load static %}
-		<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-		<!--<link href="{% static 'css/style.css' %}" rel="stylesheet">-->
-		<link href="{% static 'css/bootstrap-editable.css' %}" rel="stylesheet">
-	</head>
-	<body>
+{% load static %}
 
-    <div class="container-fluid">
-		<div class="row">
-			<div class="col-md-12">
-				<div class="row">
-					<div class="col-md-2">
-						<img alt="Quiver Database Logo" src="{% static 'img/quiver-database-logo.svg' %}"
-							style="height:150px; width:100% margin-bottom:-100px">
-					</div>
-					<div class="col-md-10">
-						<div class="page-header">
-							<h1>
-								<small>An application for studying Category Theory.</small>
-							</h1>
-						</div>
-					</div>
-				</div>	
-				<div class="row">
-					<div class="col-md-2 text-muted">
-						<h1>Key Diagram</h1>
-					</div>					
-					<div class="col-md-10">
-						<div class="row">
-							<div class='col-md-6'>
-								<h1>
-									<strong>Diagram:</strong>
-									<a id="key-diagram-name-edit" data-type="text" 
-										data-pk="1" href="#" data-url="{% url 'set_key_diagram_name' %}", 
-										data-title="Key Diagram" style="border:none">
-										{{ key_diagram }}
-									</a>
-								</h1>
-							</div>
-							<div class='col-md-6'>
-								<h1>
-									<strong>Category:</strong>
-									<a id="key-category-edit" data-type="text" 
-										data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
-										data-title="Key Category" style="border:none">
-										{{ key_cat }}
-									</a>
-								</h1>
-							</div>
-						</div>
+{% block add_scripts %}	
+<script type="text/javascript">
+
+	$.fn.editable.defaults.mode = 'inline';
+
+	$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
+		data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+	});				
+	
+	// TODO see if we can put this into a function and call on the various tag ids:
+	
+	$(document).ready(function() {
+		$.fn.editable.defaults.mode = 'inline';   
+			
+		$('#key-category-edit').editable(
+		{	
+			url: "{% url 'set_rule_key_category' %}",
+			
+			error: function(response, newValue) {
+				return response.responseText;
+			},
+			
+			success: function(response, newValue) {
+				if(!response.success) 
+					return response.error_msg;
+			}
+		});
+		
+		$('#result-category-edit').editable(
+		{	
+			url: "{% url 'set_rule_result_category' %}",
+			
+			error: function(response, newValue) {
+				return response.responseText;
+			},
+			
+			success: function(response, newValue) {
+				if(!response.success) 
+					return response.error_msg;
+			}
+		});
+		
+		$('#key-diagram-name-edit').editable(
+		{	
+			url: "{% url 'set_key_diagram_name' %}",
+			
+			error: function(response, newValue) {
+				return response.responseText;
+			},
+			
+			success: function(response, newValue) {
+				if(!response.success) 
+					return response.error_msg;
+			}
+		});
+		
+		$('#result-diagram-name-edit').editable(
+		{	
+			url: "{% url 'set_result_diagram_name' %}",
+			
+			error: function(response, newValue) {
+				return response.responseText;
+			},
+			
+			success: function(response, newValue) {
+				if(!response.success) 
+					return response.error_msg;
+			}
+		});
+		
+		$('#rule-title-edit').editable(
+		{	
+			url: "{% url 'set_rule_title' %}",
+			
+			error: function(response, newValue) {
+				return response.responseText;
+			},
+			
+			success: function(response, newValue) {
+				if(!response.success) 
+					return response.error_msg;
+			}
+		});			
+	});		
+	
+</script>		
+{% endblock %}	
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">		
+			<div class="row" style="align-items:center; justify-content:space-around; display:flex">
+				<div class="page-header" style='margin-left: -400px'>
+					<h1>
+						<strong>Rule Editor:</strong>
+						<a id="rule-title-edit" data-type="text" 
+							data-pk="1" href="#" data-url="{% url 'set_rule_title' %}", 
+							data-title="Rule Title" style="border:none">
+							{{ rule_title }}
+						</a>
+					</h1>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-10">
+					<div class="jumbotron card card-block" style="padding:0">
+						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+							src="{% static 'quiver/src/index.html' %}"
+							style="border: 0; width:100%; height:700px;"></iframe>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col-md-10">
-						<div class="jumbotron card card-block" style="padding:0">
-							<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-								src="{% static 'quiver/src/index.html' %}"
-								style="border: 0; width:100%; height:700px;"></iframe>
-						</div>
-					</div>
-					<div class="col-md-2">
-						<div class="dropdown">
-							 
-							<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-								Commutes
-							</button>
-							<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-								 <a class="dropdown-item disabled" href="#">Action</a> 
-								 <a class="dropdown-item" href="#">Another action</a> 
-								 <a class="dropdown-item" href="#">Something else here</a>
-							</div>
-						</div>
-					</div>
-				</div>
-									
-				<div class="row">
-					<div class="col-md-2 text-muted">
-						<h1>Result Diagram</h1>
-					</div>
-					<div class="col-md-10">
-						<div class="row">
-							<div class='col-md-6'>
-								<h1>
-									<strong>Diagram:</strong>
-									<a id="result-diagram-name-edit" data-type="text" 
-										data-pk="1" href="#" data-url="{% url 'set_result_diagram_name' %}", 
-										data-title="Result Diagram" style="border:none">
-										{{ result_diagram }}
-									</a>
-								</h1>
-							</div>
-							<div class='col-md-6'>
-								<h1>
-									<strong>Category:</strong>
-									<a id="result-category-edit" data-type="text" 
-										data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
-										data-title="Result Category" style="border:none">
-										{{ result_cat }}
-									</a>
-								</h1>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-10">
-						<div class="jumbotron card card-block" style="padding:0">
-							<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-								src="{% static 'quiver/src/index.html' %}"
-								style="border: 0; width:100%; height:700px;"></iframe>
-						</div>
-					</div>
-					<div class="col-md-2">
-						<div class="dropdown">
-							 
-							<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-								Commutes
-							</button>
-							<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-								 <a class="dropdown-item disabled" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
-							</div>
-						</div>
-						<div class="dropdown">
-							 
-							<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-								PromptUser
-							</button>
-							<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-								 <a class="dropdown-item disabled" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
-							</div>
-						</div> 
-						<button type="button" class="btn btn-success">
-							StartOutWithCopyOfKey
+				<div class="col-md-2">
+					<div class="dropdown">
+						 
+						<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
+							Commutes
 						</button>
+						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+							 <a class="dropdown-item disabled" href="#">Action</a> 
+							 <a class="dropdown-item" href="#">Another action</a> 
+							 <a class="dropdown-item" href="#">Something else here</a>
+						</div>
 					</div>
-				</div>	
-				<div class="row">
-					<div class="page-header" style="margin-left:">
-						<h1>
-							<strong>Rule:</strong>
-							<a id="rule-title-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'set_rule_title' %}", 
-								data-title="Rule Title" style="border:none">
-								{{ rule_title }}
-							</a>
-						</h1>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<h1>
+						<strong class="text-muted">Key Diagram Name:</strong>
+						<a id="key-diagram-name-edit" data-type="text" 
+							data-pk="1" href="#" data-url="{% url 'set_key_diagram_name' %}", 
+							data-title="Key Diagram" style="border:none">
+							{{ key_diagram }}
+						</a>
+					</h1>
+					<h1>
+						<strong class='text-muted'>Category:</strong>
+						<a id="key-category-edit" data-type="text" 
+							data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
+							data-title="Key Category" style="border:none">
+							{{ key_cat }}
+						</a>
+					</h1>
+				</div>
+			</div>
+								
+			<div class="row">
+				<div class="col-md-10">
+					<div class="jumbotron card card-block" style="padding:0">
+						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+							src="{% static 'quiver/src/index.html' %}"
+							style="border: 0; width:100%; height:700px;"></iframe>
 					</div>
+				</div>					
+				<div class="col-md-2">
+					<div class="dropdown">
+						 
+						<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
+							Commutes
+						</button>
+						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+							 <a class="dropdown-item disabled" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
+						</div>
+					</div>
+					<div class="dropdown">
+						 
+						<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
+							PromptUser
+						</button>
+						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+							 <a class="dropdown-item disabled" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
+						</div>
+					</div> 
+					<button type="button" class="btn btn-success">
+						StartOutWithCopyOfKey
+					</button>
+				</div>
+			</div>	
+			<div class="row">
+				<div class="col-md-12">
+					<h1>
+						<strong class="text-muted">Result Diagram Name:</strong>
+						<a id="result-diagram-name-edit" data-type="text" 
+							data-pk="1" href="#" data-url="{% url 'set_result_diagram_name' %}", 
+							data-title="Result Diagram" style="border:none">
+							{{ result_diagram }}
+						</a>
+					</h1>
+					<h1>
+						<strong class="text-muted">Category:</strong>
+						<a id="result-category-edit" data-type="text" 
+							data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
+							data-title="Result Category" style="border:none">
+							{{ result_cat }}
+						</a>
+					</h1>
 				</div>
 			</div>
 		</div>
 	</div>
-
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-	<script src="{% static 'js/bootstrap-editable.js' %}"></script>
-	
-	<script type="text/javascript">
-		$.fn.editable.defaults.mode = 'inline';
-
-		$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
-			data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
-		});				
-
-		$(document).ready(function() {
-			$.fn.editable.defaults.mode = 'inline';   
-				
-			$('#key-category-edit').editable(
-			{	
-				url: "{% url 'set_rule_key_category' %}",
-				
-				error: function(response, newValue) {
-					return response.responseText;
-				},
-				
-				success: function(response, newValue) {
-					if(!response.success) 
-						return response.error_msg;
-				}
-			});
-			
-			$('#result-category-edit').editable(
-			{	
-				url: "{% url 'set_rule_result_category' %}",
-				
-				error: function(response, newValue) {
-					return response.responseText;
-				},
-				
-				success: function(response, newValue) {
-					if(!response.success) 
-						return response.error_msg;
-				}
-			});
-			
-			$('#key-diagram-name-edit').editable(
-			{	
-				url: "{% url 'set_key_diagram_name' %}",
-				
-				error: function(response, newValue) {
-					return response.responseText;
-				},
-				
-				success: function(response, newValue) {
-					if(!response.success) 
-						return response.error_msg;
-				}
-			});
-			
-			$('#result-diagram-name-edit').editable(
-			{	
-				url: "{% url 'set_result_diagram_name' %}",
-				
-				error: function(response, newValue) {
-					return response.responseText;
-				},
-				
-				success: function(response, newValue) {
-					if(!response.success) 
-						return response.error_msg;
-				}
-			});
-			
-			$('#rule-title-edit').editable(
-			{	
-				url: "{% url 'set_rule_title' %}",
-				
-				error: function(response, newValue) {
-					return response.responseText;
-				},
-				
-				success: function(response, newValue) {
-					if(!response.success) 
-						return response.error_msg;
-				}
-			});			
-		});		
-	</script>
-  </body>
-</html>
+</div>
+{% endblock %}
