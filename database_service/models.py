@@ -30,13 +30,3 @@ class Diagram(Category):
     commutes = StringProperty(choices=COMMUTES)
     
     
-def unique(Model, **kwargs):
-    """
-    Queries a model and if it doesn't exist, creates with same args.
-    For some reason `unique_index=True` everywhere does nothing.
-    """
-    node = Model.nodes.get_or_none(**kwargs)
-    if node is None:
-        node = Model(**kwargs)
-    return node
-    

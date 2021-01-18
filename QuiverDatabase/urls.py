@@ -16,7 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from .views import home
+from .views import home, error
+from accounts.views import user_signup
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,6 +25,8 @@ urlpatterns = [
     path('db/', include('database_service.urls')),
     path('rules/', include('rules.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
+    path("accounts/signup/", user_signup, name="signup"),
+    path('error/<str:msg>', error, name='error'),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

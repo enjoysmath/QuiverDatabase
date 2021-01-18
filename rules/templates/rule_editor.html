@@ -40,14 +40,28 @@
 						<h1>Key Diagram</h1>
 					</div>					
 					<div class="col-md-10">
-						<h1>
-							<strong>Category:</strong>
-							<a id="key-category-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
-								data-title="Result Category" style="border:none">
-								{{ key_cat }}
-							</a>
-						</h1>
+						<div class="row">
+							<div class='col-md-6'>
+								<h1>
+									<strong>Diagram:</strong>
+									<a id="key-diagram-name-edit" data-type="text" 
+										data-pk="1" href="#" data-url="{% url 'set_key_diagram_name' %}", 
+										data-title="Result Category" style="border:none">
+										{{ key_diagram }}
+									</a>
+								</h1>
+							</div>
+							<div class='col-md-6'>
+								<h1>
+									<strong>Category:</strong>
+									<a id="key-category-edit" data-type="text" 
+										data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
+										data-title="Result Category" style="border:none">
+										{{ key_cat }}
+									</a>
+								</h1>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="row">
@@ -78,14 +92,28 @@
 						<h1>Result Diagram</h1>
 					</div>
 					<div class="col-md-10">
-						<h1>
-							<strong>Category:</strong>
-							<a id="result-category-edit" data-type="text" 
-								data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
-								data-title="Result Category" style="border:none">
-								{{ result_cat }}
-							</a>
-						</h1>
+						<div class="row">
+							<div class='col-md-6'>
+								<h1>
+									<strong>Diagram:</strong>
+									<a id="result-diagram-name-editt" data-type="text" 
+										data-pk="1" href="#" data-url="{% url 'set_result_diagram_name' %}", 
+										data-title="Result Category" style="border:none">
+										{{ result_diagram }}
+									</a>
+								</h1>
+							</div>
+							<div class='col-md-6'>
+								<h1>
+									<strong>Diagram:</strong>
+									<a id="result-category-edit" data-type="text" 
+										data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
+										data-title="Result Category" style="border:none">
+										{{ result_cat }}
+									</a>
+								</h1>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="row">
@@ -143,37 +171,84 @@
 	
 	<script type="text/javascript">
 		$.fn.editable.defaults.mode = 'inline';
-		
-		// TODO: do this with a list of strings if each is done in a common way still
-		
-		$(document).ready(function() {
-			$('#rule-title-edit').editable();
-		});
-		$(document).ready(function() {
-			$('#key-category-edit').editable();
-		});
-		$(document).ready(function() {
-			$('#result-category-edit').editable();
-		});
-		
+
 		$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
 			data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
-		});		
-		
+		});				
+
 		$(document).ready(function() {
 			$.fn.editable.defaults.mode = 'inline';   
-			$('#key-category-edit').editable({	
+				
+			$('#key-category-edit').editable(
+			{	
 				url: "{% url 'set_rule_key_category' %}",
+				
 				error: function(response, newValue) {
 					return response.responseText;
 				},
+				
 				success: function(response, newValue) {
-					if(!response.success) return response.error_msg;
+					if(!response.success) 
+						return response.error_msg;
 				}
 			});
-		});
-		
+			
+			$('#result-category-edit').editable(
+			{	
+				url: "{% url 'set_rule_result_category' %}",
+				
+				error: function(response, newValue) {
+					return response.responseText;
+				},
+				
+				success: function(response, newValue) {
+					if(!response.success) 
+						return response.error_msg;
+				}
+			});
+			
+			$('#key-diagram-name-edit').editable(
+			{	
+				url: "{% url 'set_key_diagram_name' %}",
+				
+				error: function(response, newValue) {
+					return response.responseText;
+				},
+				
+				success: function(response, newValue) {
+					if(!response.success) 
+						return response.error_msg;
+				}
+			});
+			
+			$('#result-diagram-name-edit').editable(
+			{	
+				url: "{% url 'set_result_diagram_name' %}",
+				
+				error: function(response, newValue) {
+					return response.responseText;
+				},
+				
+				success: function(response, newValue) {
+					if(!response.success) 
+						return response.error_msg;
+				}
+			});
+			
+			$('#rule-title-edit').editable(
+			{	
+				url: "{% url 'set_rule_title' %}",
+				
+				error: function(response, newValue) {
+					return response.responseText;
+				},
+				
+				success: function(response, newValue) {
+					if(!response.success) 
+						return response.error_msg;
+				}
+			});			
+		});		
 	</script>
-	
   </body>
 </html>

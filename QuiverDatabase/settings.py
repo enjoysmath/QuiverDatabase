@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'crispy_forms',
     'rules.apps.RulesConfig',
+    'accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -193,7 +194,7 @@ NEOMODEL_ENCRYPTED_CONNECTION = False  # TODO: how do we switch this on without 
 from neomodel import config   # BUGFIX: had to do it this way
 config.MAX_POOL_SIZE = 50  # TODO: what does this affect?
 
-LOGIN_REDIRECT_URL = 'home'
+#LOGIN_REDIRECT_URL = 'home'
 #LOGOUT_REDIRECT_URL = 'home'
 
 # Activate Django-Heroku.
@@ -212,3 +213,18 @@ NAME_MAX_LENGTH = 100
 #CSRF_COOKIE_DOMAIN = 'localhost'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+#By default, SESSION_EXPIRE_AT_BROWSER_CLOSE is set to False, which means session cookies 
+#will be stored in users’ browsers for as long as SESSION_COOKIE_AGE. 
+#Use this if you don’t want people to have to log in every time they open a browser.
+SESSSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+#TODO:
+#Clearing the session store¶
+#As users create new sessions on your website, session data can accumulate in your session store. If you’re using the database backend, the django_session database table will grow. If you’re using the file backend, your temporary directory will contain an increasing number of files.
+
+#To understand this problem, consider what happens with the database backend. When a user logs in, Django adds a row to the django_session database table. Django updates this row each time the session data changes. If the user logs out manually, Django deletes the row. But if the user does not log out, the row never gets deleted. A similar process happens with the file backend.
+
+#Django does not provide automatic purging of expired sessions. Therefore, it’s your job to purge expired sessions on a regular basis. Django provides a clean-up management command for this purpose: clearsessions. It’s recommended to call this command on a regular basis, for example as a daily cron job.
+
+#Note that the cache backend isn’t vulnerable to this problem, because caches automatically delete stale data. Neither is the cookie backend, because the session data is stored by the users’ browsers.
