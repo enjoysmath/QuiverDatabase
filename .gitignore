@@ -2,11 +2,5 @@
 *.wpu
 *.wpr
 /db.sqlite3
-/staticfiles/admin/css
-/staticfiles/admin/fonts
-/staticfiles/admin/img
-/staticfiles/admin/js
-/staticfiles/quiver
-/staticfiles/css
-/staticfiles
+/staticfiles/*
 *.exe
