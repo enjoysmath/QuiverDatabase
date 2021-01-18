@@ -228,3 +228,6 @@ SESSSION_EXPIRE_AT_BROWSER_CLOSE = False
 #Django does not provide automatic purging of expired sessions. Therefore, it’s your job to purge expired sessions on a regular basis. Django provides a clean-up management command for this purpose: clearsessions. It’s recommended to call this command on a regular basis, for example as a daily cron job.
 
 #Note that the cache backend isn’t vulnerable to this problem, because caches automatically delete stale data. Neither is the cookie backend, because the session data is stored by the users’ browsers.
+
+from jinja2 import Undefined
+JINJA2_ENVIRONMENT_OPTIONS = { 'undefined' : Undefined }

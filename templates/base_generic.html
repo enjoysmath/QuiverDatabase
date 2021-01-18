@@ -46,7 +46,7 @@
                 class="btn btn-primary" type="button">
                 Sign out
             </a>
-            {% else %}
+            {% elif is_login_template == False %}
             <a href="{% url 'login' %}?next={% url 'home' %}" 
                 class="btn btn-success" type="button">
                 Sign in
