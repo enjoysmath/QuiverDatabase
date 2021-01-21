@@ -28,6 +28,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path("accounts/signup/", user_signup, name="signup"),
     path('error/<str:msg>', error, name='error'),
+    path('quiver-editor/', include('diagram_editor.urls'))
 ]
 
 urlpatterns += staticfiles_urlpatterns()

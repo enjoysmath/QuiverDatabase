@@ -20,11 +20,11 @@
     <link href="{{ static('css/styles.css') }}" rel="stylesheet">
     <link href="{{ static('css/bootstrap-editable.css') }}" rel="stylesheet">
 
-    <script src="{{ static('js/jquery.min.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
-    <script src="{{ static('js/bootstrap.min.js') }}"></script>
-    <script src="{{ static('js/bootstrap-editable.js') }}"></script>
-    <script src="{{ static('js/javascript_tools.js') }}"></script>   
+    <script src="{{ static('{{ static('js/jquery.min.js') }}"></script>
+    <script src="{{ static('https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
+    <script src="{{ static('{{ static('js/bootstrap.min.js') }}"></script>
+    <script src="{{ static('{{ static('js/bootstrap-editable.js') }}"></script>
+    <script src="{{ static('{{ static('js/javascript_tools.js') }}"></script>   
     
     {% block add_scripts %} {% endblock %}
     {% block header %} 
@@ -33,7 +33,7 @@
         {% block logo %}
         <div class="col-md-2">
             <a href="{{ url('home') }}?full_page={{ full_page }}">
-                <img alt="Quiver Database Logo" src="{{ static('img/quiver-database-logo.svg') }}"
+                <img alt="Quiver Database Logo" src="{{ static('{{ static('img/quiver-database-logo.svg') }}"
                     style="height:150px; width:100% margin-bottom:-100px">
             </a>
         </div>

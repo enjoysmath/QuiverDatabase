@@ -5262,7 +5262,7 @@ class Toolbar {
 
             const button = new DOM.Element("button", { class: "action", "data-name": name })
                 .add(new DOM.Element("span", { class: "symbol" }).add(
-                    new DOM.Element("img", { src: `icons/${
+                    new DOM.Element("img", { src: `/static/img/icons/${
                         name.toLowerCase().replace(/ /g, "-")
                     }.svg` })
                 ))
@@ -5289,36 +5289,6 @@ class Toolbar {
 
         // Add all of the toolbar buttons.
         
-        add_action(
-            "DB Save",
-            [{ key: "S", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                // For now, we do not include macro information in the URL.
-                const { data } = ui.quiver.export("database", ui.settings, ui.definitions());
-
-                console.log(data);
-
-                let headers = new Headers();
-                
-
-                
-                headers.append('Content-Type', 'application/json');
-                headers.append('Accept', 'application/json');
-                // headers.append('Authorization', 'Basic ' + base64.encode(username + ":" +  password));
-                headers.append('Origin','http://localhost:8000');
-                
-                    fetch('http://localhost:8000/db/save/', {
-                        mode: 'no-cors',
-                        credentials: 'include',
-                        method: 'POST',
-                        headers: headers
-                    })
-                    .then(response => response.json())
-                    .then(json => console.log(json))
-                    .catch(error => console.log('Authorization failed : ' + error.message));
-            },
-        );
-
         // "Saving" updates the URL to reflect the current diagram.
         add_action(
             "Save",
@@ -6625,10 +6595,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Immediately load the KaTeX library.
    const rendering_library = new DOM.Element("script", {
         type: "text/javascript",
-        src: "KaTeX/katex.min.js",
+        src: "/static/js/KaTeX/katex.min.js",
     }).listen("error", () => {
         // Handle KaTeX not loading (somewhat) gracefully.
-        UI.display_error(`KaTeX failed to load.`)
+        //var loc = window.location.pathname;
+        //var dir = loc; // .substring(0, -1);
+        UI.display_error(`KaTeX failed to load.`);
     });
 
     KaTeX = new Promise((accept) => {
@@ -6644,14 +6616,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load the style sheet needed for KaTeX.
     document.head.appendChild(new DOM.Element("link", {
         rel: "stylesheet",
-        href: "KaTeX/katex.css",
+        href: "/static/js/KaTeX/katex.css",
     }).element);
     // Preload various fonts to avoid flashes of unformatted text.
     const preload_fonts = ["Main-Regular", "Math-Italic"];
     for (const font of preload_fonts) {
         const attributes = {
             rel: "preload",
-            href: `KaTeX/fonts/KaTeX_${font}.woff2`,
+            href: `/static/js/KaTeX/fonts/KaTeX_${font}.woff2`,
             as: "font"
         };
         if (window.location.hostname !== "") {

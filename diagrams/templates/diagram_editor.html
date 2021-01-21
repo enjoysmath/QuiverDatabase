@@ -6,7 +6,7 @@
     {% block header %} {% endblock %}
 {% endif %}
 
-{% block add_scripts %}
+{% block add_scripts %}   
     <script type="text/javascript">
         $.fn.editable.defaults.mode = 'inline';
         setup_ajax_csrf_token('{{ csrf_token }}'); 
@@ -21,7 +21,15 @@
                 'tag_id' : '#diagram-name-edit',
                 'setter' : "{{ url('set_model_name', Model='Diagram') }}",
                 'enable_ids' : [],
-            }]);            
+            }]); 
+        
+        $("#MyButton").ready(function() {
+            $("#MyButton").on('click', function() {
+                console.log('LOG LOG LOG');
+            });
+        });
+        
+        
     </script>
 {% endblock %}
 
@@ -54,13 +62,18 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-10">
                     <div class="jumbotron card card-block" style="padding:0">
                         <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                            src="{{ static ('quiver/src/index.html') }}"
+                            id="diagram-editor" src="{{ static('{{ static ('quiver/src/index.html') }}"
                             style="border: 0; width:100%; height:600px;"></iframe>
                     </div>
                 </div>
+                <div class="col-md-2">
+                    <a href="#" id="MyButton" class="btn btn-success" type="button">
+                        Trigger Event
+                    </a>
+                </div>                
             </div>
         </div>
     </div>

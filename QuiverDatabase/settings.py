@@ -71,7 +71,7 @@ INSTALLED_APPS = [
     'rules.apps.RulesConfig',
     'accounts.apps.AccountsConfig',
     'diagrams.apps.DiagramsConfig',
-    
+    'diagram_editor.apps.DiagramEditorConfig',
 ]
 
 MIDDLEWARE = [
@@ -300,3 +300,6 @@ JINJA2_ENVIRONMENT_OPTIONS = { 'undefined' : Undefined }
 # TODO: Enable Click-jacking protection
 X_FRAME_OPTIONS = 'ALLOW'   # ie set this to "DENY"
 # https://docs.djangoproject.com/en/1.11/ref/clickjacking/
+
+#CSRF_COOKIE_SAMESITE = None
+#CSRF_COOKIE_SECURE = True
