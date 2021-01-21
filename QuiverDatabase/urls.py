@@ -20,6 +20,7 @@ from .views import home, error
 from accounts.views import user_signup
 
 urlpatterns = [
+    path('diagrams/', include('diagrams.urls')),
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('db/', include('database_service.urls')),

@@ -1,7 +1,5 @@
 {% extends "base_generic.html" %}
 
-{% load static %}
-
 {% block content %}   
     <div class="container-fluid">
     <div class="row" style="align-items:center; justify-content:space-around; display:flex">
@@ -10,8 +8,11 @@
                 <p>Welcome to <strong>Quiver Database</strong>, a website developed by 
                     <em>Avi and Dan</em>!
                 </p>
-                <a href="{% url 'rule_editor' %}"  class="btn btn-success" type="button">
-                    Rule Editor
+                <a href="{{ url('create_new_rule') }}?full_page={{ full_page }}" class="btn btn-success" type="button">
+                    Create Rule
+                </a>
+                <a href="{{ url('create_new_diagram') }}?full_page={{ full_page }}" class="btn btn-success" type="button">
+                    Create Diagram
                 </a>
             {% endif %}             
         </div>

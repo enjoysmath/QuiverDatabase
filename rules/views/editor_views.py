@@ -1,208 +1,64 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from ..models import DiagramRule
-from database_service.models import Diagram, Category
+from database_service.models import Rule, Diagram, get_unique
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
-from ..factory import get_rule_by_id
-from database_service.factory import get_diagram, get_category
-from python_tools import full_qualname
-from neomodel.exceptions import DeflateError
-from QuiverDatabase.settings import MAX_NAME_LENGTH
+from QuiverDatabase.python_tools import full_qualname
+from QuiverDatabase.settings import MAX_TEXT_LENGTH
+from django.core.exceptions import ObjectDoesNotExist
+from QuiverDatabase.http_tools import get_posted_text
+from django.db import OperationalError
 
 # Create your views here.
 
 @login_required
 @user_passes_test(is_editor)
-def rule_editor(request):
-    try:    
-        rule_id = request.session.get('rule_id', None)
+def rule_editor(request, rule_id):
+    try:   
+        session = request.session
+        user = request.user.username
         
-        rule = get_rule_by_id(rule_id)
-        key = rule.key_diagram.single()
-        key_cat = key.category.single()
-        res = rule.result_diagram.single()
-        res_cat = res.category.single()     
+        full_page = request.GET.get('full_page', 'yes')
         
-        request.session['rule_id'] = rule.uid
-        request.session['editing_rule'] = True
+        if 'rule ids' not in session:
+            session['rule ids'] = []
+            
+        rule = Rule.nodes.get(uid=rule_id)
+        
+        if rule:
+            if not rule.checked_out_by:
+                rule.checked_out_by = user
+                session['rule ids'].append(rule_id)
+                session.save()
+            else:
+                if rule.checked_out_by != user:
+                    raise OperationalError(
+                        f'The rule with id "{rule_id}" is already checked out by {rule.checked_out_by}.')
+        else:
+            raise ObjectDoesNotExist(f'There exists no diagram with uid "{rule_id}".')
+        
         context = {
-            'key_cat' : key_cat.name,
-            'result_cat' : res_cat.name,
-            'rule_title' : rule.title,
-            'key_diagram' : key.name,
-            'result_diagram' : res.name,
+            'rule_title' : rule.name,
+            'key_diagram_id' : rule.key_diagram.single().uid,
+            'result_diagram_id' : rule.result_diagram.single().uid,
+            'full_page' : full_page,
         }
         
-        return render(request, 'rule_editor.html', context)  
-    
+        return render(request, 'rule_editor.html', context)
+        
     except Exception as e:
-        if 'editing_rule' in request.session:
-            request.session['editing_rule'] = False
-        if 'rule_id' in request.session:
-            del request.session['rule_id']
         return redirect('error', full_qualname(e) + ': ' + str(e))
+    
 
 
-@login_required   
+@login_required
 @user_passes_test(is_editor)
-def set_rule_title(request):
-    if request.session.get('editing_rule', False):  
-        try:                
-            if not 'value' in request.POST:
-                data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
-                return JsonResponse(data)
-            
-            rule_title = request.POST['value']           
-            
-            if len(rule_title) > MAX_NAME_LENGTH:
-                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})
-            
-            rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
-            
-            if rule.title != rule_title:
-                rule.title = rule_title
-                rule.save()
-            # else: current rule title is correct
-            
-            return JsonResponse({'success': True})
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
-    else:
-        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
-
-
-@login_required   
-@user_passes_test(is_editor)
-def set_rule_key_category(request):
-    #"""
-    #X-Editable: handle post request to change the value of an attribute of an object
-    #request.POST['pk']: pk of object to be changed
-    #request.POST['value']: new value to be set
-    #"""        
-    if request.session.get('editing_rule', False):  
-        try:                
-            if not 'value' in request.POST:
-                data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
-                return JsonResponse(data)
-            
-            cat_name = request.POST['value']
-
-            if len(cat_name) > MAX_NAME_LENGTH:
-                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
-            
-            rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
-            key = rule.key_diagram.single()
-            current_cat = key.category.single()
-            
-            if current_cat.name != cat_name:
-                cat = get_category(name=cat_name)
-                key.category.reconnect(current_cat, cat)
-                key.save()
-            # else: current cat name is correct
-            
-            return JsonResponse({'success': True})
-        
-        except Exception as e:
-            return JsonResponse(
-                {'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
-    else:
-        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
-
-
-@login_required   
-@user_passes_test(is_editor)    
-def set_rule_result_category(request):
-    if request.session.get('editing_rule', False):  
-        try:                
-            if not 'value' in request.POST:
-                data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
-                return JsonResponse(data)
-            
-            cat_name = request.POST['value']            
-
-            if len(cat_name) > MAX_NAME_LENGTH:
-                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
-            
-            rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
-            res = rule.result_diagram.single()
-            current_cat = res.category.single()
-            
-            if current_cat.name != cat_name:
-                cat = get_category(name=cat_name)
-                res.category.reconnect(current_cat, cat)
-                res.save()
-            # else: current cat name is correct
-            
-            return JsonResponse({'success': True})
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
-    else:
-        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
+def create_new_rule(request):
+    full_page = request.GET.get('full_page', 'yes')
+    rule = Rule.our_create(name='', checked_out_by=request.user.username)
+    
+    return render(request, 'new_rule.html', 
+                  context={'full_page': full_page,
+                           'rule_id' : rule.uid })
     
     
-@login_required   
-@user_passes_test(is_editor)
-def set_key_diagram_name(request):
-    #"""
-    #X-Editable: handle post request to change the value of an attribute of an object
-    #request.POST['pk']: pk of object to be changed
-    #request.POST['value']: new value to be set
-    #"""        
-    if request.session.get('editing_rule', False):  
-        try:                
-            if not 'value' in request.POST:
-                data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
-                return JsonResponse(data)
-            
-            diagram_name = request.POST['value']
-            
-            if len(diagram_name) > MAX_NAME_LENGTH:
-                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
-            
-            rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
-            key = rule.key_diagram.single()
-            
-            if key.name != diagram_name:
-                key.name = diagram_name
-                key.save()
-            # else: current diagram name is correct
-            
-            return JsonResponse({'success': True})
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}:{e}'})
-    else:
-        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})
-
-
-@login_required   
-@user_passes_test(is_editor)    
-def set_result_diagram_name(request):
-    if request.session.get('editing_rule', False):  
-        try:                
-            if not 'value' in request.POST:
-                data = {'success': False, 'error_msg': 'Error, missing POST parameter(s).'}
-                return JsonResponse(data)
-            
-            diagram_name = request.POST['value']
-
-            if len(diagram_name) > MAX_NAME_LENGTH:
-                return JsonResponse({'succes': False, 'error_msg': f'QuiverDB Error: Exceeded max length {MAX_NAME_LENGTH}'})            
-            
-            rule = DiagramRule.nodes.get(uid=request.session['rule_id'])
-            res = rule.result_diagram.single()
-            
-            if res.name != diagram_name:
-                res.name = diagram_name
-                res.save()
-            # else: current diagram name is correct
-            
-            return JsonResponse({'success': True})
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'error_msg': f'QuiverDB Error: {full_qualname(e)}: {e}'})
-    else:
-        return JsonResponse({'succes': False, 'error_msg': 'QuiverDB Error: Settable only in rule editor.'})

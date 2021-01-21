@@ -29,3 +29,17 @@
       }
       .row.content {height:auto;} 
     }
+    
+    // Class
+    .visible {
+      visibility: visible !important;
+    }
+    .invisible {
+      visibility: hidden !important;
+    }
+    
+    .center-row-content {
+      align-items:center; 
+      justify-content:space-around; 
+      display:flex
+    }

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+{% extends "base_generic.html" %}
+
+{{ csrf_token }}  <!-- BUGFIX. it doesn't work without this -->
+
+{% block add_scripts %}
+    <script type="text/javascript">
+        $.fn.editable.defaults.mode = 'inline';
+        setup_ajax_csrf_token('{{ csrf_token }}'); 
+        setup_edit_tag_setter_urls(
+            [{
+                'tag_id' : '#new-rule-name-edit',
+                'setter' : "{{ url('set_model_name', Model='DiagramRule') }}",
+                'enable_ids' : ['#create-rule-button'],
+            }]);
+    </script>		
+{% endblock %}
+
+{% block content %}
+    {% include 'new_rule_main.html' with context %}
+{% endblock %}

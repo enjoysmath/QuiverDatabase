@@ -1,12 +1,22 @@
 {% extends 'base_generic.html' %}
 
-{% csrf_token %}  <!-- BUGFIX. it doesn't work without this -->
-
-{% load static %}
+{% block tagline %}
+	<div class="col-md-6">
+		<div class="page-header">
+			<h1>
+				<strong>Rule Editor:</strong>
+				<a id="rule-title-edit" data-type="text" 
+					data-pk="1" href="#" data-url="{{ url('set_model_name', Model='Rule') }}", 
+					data-title="Rule Name" style="border:none">
+					{{ rule_title }}
+				</a>
+			</h1>
+		</div>
+	</div>
+{% endblock %}
 
 {% block add_scripts %}	
 <script type="text/javascript">
-
 	$.fn.editable.defaults.mode = 'inline';
 
 	$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
@@ -17,66 +27,10 @@
 	
 	$(document).ready(function() {
 		$.fn.editable.defaults.mode = 'inline';   
-			
-		$('#key-category-edit').editable(
-		{	
-			url: "{% url 'set_rule_key_category' %}",
-			
-			error: function(response, newValue) {
-				return response.responseText;
-			},
-			
-			success: function(response, newValue) {
-				if(!response.success) 
-					return response.error_msg;
-			}
-		});
-		
-		$('#result-category-edit').editable(
-		{	
-			url: "{% url 'set_rule_result_category' %}",
-			
-			error: function(response, newValue) {
-				return response.responseText;
-			},
-			
-			success: function(response, newValue) {
-				if(!response.success) 
-					return response.error_msg;
-			}
-		});
-		
-		$('#key-diagram-name-edit').editable(
-		{	
-			url: "{% url 'set_key_diagram_name' %}",
-			
-			error: function(response, newValue) {
-				return response.responseText;
-			},
-			
-			success: function(response, newValue) {
-				if(!response.success) 
-					return response.error_msg;
-			}
-		});
-		
-		$('#result-diagram-name-edit').editable(
-		{	
-			url: "{% url 'set_result_diagram_name' %}",
-			
-			error: function(response, newValue) {
-				return response.responseText;
-			},
-			
-			success: function(response, newValue) {
-				if(!response.success) 
-					return response.error_msg;
-			}
-		});
 		
 		$('#rule-title-edit').editable(
 		{	
-			url: "{% url 'set_rule_title' %}",
+			url: "{% url 'set_rule_name' %}",
 			
 			error: function(response, newValue) {
 				return response.responseText;
@@ -89,6 +43,15 @@
 		});			
 	});		
 	
+			$.fn.editable.defaults.mode = 'inline';
+		setup_ajax_csrf_token('{{ csrf_token }}'); 
+		setup_edit_tag_setter_urls(
+			[{
+				'tag_id' : '#new-rule-name-edit',
+				'setter' : "{{ url('set_model_name', Model='DiagramRule') }}",
+				'enable_ids' : ['#create-rule-button'],
+			}]);
+	
 </script>		
 {% endblock %}	
 
@@ -96,25 +59,12 @@
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-md-12">		
-			<div class="row" style="align-items:center; justify-content:space-around; display:flex">
-				<div class="page-header" style='margin-left: -400px'>
-					<h1>
-						<strong>Rule Editor:</strong>
-						<a id="rule-title-edit" data-type="text" 
-							data-pk="1" href="#" data-url="{% url 'set_rule_title' %}", 
-							data-title="Rule Title" style="border:none">
-							{{ rule_title }}
-						</a>
-					</h1>
-				</div>
-			</div>
-
 			<div class="row">
 				<div class="col-md-10">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{% static 'quiver/src/index.html' %}"
-							style="border: 0; width:100%; height:700px;"></iframe>
+							src="{{ url('create_new_diagram')}}?=full_page={{ full_page }}"
+							style="border: 0; width:100%; height:600px;"></iframe>
 					</div>
 				</div>
 				<div class="col-md-2">
@@ -131,33 +81,13 @@
 					</div>
 				</div>
 			</div>
-			<div class="row">
-				<div class="col-md-12">
-					<h2>
-						<strong class="text-muted">Key Diagram Name:</strong>
-						<a id="key-diagram-name-edit" data-type="text" 
-							data-pk="1" href="#" data-url="{% url 'set_key_diagram_name' %}", 
-							data-title="Key Diagram" style="border:none">
-							{{ key_diagram }}
-						</a>
-					</h2>
-					<h2>
-						<strong class='text-muted'>Category:</strong>
-						<a id="key-category-edit" data-type="text" 
-							data-pk="1" href="#" data-url="{% url 'set_rule_key_category' %}", 
-							data-title="Key Category" style="border:none">
-							{{ key_cat }}
-						</a>
-					</h2>
-				</div>
-			</div>
-								
+									
 			<div class="row">
 				<div class="col-md-10">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{% static 'quiver/src/index.html' %}"
-							style="border: 0; width:100%; height:700px;"></iframe>
+							src="{{ url('create_new_diagram') }}?full_page={{ full_page }}"
+							style="border: 0; width:100%; height:600px;"></iframe>
 					</div>
 				</div>					
 				<div class="col-md-2">
@@ -184,26 +114,6 @@
 					</button>
 				</div>
 			</div>	
-			<div class="row">
-				<div class="col-md-12">
-					<h2>
-						<strong class="text-muted">Result Diagram Name:</strong>
-						<a id="result-diagram-name-edit" data-type="text" 
-							data-pk="1" href="#" data-url="{% url 'set_result_diagram_name' %}", 
-							data-title="Result Diagram" style="border:none">
-							{{ result_diagram }}
-						</a>
-					</h2>
-					<h2>
-						<strong class="text-muted">Category:</strong>
-						<a id="result-category-edit" data-type="text" 
-							data-pk="1" href="#" data-url="{% url 'set_rule_result_category' %}", 
-							data-title="Result Category" style="border:none">
-							{{ result_cat }}
-						</a>
-					</h2>
-				</div>
-			</div>
 		</div>
 	</div>
 </div>

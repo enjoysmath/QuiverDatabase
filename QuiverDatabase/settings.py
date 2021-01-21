@@ -22,12 +22,12 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            },
         },
-    },
     'root': {
         'handlers': ['console'],
         'level': 'DEBUG',
-    },
+        },
 } 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -45,7 +45,7 @@ if os.environ.get('ON_HEROKU', '0') == '0':
     DEBUG = True
 else:
     DEBUG = False
-    
+
 DEBUG = True    # TODO comment out
 
 ALLOWED_HOSTS = [
@@ -57,6 +57,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'django_jinja',
     'django_neomodel',    
     'django.contrib.admin',
     'django.contrib.auth',
@@ -69,7 +70,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     'rules.apps.RulesConfig',
     'accounts.apps.AccountsConfig',
-    'diagram_editor.apps.DiagramEditorConfig',
+    'diagrams.apps.DiagramsConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -81,37 +83,100 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'QuiverDatabase.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(BASE_DIR.joinpath('templates'))],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'debug': True,
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django_jinja.backend.Jinja2",
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            # Match the template names ending in .html but not the ones in the admin folder.
+            "match_extension": ".html",
+            "match_regex": r"^(?!admin/).*",
+            "app_dirname": "templates",
+
+            # Can be set to "jinja2.Undefined" or any other subclass.
+            "undefined": None,
+
+            "newstyle_gettext": True,
+            "tests": {
+                #"mytest": "path.to.my.test",
+            },
+            "filters": {
+                #"myfilter": "path.to.my.filter",
+            },
+            "globals": {
+                #"myglobal": "path.to.my.globalfunc",
+            },
+            "constants": {
+               # "foo": "bar",
+            },
+            "extensions": [
+                "jinja2.ext.do",
+                "jinja2.ext.loopcontrols",
+                "jinja2.ext.with_",
+                "jinja2.ext.i18n",
+                "jinja2.ext.autoescape",
+                "django_jinja.builtins.extensions.CsrfExtension",
+                "django_jinja.builtins.extensions.CacheExtension",
+                "django_jinja.builtins.extensions.DebugExtension",
+                "django_jinja.builtins.extensions.TimezoneExtension",
+                "django_jinja.builtins.extensions.UrlsExtension",
+                "django_jinja.builtins.extensions.StaticFilesExtension",
+                "django_jinja.builtins.extensions.DjangoFiltersExtension",
             ],
-        },
+            "bytecode_cache": {
+                "name": "default",
+                "backend": "django_jinja.cache.BytecodeCache",
+                "enabled": False,
+            },
+            "autoescape": True,
+            "auto_reload": DEBUG,
+            "translation_engine": "django.utils.translation",
+        }
     },
     {
-        "BACKEND": "django.template.backends.jinja2.Jinja2",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
-        "APP_DIRS": True,
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
         'OPTIONS': {
-            "environment": "QuiverDatabase.jinja2.environment",
-        },
-    },    
-]
+            'context_processors': [
+            'django.template.context_processors.debug',
+            'django.template.context_processors.request',
+            'django.contrib.auth.context_processors.auth',
+            'django.contrib.messages.context_processors.messages']
+    }}]
+    
+#TEMPLATES = [
+    #{
+        #'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        #'DIRS': [str(BASE_DIR.joinpath('templates'))],
+        #'APP_DIRS': True,
+        #'OPTIONS': {
+            #'debug': True,
+            #'context_processors': [
+                #'django.template.context_processors.debug',
+                #'django.template.context_processors.request',
+                #'django.contrib.auth.context_processors.auth',
+                #'django.contrib.messages.context_processors.messages',
+            #],
+        #},
+    #},
+    #{
+        #"BACKEND": "django.template.backends.jinja2.Jinja2",
+        #"DIRS": [os.path.join(BASE_DIR, "templates")],
+        #"APP_DIRS": True,
+        #'OPTIONS': {
+            #"environment": "QuiverDatabase.jinja2.environment",
+        #},
+    #},    
+#]
 
 WSGI_APPLICATION = 'QuiverDatabase.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -135,16 +200,16 @@ else:
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
+        },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
+        },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
+        },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+        },
 ]
 
 
@@ -168,7 +233,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'diagram_editor/static'),
+    os.path.join(BASE_DIR, 'diagrams/static'),
     os.path.join(BASE_DIR, 'static'),    
     os.path.join(BASE_DIR,'QuiverDatabase/static'),
     # ^^^ BUGFIX: this fixes a lot of issues such as KaTeX load error
@@ -206,7 +271,7 @@ MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-MAX_NAME_LENGTH = 100
+MAX_TEXT_LENGTH = 150
 
 #CSRF_USE_SESSIONS = False
 #CSRF_COOKIE_HTTPONLY = False
@@ -215,19 +280,23 @@ MAX_NAME_LENGTH = 100
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 #By default, SESSION_EXPIRE_AT_BROWSER_CLOSE is set to False, which means session cookies 
-#will be stored in users’ browsers for as long as SESSION_COOKIE_AGE. 
-#Use this if you don’t want people to have to log in every time they open a browser.
+#will be stored in users' browsers for as long as SESSION_COOKIE_AGE. 
+#Use this if you don't want people to have to log in every time they open a browser.
 SESSSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 #TODO:
 #Clearing the session store¶
-#As users create new sessions on your website, session data can accumulate in your session store. If you’re using the database backend, the django_session database table will grow. If you’re using the file backend, your temporary directory will contain an increasing number of files.
+#As users create new sessions on your website, session data can accumulate in your session store. If you're using the database backend, the django_session database table will grow. If you're using the file backend, your temporary directory will contain an increasing number of files.
 
 #To understand this problem, consider what happens with the database backend. When a user logs in, Django adds a row to the django_session database table. Django updates this row each time the session data changes. If the user logs out manually, Django deletes the row. But if the user does not log out, the row never gets deleted. A similar process happens with the file backend.
 
-#Django does not provide automatic purging of expired sessions. Therefore, it’s your job to purge expired sessions on a regular basis. Django provides a clean-up management command for this purpose: clearsessions. It’s recommended to call this command on a regular basis, for example as a daily cron job.
+#Django does not provide automatic purging of expired sessions. Therefore, it's your job to purge expired sessions on a regular basis. Django provides a clean-up management command for this purpose: clearsessions. It's recommended to call this command on a regular basis, for example as a daily cron job.
 
-#Note that the cache backend isn’t vulnerable to this problem, because caches automatically delete stale data. Neither is the cookie backend, because the session data is stored by the users’ browsers.
+#Note that the cache backend isn't vulnerable to this problem, because caches automatically delete stale data. Neither is the cookie backend, because the session data is stored by the users' browsers.
 
 from jinja2 import Undefined
 JINJA2_ENVIRONMENT_OPTIONS = { 'undefined' : Undefined }
+
+# TODO: Enable Click-jacking protection
+X_FRAME_OPTIONS = 'ALLOW'   # ie set this to "DENY"
+# https://docs.djangoproject.com/en/1.11/ref/clickjacking/

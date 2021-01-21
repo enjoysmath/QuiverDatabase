@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+{% extends "base_generic.html" %}
+
+{{ csrf_token }} <!-- BUGFIX. it doesn't work without this -->
+
+{% block add_scripts %}
+    <script type="text/javascript">
+        $.fn.editable.defaults.mode = 'inline';
+        setup_ajax_csrf_token('{{ csrf_token }}'); 
+        setup_edit_tag_setter_urls(
+            [{
+                'tag_id' : '#new-diagram-name-edit',
+                'setter' : "{{ url('set_model_name', Model='Diagram') }}",
+                'enable_ids' : ['#create-diagram-button'],
+            }]);
+    </script>		
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+            <div class="row center-row-content">
+                <div class="col-md-10">
+                    <div class="page-header">
+                        <h1>Create a New Diagram</h1>
+                    </div>            
+                    <h3>
+                        <strong class="text-muted">
+                            Diagram Name:
+                        </strong>
+                    </h3>
+                    <h3>
+                        <a id="new-diagram-name-edit" data-type="text" 
+                            data-pk="{{ diagram_id }}" href="#" data-url="{{ url('set_model_name', Model='Diagram') }}", 
+                            data-title="New Diagram Name" style="border:none">
+                        </a>     
+                    </h3>
+                    <a id="create-diagram-button" class="btn btn-success invisible" 
+                        href="{{ url('diagram_editor', diagram_id) }}?full_page={{ full_page }}"> 
+                        Create
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
