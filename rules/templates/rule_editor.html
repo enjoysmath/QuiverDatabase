@@ -1,12 +1,27 @@
 {% extends 'base_generic.html' %}
 
+{% block add_scripts %}	
+<script type="text/javascript">
+	$.fn.editable.defaults.mode = 'inline';
+	
+	setup_ajax_csrf_token('{{ csrf_token }}'); 
+	setup_edit_tag_setter_urls(
+	[{
+		'tag_id' : '#rule-name-edit',
+		'setter' : "{{ url('set_model_name', Model='Rule') }}",
+		'enable_ids' : [],
+	}]);
+
+</script>		
+{% endblock %}	
+
 {% block tagline %}
 	<div class="col-md-6">
 		<div class="page-header">
 			<h1>
 				<strong>Rule Editor:</strong>
-				<a id="rule-title-edit" data-type="text" 
-					data-pk="1" href="#" data-url="{{ url('set_model_name', Model='Rule') }}", 
+				<a id="rule-name-edit" data-type="text" 
+					data-pk="1" href="#" 
 					data-title="Rule Name" style="border:none">
 					{{ rule_title }}
 				</a>
@@ -14,46 +29,6 @@
 		</div>
 	</div>
 {% endblock %}
-
-{% block add_scripts %}	
-<script type="text/javascript">
-	$.fn.editable.defaults.mode = 'inline';
-
-	$.ajaxSetup({  // BUGFIX.  This took hours to get to work!  And remember the csrf_token line at the top of template
-		data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
-	});				
-	
-	// TODO see if we can put this into a function and call on the various tag ids:
-	
-	$(document).ready(function() {
-		$.fn.editable.defaults.mode = 'inline';   
-		
-		$('#rule-title-edit').editable(
-		{	
-			url: "{% url 'set_rule_name' %}",
-			
-			error: function(response, newValue) {
-				return response.responseText;
-			},
-			
-			success: function(response, newValue) {
-				if(!response.success) 
-					return response.error_msg;
-			}
-		});			
-	});		
-	
-			$.fn.editable.defaults.mode = 'inline';
-		setup_ajax_csrf_token('{{ csrf_token }}'); 
-		setup_edit_tag_setter_urls(
-			[{
-				'tag_id' : '#new-rule-name-edit',
-				'setter' : "{{ url('set_model_name', Model='DiagramRule') }}",
-				'enable_ids' : ['#create-rule-button'],
-			}]);
-	
-</script>		
-{% endblock %}	
 
 {% block content %}
 <div class="container-fluid">
@@ -63,8 +38,8 @@
 				<div class="col-md-10">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{{ url('create_new_diagram')}}?=full_page={{ full_page }}"
-							style="border: 0; width:100%; height:600px;"></iframe>
+							src="{{ url('create_new_diagram') }}?full_page=no"
+							style="border: 0; width:100%; height:750px;"></iframe>
 					</div>
 				</div>
 				<div class="col-md-2">
@@ -86,8 +61,8 @@
 				<div class="col-md-10">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{{ url('create_new_diagram') }}?full_page={{ full_page }}"
-							style="border: 0; width:100%; height:600px;"></iframe>
+							src="{{ url('create_new_diagram') }}?full_page=no"
+							style="border: 0; width:100%; height:750px;"></iframe>
 					</div>
 				</div>					
 				<div class="col-md-2">

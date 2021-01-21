@@ -100,7 +100,7 @@ model_str_to_class = {
     'Category' : Category,
     'Object' : Object,
     'Diagram' : Diagram,
-    'DiagramRule' : Rule,
+    'Rule' : Rule,
 }
 
 MAX_MODEL_CLASS_NAME_LENGTH = max([len(x) for x in model_str_to_class.keys()])
