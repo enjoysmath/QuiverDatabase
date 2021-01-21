@@ -10,3 +10,4 @@ psycopg2
 djangorestframework
 django-crispy-forms
 jinja2
+django-jinja
