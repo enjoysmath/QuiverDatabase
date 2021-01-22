@@ -76,6 +76,13 @@
         method: 'POST',
         body: json_str,
         mode: 'same-origin',
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert("Success: " + data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
         });
     }
                

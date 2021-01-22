@@ -5,6 +5,8 @@ from accounts.permissions import is_editor
 from QuiverDatabase.http_tools import get_posted_text
 from django.http import JsonResponse
 from QuiverDatabase.python_tools import full_qualname
+from .quiver_data_format import QuiverDataFormat
+import json
 
 # Create your views here.
 
@@ -60,20 +62,28 @@ def save_diagram_to_database(request, diagram_id):
                 #raise ValueError(f'A {Model} already exists with name "{name}".')
             
             #model.name = name
+    
             #model.save()
-    import json
-    if request.method == 'POST' and request.headers.get("contentType", "application/json; charset=utf-8"):
-        body_unicode = request.body.decode('utf-8')
-        received_json = json.loads(body_unicode)
-        
-        version = received_json[0]
-
-        print()
-        print(received_json)
-        print()
-        
-        return JsonResponse(received_json, safe=False)
-    return JsonResponse({})
+    try:
+        if request.method == 'POST' and request.headers.get("contentType", "application/json; charset=utf-8"):
+            body = request.body.decode('utf-8')
             
+            if body:
+                try:
+                    recvd_json = json.loads(body)
+                    data = QuiverDataFormat(recvd_json)
+                    
+                except json.decoder.JSONDecodeError:
+                    # For some reason, empty diagrams are resulting in the body as a URL str (not JSON)
+                    data = QuiverDataFormat.Default                
+            else:
+                data = QuiverDataFormat.Default
+                
+            
+                
+            return JsonResponse(str(data), safe=False)
+    except Exception as e:
+        raise e
+    
     #except Exception as e:
         #return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 

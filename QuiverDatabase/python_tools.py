@@ -36,4 +36,5 @@ def deep_set(d:dict, keys, value, create=True):
         elif create:
             d = d[key] = {}
     
-    d[key] = value    
+    d[key] = value 
+    return value
