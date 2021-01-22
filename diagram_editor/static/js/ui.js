@@ -910,6 +910,52 @@ class UI {
             welcome_pane.class_list.add("hidden");
         }).add_to(welcome_pane);
 
+        // QuiverDatabase: stop event propogation on to quiver when click is in the site's button pane
+        const database_control_pane = new DOM.Div({
+            id: "lower-control-pane",
+            class: "container-fluid pane",
+        })
+        .add(new DOM.Div({class: "row"})
+            .add(new DOM.Div({class:"col-md-12"})
+            .add(new DOM.Element("h4")
+            .add(new DOM.Element("strong", {class:"text-muted"})
+            .add("Diagram Name:"))
+            .add(new DOM.Element("a", {
+                "id":"diagram-name-edit",
+                "data-type": "text",
+                "href": "#",
+                "style": "border:none; margin-left:10px",
+            })))))
+        .add(new DOM.Div({class: "row"})
+            .add(new DOM.Div({class:"col-md-12"})
+            .add(new DOM.Element("h4")
+            .add(new DOM.Element("strong", {class:"text-muted"})
+            .add("Category:"))
+            .add(new DOM.Element("a", {
+                "id":"category-name-edit",
+                "data-type": "text",
+                "href": "#",
+                "style": "border:none; margin-left:10px",
+            })))))
+        .add(new DOM.Div({class: "row"})
+            .add(new DOM.Div({class: "col-md-12"})
+            .add(new DOM.Element("a", {
+                "id" : "save-to-database-button",
+                "class" : "btn btn-primary",
+                "style" : "border-radius: 8px",
+                // "url" : TODO set in html script with diagram_id
+                // "onclick": ui.
+            }).add("Save Diagram")
+            .listen("click", function() {
+                const {data} = this.quiver.export("database", this.settings, this.definitions());
+                save_diagram_to_database(data);
+                // history.pushState({}, "", data);  TODO do we want this?
+            }.bind(this)
+             ))));
+             
+        
+        panes.push(database_control_pane);
+
         for (const pane of panes) {
             this.element.add(pane);
 
@@ -1654,7 +1700,7 @@ class UI {
                         this.panel.hide_if_unselected(this);
                         // Display the queue.
                         this.element.class_list.add("show-queue");
-                        this.toolbar.element.query_selector('.action[data-name="Show queue"] .name')
+                        this.toolbar.element.query_selector('.btn[data-name="Show queue"] .name')
                             .replace("Hide queue");
                         // Bring up the label input and select the text.
                         this.panel.focus_label_input();
@@ -3246,7 +3292,6 @@ class History {
                         label.cell.label = label[to];
                         ui.panel.render_tex(ui, label.cell);
                     }
-                    update_panel = true;
                     break;
                 case "label_colour":
                     for (const label_colour of action.label_colours) {
@@ -4263,7 +4308,7 @@ class Panel {
                     // When the shortcut is active, we will always be displaying the modal pane,
                     // so the shortcut is always valid.
                     const shortcut = { key: "C", context: Shortcuts.SHORTCUT_PRIORITY.Always };
-                    new DOM.Element("kbd", { class: "hint button" })
+                    new DOM.Element("kbd", { class: "hint quiver-button" })
                         .add(Shortcuts.name([shortcut])).add_to(checkbox.parent);
                     const shortcuts = [ui.shortcuts.add([shortcut], () => {
                         if (!options.class_list.contains("hidden")) {
@@ -4400,7 +4445,7 @@ class Panel {
         });
         delay(() => {
             button.add(
-                new DOM.Element("kbd", { class: "hint button" }).add(Shortcuts.name([shortcut]))
+                new DOM.Element("kbd", { class: "hint quiver-button" }).add(Shortcuts.name([shortcut]))
             );
         });
         return button;
@@ -4460,7 +4505,7 @@ class Panel {
             if (options.style.name.startsWith("corner")) {
                 button.set_style({
                     "background-image": ["", "un"].map((prefix) => {
-                        return `url("icons/${
+                        return `url("/static/icons/${
                             options.style.name.endsWith("inverse") ? "var-" : ""
                         }pullback-${prefix}checked.svg")`;
                     }).join(", ")
@@ -4560,7 +4605,7 @@ class Panel {
                         ? ((i % 2 === 0 && classes.includes("short"))
                             ? option.element.offsetWidth : 0)
                         : option.element.offsetLeft;
-                    options_list.add(new DOM.Element("kbd", { class: "hint button" }, {
+                    options_list.add(new DOM.Element("kbd", { class: "hint quiver-button" }, {
                         left: `${left}px`,
                         top: `${option.element.offsetTop}px`,
                     }).add(Shortcuts.name([{ key }])));
@@ -4670,7 +4715,7 @@ class Panel {
             }
 
             // Enable all the inputs iff we've selected at least one edge.
-            this.element.query_selector_all('input:not([type="text"]), button')
+            this.element.query_selector_all('input:not([type="text"]), quiver-button')
                 .forEach((input) => input.element.disabled = !selection_contains_edge);
             this.element.query_selector_all(".slider, .colour-indicator").forEach((element) => {
                 element.class_list.toggle("disabled", !selection_contains_edge);
@@ -4911,7 +4956,7 @@ class Panel {
             });
         } else {
             // Disable all the inputs.
-            this.element.query_selector_all("input, button")
+            this.element.query_selector_all("input, quiver-button")
                 .forEach((input) => input.element.disabled = true);
             // Disable the macro input.
             this.global.query_selector_all('input[type="text"]')
@@ -5260,9 +5305,9 @@ class Toolbar {
         const add_action = (name, combinations, action) => {
             const shortcut_name = Shortcuts.name(combinations);
 
-            const button = new DOM.Element("button", { class: "action", "data-name": name })
+            const button = new DOM.Element("button", { class: "btn btn-success", "data-name": name })
                 .add(new DOM.Element("span", { class: "symbol" }).add(
-                    new DOM.Element("img", { src: `/static/img/icons/${
+                    new DOM.Element("img", { src: `/static/icons/${
                         name.toLowerCase().replace(/ /g, "-")
                     }.svg` })
                 ))
@@ -5288,18 +5333,18 @@ class Toolbar {
         };
 
         // Add all of the toolbar buttons.
-        
+
         // "Saving" updates the URL to reflect the current diagram.
-        add_action(
-            "Save",
-            [{ key: "S", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                // For now, we do not include macro information in the URL.
-                const { data } = ui.quiver.export("base64", ui.settings, ui.definitions());
-                // `data` is the new URL.
-                history.pushState({}, "", data);
-            },
-        );
+        //add_action(
+            //"Save",
+            //[{ key: "S", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+            //() => {
+                //// For now, we do not include macro information in the URL.
+                //const { data } = ui.quiver.export("base64", ui.settings, ui.definitions());
+                //// `data` is the new URL.
+                //history.pushState({}, "", data);
+            //},
+        //);
 
         add_action(
             "Undo",
@@ -5325,16 +5370,16 @@ class Toolbar {
             },
         );
 
-        add_action(
-            "Deselect all",
-            [{ key: "A", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            () => {
-                ui.deselect();
-                ui.panel.hide(ui);
-                ui.panel.label_input.parent.class_list.add("hidden");
-                ui.colour_picker.close();
-            },
-        );
+        //add_action(
+            //"Deselect all",
+            //[{ key: "A", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+            //() => {
+                //ui.deselect();
+                //ui.panel.hide(ui);
+                //ui.panel.label_input.parent.class_list.add("hidden");
+                //ui.colour_picker.close();
+            //},
+        //);
 
         add_action(
             "Delete",
@@ -5406,62 +5451,62 @@ class Toolbar {
             },
         );
 
-        add_action(
-            "Show hints",
-            [{
-                key: "H", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
-            }],
-            function () {
-                ui.element.class_list.toggle("show-hints");
-                const hidden = !ui.element.class_list.contains("show-hints");
-                this.query_selector(".name").replace(
-                    (hidden ? "Show" : "Hide") + " hints"
-                );
-            },
-        );
+        //add_action(
+            //"Show hints",
+            //[{
+                //key: "H", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
+            //}],
+            //function () {
+                //ui.element.class_list.toggle("show-hints");
+                //const hidden = !ui.element.class_list.contains("show-hints");
+                //this.query_selector(".name").replace(
+                    //(hidden ? "Show" : "Hide") + " hints"
+                //);
+            //},
+        //);
 
-        add_action(
-            "Show queue",
-            [],
-            function () {
-                ui.element.class_list.toggle("show-queue");
-                const hidden = !ui.element.class_list.contains("show-queue");
-                this.query_selector(".name").replace(
-                    (hidden ? "Show" : "Hide") + " queue"
-                );
-            },
-        );
+        //add_action(
+            //"Show queue",
+            //[],
+            //function () {
+                //ui.element.class_list.toggle("show-queue");
+                //const hidden = !ui.element.class_list.contains("show-queue");
+                //this.query_selector(".name").replace(
+                    //(hidden ? "Show" : "Hide") + " queue"
+                //);
+            //},
+        //);
 
-        add_action(
-            "Shortcuts",
-            [{
-                key: "/", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
-            }],
-            () => {
-                const hidden = ui.element.query_selector("#keyboard-shortcuts-pane").class_list
-                    .contains("hidden");
-                ui.element.query_selector_all(".pane").forEach((pane) => {
-                    pane.class_list.add("hidden");
-                });
-                ui.element.query_selector("#keyboard-shortcuts-pane").class_list
-                    .toggle("hidden", !hidden);
-                ui.element.query_selector(".version").class_list.add("hidden");
-            },
-        );
+        //add_action(
+            //"Shortcuts",
+            //[{
+                //key: "/", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
+            //}],
+            //() => {
+                //const hidden = ui.element.query_selector("#keyboard-shortcuts-pane").class_list
+                    //.contains("hidden");
+                //ui.element.query_selector_all(".pane").forEach((pane) => {
+                    //pane.class_list.add("hidden");
+                //});
+                //ui.element.query_selector("#keyboard-shortcuts-pane").class_list
+                    //.toggle("hidden", !hidden);
+                //ui.element.query_selector(".version").class_list.add("hidden");
+            //},
+        //);
 
-        add_action(
-            "About",
-            [],
-            () => {
-                const hidden = ui.element.query_selector("#about-pane").class_list
-                    .contains("hidden");
-                ui.element.query_selector_all(".pane").forEach((pane) => {
-                    pane.class_list.add("hidden");
-                });
-                ui.element.query_selector("#about-pane").class_list.toggle("hidden", !hidden);
-                ui.element.query_selector(".version").class_list.toggle("hidden", !hidden);
-            },
-        );
+        //add_action(
+            //"About",
+            //[],
+            //() => {
+                //const hidden = ui.element.query_selector("#about-pane").class_list
+                    //.contains("hidden");
+                //ui.element.query_selector_all(".pane").forEach((pane) => {
+                    //pane.class_list.add("hidden");
+                //});
+                //ui.element.query_selector("#about-pane").class_list.toggle("hidden", !hidden);
+                //ui.element.query_selector(".version").class_list.toggle("hidden", !hidden);
+            //},
+        //);
 
         // Disable those buttons that need to be disabled.
         this.update(ui);
@@ -5476,7 +5521,7 @@ class Toolbar {
         }
 
         const enable_if = (name, condition) => {
-            const element = this.element.query_selector(`.action[data-name="${name}"]`).element;
+            const element = this.element.query_selector(`.btn[data-name="${name}"]`).element;
             element.disabled = !condition;
         };
 
@@ -5485,7 +5530,7 @@ class Toolbar {
             && ui.history.present < ui.history.actions.length);
         enable_if("Select all",
             ui.in_mode(UIMode.Default) && ui.selection.size < ui.quiver.all_cells().length);
-        enable_if("Deselect all", ui.in_mode(UIMode.Default) && ui.selection.size > 0);
+        //enable_if("Deselect all", ui.in_mode(UIMode.Default) && ui.selection.size > 0);
         enable_if("Delete", ui.in_mode(UIMode.Default) && ui.selection.size > 0);
         enable_if("Centre view",
             ui.element.query_selector(".focus-point.focused")
@@ -5498,7 +5543,7 @@ class Toolbar {
         enable_if("Reset zoom", ui.scale !== 0);
 
         // Update the current zoom level underneath the "Reset zoom" button.
-        this.element.query_selector('.action[data-name="Reset zoom"] .shortcut').element.innerText
+        this.element.query_selector('.btn[data-name="Reset zoom"] .shortcut').element.innerText
             = `${Math.round(2 ** ui.scale * 100)}%`;
     }
 }
@@ -6535,7 +6580,7 @@ class Edge extends Cell {
 
 // A `Promise` that returns the `katex` global object when it's loaded.
 let KaTeX = null;
-
+var my_ui = null;
 // We want until the (minimal) DOM content has loaded, so we have access to `document.body`.
 document.addEventListener("DOMContentLoaded", () => {
     // We don't want the browser being too clever and trying to restore the scroll position, as that
@@ -6547,6 +6592,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // The global UI.
     const ui = new UI(new DOM.Element(document.body));
     ui.initialise();
+    my_ui = ui;
 
     const load_quiver_from_query_string = () => {
         // If there is `q` parameter in the query string, try to decode it as a diagram.
@@ -6598,9 +6644,7 @@ document.addEventListener("DOMContentLoaded", () => {
         src: "/static/js/KaTeX/katex.min.js",
     }).listen("error", () => {
         // Handle KaTeX not loading (somewhat) gracefully.
-        //var loc = window.location.pathname;
-        //var dir = loc; // .substring(0, -1);
-        UI.display_error(`KaTeX failed to load.`);
+        UI.display_error(`KaTeX failed to load.`)
     });
 
     KaTeX = new Promise((accept) => {

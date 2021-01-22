@@ -1,4 +1,4 @@
-   /* Remove the navbar's default margin-bottom and rounded borders */ 
+    /* Remove the navbar's default margin-bottom and rounded borders */ 
     .navbar {
       margin-bottom: 0;
       border-radius: 0;
@@ -43,3 +43,81 @@
       justify-content:space-around; 
       display:flex
     }
+
+    .toolbar .btn {
+        position: relative;
+        vertical-align: middle;
+        width: 70px; height: 70px;
+    
+        /*background: transparent;*/
+        border: none;
+        border-radius: 15px;
+        outline: none;
+    
+        font: inherit;
+        text-align: center;
+        font-size: 20px;
+        color: inherit;
+        white-space: nowrap;
+        
+        margin-left: 3px;
+        margin-right: 3px;
+    
+        cursor: default;
+        user-select: none;
+    }
+    
+    .toolbar .btn:hover {
+        background: hsl(0, 0%, 28%);
+    }
+    
+    .toolbar .btn:active {
+        background: var(--ui-blue);
+    }
+    
+    .toolbar .btn img {
+        width: 28px;
+        margin-top: 2px;
+        vertical-align: middle;
+    }
+    
+    .toolbar .btn:disabled {
+        /*background: transparent;*/
+    }
+    
+    .toolbar .btn:disabled img {
+        opacity: 0.6;
+    }
+    
+    .toolbar .btn:disabled .name, .toolbar .btn:disabled .shortcut {
+        color: hsl(0, 0%, 64%);
+    }
+    
+    button.flash {
+        animation: background-flash 0.4s ease-in;
+    }
+    
+    @keyframes background-flash {
+        from {
+            background: var(--ui-blue);
+        }
+    }
+    
+    .toolbar .btn .name, .toolbar .btn .shortcut {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    
+        font-size: 12px;
+        line-height: 12px;
+        color: white; /*hsl(0, 0%, 80%); */
+    }
+    
+    .toolbar .btn .name {
+        top: 6px;
+    }
+    
+    .toolbar .btn .shortcut {
+        bottom: 6px;
+    }
+    

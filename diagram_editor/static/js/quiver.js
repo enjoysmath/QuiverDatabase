@@ -1098,11 +1098,14 @@ QuiverImportExport.database = new class extends QuiverImportExport {
     // - Arrays may be truncated if the values of the elements are the default values.
 
     export(quiver) {
+        // Remove the query string from the current URL and use that as a base.
+        const URL_prefix = window.location.href.replace(/\?.*$/, "");
+
         if (quiver.is_empty()) {
             // No need to have an encoding of an empty quiver;
             // we'll just use the URL directly.
             return {
-                data: null,
+                data: URL_prefix,
                 metadata: {},
             };
         }
@@ -1451,3 +1454,4 @@ QuiverImportExport.database = new class extends QuiverImportExport {
         return quiver;
     }
 };
+

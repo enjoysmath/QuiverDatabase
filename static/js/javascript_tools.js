@@ -14,6 +14,7 @@ function setup_edit_tag_setter_urls(tag_id_urls)
             $(tag_url['tag_id']).editable(
             {	
                 url: tag_url['setter'],
+                pk: tag_url['pk'],
                 
                 error: function(response, newValue) {
                     return response.responseText;                    
@@ -32,6 +33,8 @@ function setup_edit_tag_setter_urls(tag_id_urls)
                     }
                 },
             });
+            
+            $(tag_url['tag_id']).text(tag_url['initial']);
         }
     });
 }

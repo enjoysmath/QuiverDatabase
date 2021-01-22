@@ -3,6 +3,6 @@ from .views import *
 
 
 urlpatterns = [
-    path('', quiver_editor, name='quiver_editor'),
+    path('<str:diagram_id>', quiver_editor, name='diagram_editor'),
 ]
 

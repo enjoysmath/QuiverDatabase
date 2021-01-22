@@ -27,6 +27,9 @@ def diagram_editor(request, diagram_id=None):
         diagram = Diagram.nodes.get(uid=diagram_id)
         
         if diagram:
+            if diagram.name == '':
+                raise ValueError('Diagram name must not be empty.')
+            
             if not diagram.checked_out_by:
                 diagram.checked_out_by = user
                 session['diagram ids'].append(diagram_id)
