@@ -9,10 +9,12 @@ from database_service.http_tools import get_diagram
 #from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.db import OperationalError
 from django.core.exceptions import ObjectDoesNotExist
+from inspect import currentframe, getframeinfo
 
 # Create your views here.
 
-
+@login_required
+@user_passes_test(is_editor)
 def quiver_editor(request, diagram_id):
     try:
         session = request.session
@@ -43,9 +45,7 @@ def quiver_editor(request, diagram_id):
         context = {
             'diagram_name' : diagram.name,
             'category_name' : diagram.category.single().name,
-            #'full_page' : full_page,
-            # TODO:
-            'full_page' : 'no',
+            'full_page' : full_page,
             'category_id' : diagram.category.single().uid,
             'diagram_id' : diagram.uid,
         }
@@ -53,6 +53,21 @@ def quiver_editor(request, diagram_id):
         return render(request, 'quiver.html', context)  
     
     except Exception as e:
-        return redirect('error', full_qualname(e) + ': ' + str(e))
+        frameinfo = getframeinfo(currentframe())
+        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
     
+    
+
+@login_required
+@user_passes_test(is_editor)
+def create_new_diagram(request):
+    full_page = request.GET.get('full_page', 'yes')
+    diagram = Diagram.our_create(name='', checked_out_by=request.user.username)
+                
+    context={
+        'full_page': full_page, 
+        'diagram_id': diagram.uid
+    } 
+                
+    return render(request, 'new_diagram.html', context)
     

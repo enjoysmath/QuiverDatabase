@@ -1,123 +1,131 @@
-    /* Remove the navbar's default margin-bottom and rounded borders */ 
-    .navbar {
-      margin-bottom: 0;
-      border-radius: 0;
-    }
-    
-    /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
-    .row.content {height: 450px}
-    
-    /* Set gray background color and 100% height */
-    .sidenav {
-      padding-top: 20px;
-      background-color: #f1f1f1;
-      height: 100%;
-    }
-    
-    /* Set black background color, white text and some padding */
-    footer {
-      background-color: #555;
-      color: white;
-      padding: 15px;
-    }
-    
-    /* On small screens, set height to 'auto' for sidenav and grid */
-    @media screen and (max-width: 767px) {
-      .sidenav {
-        height: auto;
-        padding: 15px;
-      }
-      .row.content {height:auto;} 
-    }
-    
-    // Class
-    .visible {
-      visibility: visible !important;
-    }
-    .invisible {
-      visibility: hidden !important;
-    }
-    
-    .center-row-content {
-      align-items:center; 
-      justify-content:space-around; 
-      display:flex
-    }
+/* Remove the navbar's default margin-bottom and rounded borders */ 
+.navbar {
+  margin-bottom: 0;
+  border-radius: 0;
+}
 
-    .toolbar .btn {
-        position: relative;
-        vertical-align: middle;
-        width: 70px; height: 70px;
+/* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+.row.content {height: 450px}
+
+/* Set gray background color and 100% height */
+.sidenav {
+  padding-top: 20px;
+  background-color: #f1f1f1;
+  height: 100%;
+}
+
+/* Set black background color, white text and some padding */
+footer {
+  background-color: #555;
+  color: white;
+  padding: 15px;
+}
+
+/* On small screens, set height to 'auto' for sidenav and grid */
+@media screen and (max-width: 767px) {
+  .sidenav {
+    height: auto;
+    padding: 15px;
+  }
+  .row.content {height:auto;} 
+}
+
+// Class
+.visible {
+  visibility: visible !important;
+}
+.invisible {
+  visibility: hidden !important;
+}
+
+.center-content {
+  align-items:center; 
+  justify-content:space-around; 
+  display:flex
+}
+
+.btn-rounded {
+    border-radius: 8px;
+}
+
+.toolbar .btn {
+    position: relative;
+    vertical-align: middle;
+    width: 70px; height: 70px;
+
+    /*background: transparent;*/
+    border: none;
+    border-radius: 15px;
+    outline: none;
+
+    font: inherit;
+    text-align: center;
+    font-size: 20px;
+    color: inherit;
+    white-space: nowrap;
     
-        /*background: transparent;*/
-        border: none;
-        border-radius: 15px;
-        outline: none;
-    
-        font: inherit;
-        text-align: center;
-        font-size: 20px;
-        color: inherit;
-        white-space: nowrap;
-        
-        margin-left: 3px;
-        margin-right: 3px;
-    
-        cursor: default;
-        user-select: none;
-    }
-    
-    .toolbar .btn:hover {
-        background: hsl(0, 0%, 28%);
-    }
-    
-    .toolbar .btn:active {
+    margin-left: 3px;
+    margin-right: 3px;
+
+    cursor: default;
+    user-select: none;
+}
+
+.toolbar .btn:hover {
+    background: hsl(0, 0%, 28%);
+}
+
+.toolbar .btn:active {
+    background: var(--ui-blue);
+}
+
+.toolbar .btn img {
+    width: 28px;
+    margin-top: 2px;
+    vertical-align: middle;
+}
+
+.toolbar .btn:disabled {
+    /*background: transparent;*/
+}
+
+.toolbar .btn:disabled img {
+    opacity: 0.6;
+}
+
+.toolbar .btn:disabled .name, .toolbar .btn:disabled .shortcut {
+    color: hsl(0, 0%, 64%);
+}
+
+button.flash {
+    animation: background-flash 0.4s ease-in;
+}
+
+@keyframes background-flash {
+    from {
         background: var(--ui-blue);
     }
-    
-    .toolbar .btn img {
-        width: 28px;
-        margin-top: 2px;
-        vertical-align: middle;
-    }
-    
-    .toolbar .btn:disabled {
-        /*background: transparent;*/
-    }
-    
-    .toolbar .btn:disabled img {
-        opacity: 0.6;
-    }
-    
-    .toolbar .btn:disabled .name, .toolbar .btn:disabled .shortcut {
-        color: hsl(0, 0%, 64%);
-    }
-    
-    button.flash {
-        animation: background-flash 0.4s ease-in;
-    }
-    
-    @keyframes background-flash {
-        from {
-            background: var(--ui-blue);
-        }
-    }
-    
-    .toolbar .btn .name, .toolbar .btn .shortcut {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-    
-        font-size: 12px;
-        line-height: 12px;
-        color: white; /*hsl(0, 0%, 80%); */
-    }
-    
-    .toolbar .btn .name {
-        top: 6px;
-    }
-    
-    .toolbar .btn .shortcut {
-        bottom: 6px;
-    }
-    
+}
+
+.toolbar .btn .name, .toolbar .btn .shortcut {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
+    font-size: 12px;
+    line-height: 12px;
+    color: white; /*hsl(0, 0%, 80%); */
+}
+
+.toolbar .btn .name {
+    top: 6px;
+}
+
+.toolbar .btn .shortcut {
+    bottom: 6px;
+}
+
+.nopadding {
+   padding: 0 !important;
+   margin: 0 !important;
+}

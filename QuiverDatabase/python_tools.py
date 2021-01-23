@@ -15,9 +15,12 @@ def deep_get(d:dict, keys, default=None, create=True):
         if key in d:
             d = d[key]
         elif create:
-            d = d[key] = {}
+            d[key] = {}
+            d = d[key]
         else:
             return default
+    
+    key = keys[-1]
     
     if key in d:
         return d[key]
@@ -34,7 +37,10 @@ def deep_set(d:dict, keys, value, create=True):
         if key in d:
             d = d[key]
         elif create:
-            d = d[key] = {}
+            d[key] = {}
+            d = d[key]
     
-    d[key] = value 
+    d[keys[-1]] = value 
     return value
+
+

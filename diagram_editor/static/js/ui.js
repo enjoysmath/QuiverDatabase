@@ -942,7 +942,7 @@ class UI {
             .add(new DOM.Element("a", {
                 "id" : "save-to-database-button",
                 "class" : "btn btn-primary",
-                "style" : "border-radius: 8px",
+                // "style" : "border-radius: 8px",
                 // "url" : TODO set in html script with diagram_id
                 // "onclick": ui.
             }).add("Save Diagram")

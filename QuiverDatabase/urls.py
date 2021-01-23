@@ -20,14 +20,14 @@ from .views import home, error
 from accounts.views import user_signup
 
 urlpatterns = [
-    path('diagrams/', include('diagrams.urls')),
+    path('diagram/', include('diagram_editor.urls')),
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('db/', include('database_service.urls')),
     path('rules/', include('rules.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path("accounts/signup/", user_signup, name="signup"),
-    path('error/<str:msg>', error, name='error'),
+    path('error/<str:msg>/<int:line>/<str:file>', error, name='error'),
     path('quiver-editor/', include('diagram_editor.urls'))
 ]
 

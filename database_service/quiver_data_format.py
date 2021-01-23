@@ -45,10 +45,12 @@
 from copy import deepcopy
 from QuiverDatabase.python_tools import deep_get, deep_set
 import pprint
+from QuiverDatabase.settings import MAX_TEXT_LENGTH
 
 
 class QuiverLabel:  
     def __init__(self, string):
+        assert(len(string) <= MAX_TEXT_LENGTH)
         self.string = string
         
     def __deepcopy__(self, memo):
@@ -56,22 +58,26 @@ class QuiverLabel:
     
     def __str__(self):
         return self.string
+    
+    def __repr__(self):
+        return str(self)
 
 QuiverLabel.Default = QuiverLabel('')
         
 
 class QuiverColor:   
     def __init__(self, json):
-        self.h = json[0]   
-        assert(isinstance(self.h, int) and 0 <= self.h <= 360)
-        self.s = json[1]
-        assert(isinstance(self.s, int) and 0 <= self.s <= 100)
+        assert(isinstance(json[0], int) and 0 <= json[0] <= 360)
+        self.h = json[0]           
+        assert(isinstance(json[1], int) and 0 <= json[1] <= 100)
+        self.s = json[1]        
+        assert(isinstance(json[2], int) and 0 <= json[2] <= 100)
         self.l = json[2]
-        assert(isinstance(self.l, int) and 0 <= self.l <= 100)
-        self.a = json[3]
-        if isinstance(self.a, int):
-            self.a = float(self.a)
-        assert(isinstance(self.a, float) and 0.0 <= self.a <= 1.0)
+        a = json[3]
+        if isinstance(a, int):
+            a = float(a)
+        assert(isinstance(a, float) and 0.0 <= a <= 1.0)
+        self.a = a
                         
     def __deepcopy__(self, memo):
         return QuiverColor([self.h, self.s, self.l, self.a])
@@ -88,15 +94,14 @@ class QuiverVertex:
         self.y = json[1]
         if len(json) > 2:
             self.label = QuiverLabel(json[2])
-            if len(json) > 3:
-                self.label_color = QuiverColor(json[3])
-            else:
-                self.label_color = deepcopy(QuiverColor.Default)
         else:
             self.label = deepcopy(QuiverLabel.Default)
+            
+        if len(json) > 3:
+            self.label_color = QuiverColor(json[3])
+        else:            
             self.label_color = deepcopy(QuiverColor.Default)
             
-        
     def __deepcopy__(self, memo):
         return QuiverVertex([self.x, self.y, deepcopy(self.label), deepcopy(self.label_color)])
     
@@ -104,40 +109,39 @@ class QuiverVertex:
         return f'[x:{self.x}, y:{self.y}\n ' + \
                f'label:{str(self.label)}\n' + \
                f'color:{str(self.label_color)}]'
+    
+    def __repr__(self):
+        return str(self)
 
+
+LeftAlign, CenterAlign, RightAlign, OverAlign = range(4)
+DefaultAlignment = LeftAlign
 
 class QuiverEdge:
-    LeftAlign, CenterAlign, RightAlign, OverAlign = range(4)
-    DefaultAlignment = LeftAlign
-    
     def __init__(self, json):
         self.source_index = json[0]
         self.target_index = json[1]
         if len(json) > 2:
             self.label = QuiverLabel(json[2])
-            if len(json) > 3:
-                self.alignment = json[3]
-                assert(0 <= json[3] <= self.OverAlign)
-                
-                if len(json) > 4:
-                    self.options = QuiverEdgeOptions(json[4])
-                    
-                    if len(json) > 5:
-                        self.label_color = QuiverColor(json[5])
-                    else:
-                        self.label_color = deepcopy(QuiverColor.Default)
-                else:
-                    self.options = deepcopy(QuiverEdgeOptions.Default)
-                    self.label_color = deepcopy(QuiverColor.Default)
-            else:
-                self.alignment = self.DefaultAlignment
-                self.options = deepcopy(QuiverEdgeOptions.Default)
-                self.label_color = deepcopy(QuiverColor.Default)                
         else:
             self.label = deepcopy(QuiverLabel.Default)
-            self.alignment = self.DefaultAlignment
+            
+        if len(json) > 3:
+            assert(0 <= json[3] <= OverAlign)
+            self.alignment = json[3]
+        else:
+            self.alignment = DefaultAlignment
+            
+        if len(json) > 4:
+            self.options = QuiverEdgeOptions(json[4])
+        else:
             self.options = deepcopy(QuiverEdgeOptions.Default)
-            self.label_color = deepcopy(QuiverColor.Default)            
+            
+        if len(json) > 5:
+            self.label_color = QuiverColor(json[5])
+        else:
+            self.label_color = deepcopy(QuiverColor.Default)
+            
             
     def __deepcopy__(self, memo):
         return QuiverEdge([self.source_index, self.target_index, deepcopy(self.label), 
@@ -150,15 +154,18 @@ class QuiverEdge:
                f'alignment:{self.alignment}\n' + \
                f'options:{str(self.options)}\n' + \
                f'color:{str(self.label_color)}]'
-                    
+
+    def __repr__(self):
+        return str(self)
+    
                     
 class QuiverEdgeOptions:
-    TailStyleNames = set(['mono', 'none', 'hook', 'arrowhead', 'maps to'])
+    TailStyleNames = set(['none', 'mono', 'hook', 'arrowhead', 'maps to'])
     HookTailSides = set(['top', 'bottom'])
     
     BodyStyleNames = set(['none', 'solid', 'dashed', 'dotted', 'squiggly', 'barred'])
     
-    HeadStyleNames = set(['arrowhead', 'none', 'epi', 'harpoon'])
+    HeadStyleNames = set(['none', 'arrowhead', 'epi', 'harpoon'])
     HarpoonHeadSides = set(['top', 'bottom'])
     
     
@@ -185,6 +192,13 @@ class QuiverEdgeOptions:
         if 'level' in json:
             x = self.dict['level'] = json['level']
             assert(1 <= x <= 3)
+            
+        if 'length_shorten' in json:
+            x = self.dict['length_shorten'] = {}
+            x['source'] = json['length_shorten'].get('source', 0)
+            assert(0 <= x['source'] <= 100)
+            x['target'] = json['length_shorten'].get('target', 100)
+            assert(0 <= x['target'] <= 100)
             
         keys = ('style', 'body', 'name')            
         style = deep_set(self.dict, keys, deep_get(json, keys, 'solid'))
@@ -215,10 +229,15 @@ class QuiverEdgeOptions:
     def __deepcopy__(self, memo):
         o = QuiverEdgeOptions({}, init=False)
         o.dict = deepcopy(self.dict)
+        return o
     
     def __str__(self):
         return pprint.pformat(self.dict)
-
+    
+    def __repr__(self):
+        return str(self)
+    
+    
 QuiverEdgeOptions.Default = QuiverEdgeOptions({
     'label_position': 50,
     'offset' : 0,
@@ -241,7 +260,6 @@ QuiverEdgeOptions.Default = QuiverEdgeOptions({
     }
 })
 
-            
             
 class QuiverDataFormat:
     def __init__(self, json):

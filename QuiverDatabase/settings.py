@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     'crispy_forms',
     'rules.apps.RulesConfig',
     'accounts.apps.AccountsConfig',
-    'diagrams.apps.DiagramsConfig',
     'diagram_editor.apps.DiagramEditorConfig',
 ]
 
@@ -91,7 +90,7 @@ ROOT_URLCONF = 'QuiverDatabase.urls'
 TEMPLATES = [
     {
         "BACKEND": "django_jinja.backend.Jinja2",
-        "DIRS": [os.path.join(BASE_DIR, 'templates')],
+        "DIRS": [os.path.join(BASE_DIR, 'QuiverDatabase', 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             # Match the template names ending in .html but not the ones in the admin folder.
