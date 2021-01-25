@@ -950,14 +950,7 @@ class UI {
                     const {data} = this.quiver.export("database", this.settings, this.definitions());
                     save_diagram_to_database(data);
                     // history.pushState({}, "", data);  TODO do we want this?
-                }.bind(this))))
-            .add(new DOM.Div({class: "col-md-2"})
-                .add(new DOM.Element("input", {
-                    "id" : "diagram-bg-color",
-                    "class" : "btn btn-primary",
-                    "value" : "3399FF80",
-                    "data-jscolor" : "{}"
-                }))));
+                }.bind(this)))));
              
         
         panes.push(database_control_pane);

@@ -8,7 +8,7 @@ from QuiverDatabase.settings import MAX_TEXT_LENGTH
 from django.core.exceptions import ObjectDoesNotExist
 from QuiverDatabase.http_tools import get_posted_text
 from django.db import OperationalError
-from inspect import currentframe, getframeinfo
+import traceback
 
 # Create your views here.
 
@@ -45,8 +45,7 @@ def rule_editor(request, rule_id):
         return render(request, 'rule_editor.html', context)
         
     except Exception as e:
-        frameinfo = getframeinfo(currentframe())
-        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+        return redirect('error', f'{full_qualname}: {str(e)}')
     
 
 

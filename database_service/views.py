@@ -17,6 +17,7 @@ from django.core.exceptions import ObjectDoesNotExist
 def set_model_name(request, Model:str):
     try:        
         name = get_posted_text(request)        
+        name = name.strip()
         
         if name == '':
             raise Exception(f'Name cannot be empty.')
@@ -35,7 +36,7 @@ def set_model_name(request, Model:str):
             model.name = name
             model.save()
             
-        return JsonResponse({'success': True})
+        return JsonResponse({'success': True, 'standardized': name})
         
     except Exception as e:
         return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 

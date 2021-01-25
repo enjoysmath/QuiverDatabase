@@ -23,9 +23,10 @@ function setup_edit_tag_setter_urls(tag_id_urls)
                 success: function(response, newValue) {
                     var enable_ids = tag_url['enable_ids'];
                     
-                    if(response.success) 
+                    if(response.success) {
                         for (const tag_id of enable_ids)
                             $(tag_id).removeClass('invisible');
+                    }
                     else {
                         for (const tag_id of enable_ids)
                             $(tag_id).addClass('invisible');
@@ -34,7 +35,9 @@ function setup_edit_tag_setter_urls(tag_id_urls)
                 },
             });
             
-            $(tag_url['tag_id']).text(tag_url['initial']);
+            // BUGFIX: using .text() here causes a bug in which clicking on an editor's 
+            // text item, the text is not shown in the edit field.  With the following, it *is* shown.
+            $(tag_url['tag_id']).editable('setValue', tag_url['initial'], true);
         }
     });
 }

@@ -9,7 +9,7 @@ from database_service.http_tools import get_diagram
 #from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.db import OperationalError
 from django.core.exceptions import ObjectDoesNotExist
-from inspect import currentframe, getframeinfo
+import traceback
 
 # Create your views here.
 
@@ -50,8 +50,7 @@ def quiver_editor(request, diagram_id):
         return render(request, 'quiver.html', context)  
     
     except Exception as e:
-        frameinfo = getframeinfo(currentframe())
-        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+        return redirect('error', f'{full_qualname}: {str(e)}')
     
     
 

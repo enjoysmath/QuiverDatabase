@@ -19,6 +19,7 @@ from QuiverDatabase.python_tools import full_qualname
 from inspect import getframeinfo, currentframe
 from django.core.exceptions import ObjectDoesNotExist
 from database_service.models import Diagram
+import traceback
 
 # Create your views here.
 
@@ -41,9 +42,8 @@ def signup_view(request, next:str=None):
             return redirect(next)
         return render(request, 'signup.html', {'form': form})   
     except Exception as e:
-        frameinfo = getframeinfo(currentframe())
-        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)        
-        
+        return redirect('error', f'{full_qualname}: {str(e)}')
+    
         
 def login_view(request, next:str=None):
     try:
@@ -68,8 +68,7 @@ def login_view(request, next:str=None):
                 
         return render(request, 'login.html', context)
     except Exception as e:
-        frameinfo = getframeinfo(currentframe())
-        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+        return redirect('error', f'{full_qualname}: {str(e)}')
         
 
 @login_required
@@ -85,8 +84,7 @@ def logout_view(request, next:str=None):
             
         return redirect(next)
     except Exception as e:
-        frameinfo = getframeinfo(currentframe())
-        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+        return redirect('error', f'{full_qualname}: {str(e)}')
     
     
 
