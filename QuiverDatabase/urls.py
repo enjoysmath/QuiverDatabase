@@ -17,22 +17,28 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from .views import home, error
-from accounts.views import SignupView, LoginView, LogoutView
+from accounts.views import signup_view, login_view, logout_view, user_profile
 
 #from accounts.views import user_signup
 
 urlpatterns = [
+    path('diagram/', include('diagram_editor.urls')),    
     path('', home, name='home'),
-    path('sign-up', SignupView.as_view(), name='create_user'),
-    path('sign-in', LoginView.as_view(), name='login_user'),
-    path('sign-out', LogoutView.as_view(), name='logout_user'),
+    path('profile', user_profile, name='profile'),
+    path('sign-up', signup_view,
+         {'next': 'profile'}, name='create_user'),
+    
+    path('sign-in', login_view, 
+         {'next':'profile'}, name='login'),
+    
+    path('sign-out', logout_view, 
+         {'next':'home'}, name='logout'),
+    
     path('password-reset', include('password_reset.urls')),
-    path('diagram/', include('diagram_editor.urls')),
     path('admin/', admin.site.urls),
     path('db/', include('database_service.urls')),
     path('rules/', include('rules.urls')),
     path('error/<str:msg>/<int:line>/<str:file>', error, name='error'),
-    path('quiver-editor/', include('diagram_editor.urls')),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

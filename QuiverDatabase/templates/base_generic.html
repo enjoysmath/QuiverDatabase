@@ -22,6 +22,7 @@
     {% endblock %}
     
     {% block resources %}
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
     {% block add_resources %} {% endblock %}
     
     {% block scripts %}    
@@ -55,7 +56,7 @@
         </div>
         {% endblock %}
         {% block header_buttons %}
-            <div class="col-md-4" style="positon:relative; right:5px; top:26px">
+            <div class="col-md-4" style="position:relative; right:5px; top:26px">
                 {% block login_out_buttons %}
                     {% with style="" %}
                         {% include 'login_out_buttons.html' %}
@@ -63,7 +64,6 @@
                 {% endblock %}
             </div>
         {% endblock %}
-        </div>
     </div>
     </div>
 

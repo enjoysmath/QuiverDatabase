@@ -1042,7 +1042,7 @@ QuiverImportExport.base64 = new class extends QuiverImportExport {
         ui.buffer_updates = false;
 
         // If the quiver is now nonempty, some toolbar actions will be available.
-        ui.toolbar.update(ui);
+        //ui.toolbar.update(ui);
         ui.update_focus_tooltip();
 
         if (errors.length > 0) {
@@ -1443,7 +1443,7 @@ QuiverImportExport.database = new class extends QuiverImportExport {
         ui.buffer_updates = false;
 
         // If the quiver is now nonempty, some toolbar actions will be available.
-        ui.toolbar.update(ui);
+        //ui.toolbar.update(ui);
         ui.update_focus_tooltip();
 
         if (errors.length > 0) {

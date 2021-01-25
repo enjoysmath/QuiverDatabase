@@ -4,3 +4,4 @@
 /db.sqlite3
 /staticfiles/*
 *.exe
+/diagram_editor/templates/quiver_vscode_dbg.html

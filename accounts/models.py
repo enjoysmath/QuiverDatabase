@@ -5,8 +5,10 @@ from QuiverDatabase.settings import MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH
 
 
 class User(models.Model):
-    name = models.CharField(max_length=MAX_USERNAME_LENGTH)
-    email = models.EmailField() #blank=True)
-    password = models.CharField(max_length=MAX_PASSWORD_LENGTH)
-    password_confirm = models.CharField(max_length=MAX_PASSWORD_LENGTH)
+    username = models.CharField(max_length=MAX_USERNAME_LENGTH, blank=False)
+    email = models.EmailField(blank=False)
+    password = models.CharField(max_length=MAX_PASSWORD_LENGTH, blank=False)
+    password_confirm = models.CharField(max_length=MAX_PASSWORD_LENGTH, blank=False)  # Confirmation password
+    
+    
     

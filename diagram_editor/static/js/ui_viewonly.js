@@ -492,7 +492,7 @@ UIMode.Command = class extends UIMode {
         }
         ui.panel.label_input.element.blur();
         ui.panel.update(ui);
-        ui.toolbar.update(ui);
+        //ui.toolbar.update(ui);
         ui.panel.hide_if_unselected(ui);
     }
 
@@ -578,7 +578,7 @@ class UI {
         this.colour_picker = new ColourPicker();
 
         // The toolbar.
-        this.toolbar = new Toolbar();
+        ////this.toolbar.update(ui); = new Toolbar();
 
         // LaTeX macro definitions.
         this.macros = new Map();
@@ -619,7 +619,7 @@ class UI {
 
         // Update UI elements.
         this.panel.update(this);
-        this.toolbar.update(this);
+        //this.toolbar.update(ui);.update(this);
         // While the following does work without a delay, it currently experiences some stutters.
         // Using a delay makes the transition much smoother.
         delay(() => {
@@ -693,8 +693,8 @@ class UI {
         });
 
         // Set up the toolbar.
-        this.toolbar.initialise(this);
-        this.element.add(this.toolbar.element);
+        //this.toolbar.initialise(this);
+        //this.element.add(this.toolbar.element);
 
         // Set up the keyboard shortcuts, and about, panes.
         const panes = [];
@@ -781,30 +781,30 @@ class UI {
                 ["Modify label colour", (td) => Shortcuts.element(td, [{ key: "Y" }])],
                 ["Modify arrow colour", (td) => Shortcuts.element(td, [{ key: "U" }])]
             ]))
-            .add(new DOM.Element("h2").add("Toolbar"))
-            .add(new DOM.Table([
-                ["Save diagram in URL", (td) => Shortcuts.element(td, [
-                    { key: "S", modifier: true }
-                ])],
-                ["Undo", (td) => Shortcuts.element(td, [{ key: "Z", modifier: true }])],
-                ["Redo", (td) => Shortcuts.element(td, [
-                    { key: "Z", modifier: true, shift: true }
-                ])],
-                ["Select all", (td) => Shortcuts.element(td, [{ key: "A", modifier: true }])],
-                ["Deselect all", (td) => Shortcuts.element(td, [
-                    { key: "A", modifier: true, shift: true }
-                ])],
-                ["Delete", (td) => Shortcuts.element(td, [
-                    { key: "Backspace" }, { key: "Delete" }
-                ])],
-                ["Centre view", (td) => Shortcuts.element(td, [{ key: "G" }])],
-                ["Zoom out", (td) => Shortcuts.element(td, [{ key: "-", modifier: true }])],
-                ["Zoom in", (td) => Shortcuts.element(td, [{ key: "=", modifier: true }])],
-                ["Toggle grid", (td) => Shortcuts.element(td, [{ key: "H" }])],
-                ["Toggle help", (td) => Shortcuts.element(td, [{
-                    key: "H", modifier: true, shift: true
-                }])]
-            ]))
+            //.add(new DOM.Element("h2").add("Toolbar"))
+            //.add(new DOM.Table([
+                //["Save diagram in URL", (td) => Shortcuts.element(td, [
+                    //{ key: "S", modifier: true }
+                //])],
+                //["Undo", (td) => Shortcuts.element(td, [{ key: "Z", modifier: true }])],
+                //["Redo", (td) => Shortcuts.element(td, [
+                    //{ key: "Z", modifier: true, shift: true }
+                //])],
+                //["Select all", (td) => Shortcuts.element(td, [{ key: "A", modifier: true }])],
+                //["Deselect all", (td) => Shortcuts.element(td, [
+                    //{ key: "A", modifier: true, shift: true }
+                //])],
+                //["Delete", (td) => Shortcuts.element(td, [
+                    //{ key: "Backspace" }, { key: "Delete" }
+                //])],
+                //["Centre view", (td) => Shortcuts.element(td, [{ key: "G" }])],
+                //["Zoom out", (td) => Shortcuts.element(td, [{ key: "-", modifier: true }])],
+                //["Zoom in", (td) => Shortcuts.element(td, [{ key: "=", modifier: true }])],
+                //["Toggle grid", (td) => Shortcuts.element(td, [{ key: "H" }])],
+                //["Toggle help", (td) => Shortcuts.element(td, [{
+                    //key: "H", modifier: true, shift: true
+                //}])]
+            //]))
             .add(new DOM.Element("h2").add("Export"))
             .add(new DOM.Table([
                 ["Toggle diagram centring", (td) => Shortcuts.element(td, [{ key: "C" }])]
@@ -990,7 +990,7 @@ class UI {
             .add(new DOM.Div({ class: "tooltip" }))
             .add_to(this.canvas);
         this.update_focus_tooltip();
-        this.toolbar.update(this);
+        //this.toolbar.update(this);
 
         // Handle panning via scrolling.
         window.addEventListener("wheel", (event) => {
@@ -1706,8 +1706,8 @@ class UI {
                         this.panel.hide_if_unselected(this);
                         // Display the queue.
                         this.element.class_list.add("show-queue");
-                        this.toolbar.element.query_selector('.btn[data-name="Show queue"] .name')
-                            .replace("Hide queue");
+                        //this.toolbar.element.query_selector('.btn[data-name="Show queue"] .name')
+                            //.replace("Hide queue");
                         // Bring up the label input and select the text.
                         this.panel.focus_label_input();
                     } else if (document.activeElement === this.panel.label_input.element) {
@@ -1834,7 +1834,7 @@ class UI {
 
             if (this.focus_point.class_list.contains("focused")) {
                 this.focus_point.class_list.remove("focused", "smooth");
-                this.toolbar.update(this);
+                //this.toolbar.update(this);
                 return;
             }
 
@@ -1942,7 +1942,7 @@ class UI {
                     this.reposition_focus_point(this.focus_position);
                     this.focus_point.class_list.remove("revealed", "pending", "active");
                     this.focus_point.class_list.add("focused");
-                    this.toolbar.update(this);
+                    ////this.toolbar.update(ui);.update(this);
                     delay(() => this.focus_point.class_list.add("smooth"));
                 }
             }
@@ -1989,7 +1989,7 @@ class UI {
                 if (!this.focus_point.class_list.contains("focused")) {
                     this.focus_point.class_list.remove("revealed", "pending", "active");
                     this.focus_point.class_list.add("focused");
-                    this.toolbar.update(this);
+                    ////this.toolbar.update(ui);.update(this);
                     // We first reposition to the correct location, then add the delta after adding
                     // the `smooth` class (directly below), so that it animates to the new position.
                     this.reposition_focus_point(this.focus_position);
@@ -2144,7 +2144,7 @@ class UI {
                 }
             }
             this.mode = mode;
-            this.toolbar.update(this);
+            ////this.toolbar.update(ui);.update(this);
             if (this.mode.name !== null) {
                 this.element.class_list.add(this.mode.name);
             }
@@ -2488,7 +2488,7 @@ class UI {
         if (selection_changed) {
             this.update_focus_tooltip();
             this.panel.update(this);
-            this.toolbar.update(this);
+            ////this.toolbar.update(ui);.update(this);
             if (this.selection_contains_edge()) {
                 this.panel.element.class_list.remove("hidden");
             }
@@ -2516,7 +2516,7 @@ class UI {
 
         this.update_focus_tooltip();
         this.panel.update(this);
-        this.toolbar.update(this);
+        ////this.toolbar.update(ui);.update(this);
     }
 
     /// Adds a cell to the canvas.
@@ -3153,7 +3153,7 @@ class History {
         this.collapse = null;
 
         // Update the history toolbar buttons (e.g. enabling Redo).
-        ui.toolbar.update(ui);
+        //ui.toolbar.update(ui);
     }
 
     /// Add a collapsible history event. This allows the last event to be modified later,
@@ -3435,7 +3435,7 @@ class History {
                 ui.panel.hide_if_unselected(ui);
             }
 
-            ui.toolbar.update(ui);
+            //ui.toolbar.update(ui);
 
             return true;
         }
@@ -3464,7 +3464,7 @@ class History {
                 ui.panel.hide_if_unselected(ui);
             }
 
-            ui.toolbar.update(ui);
+            //ui.toolbar.update(ui);
 
             return true;
         }
@@ -5301,42 +5301,37 @@ class Toolbar {
     }
 
     initialise(ui) {
-        this.element = new DOM.Div({ class: "toolbar" })
-            .listen(pointer_event("down"), (event) => {
-                if (event.button === 0) {
-                    event.stopImmediatePropagation();
-                }
-            });
+        //this.element = new DOM.Div({ class: "toolbar" })
+            //.listen(pointer_event("down"), (event) => {
+                //if (event.button === 0) {
+                    //event.stopImmediatePropagation();
+                //}
+            //});
 
-        const add_action = (name, combinations, action) => {
-            const shortcut_name = Shortcuts.name(combinations);
+        //const add_action = (name, combinations, action) => {
+            //const shortcut_name = Shortcuts.name(combinations);
 
-            const button = new DOM.Element("button", { class: "btn btn-success", "data-name": name })
-                .add(new DOM.Element("span", { class: "symbol" }).add(
-                    new DOM.Element("img", { src: `/static/icons/${
-                        name.toLowerCase().replace(/ /g, "-")
-                    }.svg` })
-                ))
-                .add(new DOM.Element("span", { class: "name" }).add(name))
-                .add(new DOM.Element("span", { class: "shortcut" }).add(shortcut_name))
-                .listen(pointer_event("down"), (event) => {
-                    if (event.button === 0) {
-                        event.stopImmediatePropagation();
-                    }
-                })
+            //const button = new DOM.Element("button", { class: "btn btn-success", "data-name": name })
+                //.add(new DOM.Element("span", { class: "symbol" }).add(
+                    //new DOM.Element("img", { src: `/static/icons/${
+                        //name.toLowerCase().replace(/ /g, "-")
+                    //}.svg` })
+                //))
+                //.add(new DOM.Element("span", { class: "name" }).add(name))
+                //.add(new DOM.Element("span", { class: "shortcut" }).add(shortcut_name))
+                //.listen(pointer_event("down"), (event) => {
+                    //if (event.button === 0) {
+                        //event.stopImmediatePropagation();
+                    //}
+                //})
 
-            const trigger_action_and_update_toolbar = (event) => {
-                action.call(button, event);
-                ui.toolbar.update(ui);
-            };
+            //button.listen("click", action.call);
 
-            button.listen("click", trigger_action_and_update_toolbar);
+            //ui.shortcuts.add(combinations, trigger_action_and_update_toolbar, button);
 
-            ui.shortcuts.add(combinations, trigger_action_and_update_toolbar, button);
-
-            this.element.add(button);
-            return button;
-        };
+            //this.element.add(button);
+            //return button;
+        //};
 
         // Add all of the toolbar buttons.
 
@@ -5387,75 +5382,75 @@ class Toolbar {
             //},
         //);
 
-        add_action(
-            "Delete",
-            [
-                { key: "Backspace" },
-                { key: "Delete" },
-            ],
-            () => {
-                ui.history.add(ui, [{
-                    kind: "delete",
-                    cells: ui.quiver.transitive_dependencies(ui.selection),
-                }], true);
-                ui.panel.update(ui);
-            },
-        );
+        //add_action(
+            //"Delete",
+            //[
+                //{ key: "Backspace" },
+                //{ key: "Delete" },
+            //],
+            //() => {
+                //ui.history.add(ui, [{
+                    //kind: "delete",
+                    //cells: ui.quiver.transitive_dependencies(ui.selection),
+                //}], true);
+                //ui.panel.update(ui);
+            //},
+        //);
 
-        add_action(
-            "Centre view",
-            [{ key: "G" }],
-            () => {
-                // If the focus point is focused, we centre on it; otherwise we centre on the
-                // selection, or the entire quiver if no cells are selected.
-                if (ui.element.query_selector(".focus-point.focused")) {
-                    ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
-                } else {
-                    ui.centre_view();
-                }
-            },
-        );
+        //add_action(
+            //"Centre view",
+            //[{ key: "G" }],
+            //() => {
+                //// If the focus point is focused, we centre on it; otherwise we centre on the
+                //// selection, or the entire quiver if no cells are selected.
+                //if (ui.element.query_selector(".focus-point.focused")) {
+                    //ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
+                //} else {
+                    //ui.centre_view();
+                //}
+            //},
+        //);
 
-        add_action(
-            "Zoom out",
-            [{ key: "-", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                ui.pan_view(Offset.zero(), -0.25);
-            },
-        );
+        //add_action(
+            //"Zoom out",
+            //[{ key: "-", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+            //() => {
+                //ui.pan_view(Offset.zero(), -0.25);
+            //},
+        //);
 
-        add_action(
-            "Zoom in",
-            [{ key: "=", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                ui.pan_view(Offset.zero(), 0.25);
-            },
-        );
+        //add_action(
+            //"Zoom in",
+            //[{ key: "=", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+            //() => {
+                //ui.pan_view(Offset.zero(), 0.25);
+            //},
+        //);
 
-        add_action(
-            "Reset zoom",
-            // We'd like to display the current zoom level, so we use a slight hack: we set the
-            // "key" to be the zoom level: this will never be triggered by a shortcut, because there
-            // is no key called "100%" or similar. However, the text will then display underneath
-            // the button as desired.
-            [{ key: "100%" }],
-            () => {
-                ui.scale = 0;
-                ui.pan_view(Offset.zero());
-            },
-        );
+        //add_action(
+            //"Reset zoom",
+            //// We'd like to display the current zoom level, so we use a slight hack: we set the
+            //// "key" to be the zoom level: this will never be triggered by a shortcut, because there
+            //// is no key called "100%" or similar. However, the text will then display underneath
+            //// the button as desired.
+            //[{ key: "100%" }],
+            //() => {
+                //ui.scale = 0;
+                //ui.pan_view(Offset.zero());
+            //},
+        //);
 
-        add_action(
-            "Hide grid",
-            [{ key: "H", modifier: false, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            function () {
-                ui.grid.class_list.toggle("hidden");
-                const hidden = ui.grid.class_list.contains("hidden");
-                this.query_selector(".name").replace(
-                    (hidden ? "Show" : "Hide") + " grid"
-                );
-            },
-        );
+        //add_action(
+            //"Hide grid",
+            //[{ key: "H", modifier: false, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+            //function () {
+                //ui.grid.class_list.toggle("hidden");
+                //const hidden = ui.grid.class_list.contains("hidden");
+                //this.query_selector(".name").replace(
+                    //(hidden ? "Show" : "Hide") + " grid"
+                //);
+            //},
+        //);
 
         //add_action(
             //"Show hints",

@@ -20,96 +20,21 @@
 
     <!-- Preload images that we want to display immediately. -->
 {% block add_resources %}
-    <link rel="icon" href="{% static 'icons/icon.png' %}">
-    <link rel="preload" href="{% static 'img/quiver-blue.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/about.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/centre-view.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/delete.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/deselect-all.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/hide-grid.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/redo.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/reset-zoom.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/save.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/select-all.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/shortcuts.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/show-hints.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/show-queue.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/undo.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/zoom-in.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/zoom-out.svg' %}" as="image">
     <!-- Style sheets and scrips -->
     <link rel="stylesheet" type="text/css" media="screen" href="{% static 'css/main.css' %}">
 {% endblock %}
 
 {% block add_scripts %}
     <script type="text/javascript" src="{% static 'js/javascript_tools.js' %}"></script>
-    <script type="text/javascript">
-    
-    $.fn.editable.defaults.mode = 'inline';
-    setup_ajax_csrf_token('{{ csrf_token }}'); 
-    
-    setup_edit_tag_setter_urls(
-        [{ 
-            'tag_id' : '#category-name-edit',
-            'setter' : "{% url 'set_model_name' Model='Category' %}",
-            'pk' : "{{ category_id }}",
-            'initial' : "{{ category_name }}",
-            'enable_ids' : [],
-        },
-        {
-            'tag_id' : '#diagram-name-edit',
-            'setter' : "{% url 'set_model_name' Model='Diagram' %}",
-            'pk' : "{{ diagram_id }}",
-            'initial' : "{{ diagram_name }}",
-            'enable_ids' : [],
-        }]); 
-        
-    function save_diagram_to_database(json_str) 
-    {
-        const diagram_id = "{{ diagram_id }}";
-               
-        fetch("{% url 'save_diagram' diagram_id %}", 
-        {
-            headers: {
-            'X-CSRFToken': "{{ csrf_token }}",
-            "x-Requested-With": "XMLHttpRequest",
-            "Content-Type": "application/json; charset=utf-8",
-        },
-        method: 'POST',
-        body: json_str,
-        mode: 'same-origin',
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert("Success: " + data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-    }
-    
-    $(document).ready(function() {
-        jscolor.init();        
-    });
-                  
-    </script>
     <script type="text/javascript" src="{% static 'js/ds.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/dom.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/quiver.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/bezier.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/arrow.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/ui.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ui_viewonly.js' %}"></script>
 {% endblock %}
 
 {% block tagline %} {% endblock %}
-
-{% block header %} 
-{% include 'logo.html' %}
-{% with style="position:absolute; right:1%; top:1%; z-index:1" %}
-    {% include 'login_out_buttons.html' %}
-{% endwith %}
-{% endblock %}
-
 
 {% block body_scripts %}
     <noscript>JavaScript must be enabled to use quiver.</noscript>

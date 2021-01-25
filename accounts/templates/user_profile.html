@@ -1,0 +1,44 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<div class="container-fluid" style="margin-top:1%">
+    <div class="row center-content">
+        <div class="col-md-12">
+            <div class="tabbable" id="profile-tabs">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#profile-tab1" data-toggle="tab">Intro</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#profile-tab2" data-toggle="tab">Diagrams</a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="profile-tab1">
+                     {% if user.is_authenticated %}
+                         <h1>Profile of {{ user.username }}</h1>
+                         <img src="{{ user.proifle_img_url }}" width = "200" height = "200"  />
+                         <h2>{{ user.email }}</h2>
+                     {% endif %}
+                    </div>
+                    <div class="tab-pane" id="profile-tab2">
+                    {% if diagrams %}
+                        <h2>Opened Diagrams:</h2>
+                        {% for diagram in diagrams %}
+                            <h1>diagram.name</h1>
+                            <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                                src="{% url 'diagram_editor' diagram_id=diagram.uid %}"
+                                style="border: 0; width:100%; height:300px;"></iframe>
+                            <h2>{{ diagram.details }}</h2>
+                        {% endfor %}
+                    {% endif %}
+                    <a href="{% url 'create_new_diagram' %}" class="btn btn-success" type="button">
+                        Create Diagram
+                    </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

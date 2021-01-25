@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import SignupForm, LoginForm  # AuthenticationForm
+from .forms import SignupForm, SigninForm
 from django.views.generic import CreateView, FormView, View
 from .models import User
 from crispy_forms.helper import FormHelper
@@ -11,70 +11,105 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.base import TemplateResponseMixin
 from django.contrib import auth
 from urllib import parse as urlparse 
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password
+from QuiverDatabase.python_tools import full_qualname
+from inspect import getframeinfo, currentframe
+from django.core.exceptions import ObjectDoesNotExist
+from database_service.models import Diagram
 
 # Create your views here.
 
 
+def signup_view(request, next:str=None):
+    try:
+        form = SignupForm(request.POST)
+    
+        if form.is_valid():
+            new_user = form.save(commit=False)
+            new_user.password = make_password(form.cleaned_data['password1'])
+            new_user.save()
+            
+            login(request, new_user)
+            
+            if next is None:
+                next = request.GET.get('next', 'profile')
+                
+            login(request, new_user)            
+            return redirect(next)
+        return render(request, 'signup.html', {'form': form})   
+    except Exception as e:
+        frameinfo = getframeinfo(currentframe())
+        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)        
+        
+        
+def login_view(request, next:str=None):
+    try:
+        logout(request)
+        
+        if request.POST:
+            username = request.POST['username']
+            password = request.POST['password']
+    
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                if user.is_active:
+                    if next is None:
+                        next = request.POST.get('next', 'profile')
+                    login(request, user)
+                    return redirect(next)
+    
+        context = {
+            'form' : SigninForm(request.POST)
+        }
+                
+        return render(request, 'login.html', context)
+    except Exception as e:
+        frameinfo = getframeinfo(currentframe())
+        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+        
 
-class SignupView(SuccessMessageMixin, CreateView):        
-    template_name = 'sign_up.html'
-    form_class = SignupForm
-    succes_url = reverse_lazy('home')
-    success_message = 'Your account was created successfully.'
+@login_required
+def logout_view(request, next:str=None):
+    try:            
+        user = request.user
+        
+        if user and user.is_authenticated:
+            logout(request)
+            
+        if next is None:
+            next = request.GET.get('next', 'home')
+            
+        return redirect(next)
+    except Exception as e:
+        frameinfo = getframeinfo(currentframe())
+        return redirect('error', full_qualname(e) + ': ' + str(e), frameinfo.lineno, frameinfo.filename)
+    
     
 
-
+@login_required
+def user_profile(request):
+    diagrams = []
+    session = request.session
     
-class LoginView(SuccessMessageMixin, FormView):
-    form_class = LoginForm    
-    template_name = 'login.html'
-    success_message = 'Successful login message. (TODO)'
-    success_url = reverse_lazy('home')
-
-    def form_valid(self, form):
-        """
-        The user has provided valid credentials (this was checked in AuthenticationForm.is_valid()). So now we
-        can check the test cookie stuff and log him in.
-        """
-        self.check_and_delete_test_cookie()
-        login(self.request, form.get_user())
-        return super(LoginView, self).form_valid(form)
-
-    def form_invalid(self, form):
-        """
-        The user has provided invalid credentials (this was checked in AuthenticationForm.is_valid()). So now we
-        set the test cookie again and re-render the form with errors.
-        """
-        self.set_test_cookie()
-        return super(LoginView, self).form_invalid(form)
-
-    def set_test_cookie(self):
-        self.request.session.set_test_cookie()
-
-    def check_and_delete_test_cookie(self):
-        if self.request.session.test_cookie_worked():
-            self.request.session.delete_test_cookie()
-            return True
-        return False
-
-    def get(self, request, *args, **kwargs):
-        """
-        Same as django.views.generic.edit.ProcessFormView.get(), but adds test cookie stuff
-        """
-        self.set_test_cookie()
-        return super(LoginView, self).get(request, *args, **kwargs)
-
-
-
-
-class LogoutView(TemplateResponseMixin, View):
-    template_name = "logout.html"
-
-    def get(self, *args, **kwargs):
-        if self.request.user.is_authenticated:
-            logout(self.request)
-        else:
-            return redirect('home')
-        return self.render_to_response(context={})
-
+    if 'diagram ids' in session:
+        for diagram_id in session['diagram ids']:
+            try:
+                diagram = Diagram.get_or_none(uid=diagram_id)
+                diagrams.append(diagram)
+            except ObjectDoesNotExist:
+                messages.warning(f'Diagram with uid {diagram_id} does not exist but is listed in profile of {request.user.username}') 
+                session['diagram ids'].remove(diagram_id)
+                session.save()
+    
+    context = {
+        'diagrams' : diagrams
+    }
+                
+    return render(request, 'user_profile.html', context)
+    
+    
 

@@ -91,7 +91,8 @@ TEMPLATES = [
     # Tried Jinja2 template engine, and it didn't work with crispy forms (unfixable errors when doing forms)
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.joinpath('QuiverDatabase', 'templates')],
+        'DIRS': [BASE_DIR.joinpath('QuiverDatabase', 'templates'),
+                 BASE_DIR.joinpath('accounts', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -257,3 +258,7 @@ X_FRAME_OPTIONS = 'ALLOW'   # ie set this to "DENY"
 
 #CSRF_COOKIE_SAMESITE = None
 #CSRF_COOKIE_SECURE = True
+
+LOGIN_URL = '/sign-in'     # this should coinside with url pattern of login view
+LOGOUT_URL = '/sign-out'   # same but for logout view
+LOGIN_REDIRECT_URL = '/' # url to main page
