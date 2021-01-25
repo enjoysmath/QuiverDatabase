@@ -1,5 +1,6 @@
+{% load static %}
 
-<a href="{{ url('home') }}?full_page={{ full_page }}">
-    <img alt="Quiver Database Logo" src="{{ static('img/quiver-database-logo.svg') }}"
+<a href="{% url 'home' %}">
+    <img alt="Quiver Database Logo" src="{% static 'img/quiver-database-logo.svg' %}"
         style="height:150px; width:100% margin-bottom:-100px; position:absolute; left:0; z-index:1">
 </a>

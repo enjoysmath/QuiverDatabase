@@ -457,7 +457,7 @@ being. */
     position: fixed;
     left: 50%; height: 32px;
     /* Position 8px above the global panel. */
-    bottom: calc(8px + 46px);
+    bottom: 140px;
     width: 40%;
     min-width: 560px;
     transform: translateX(-50%);
@@ -1253,7 +1253,7 @@ quiver-button.flash {
 	bottom: 0;
 	left: 49.5%;
 	top: auto;  /* in order to override .pane */
-	width: 98%;
+	width: 98%; 
 	height: auto;
 	margin: 10px;
 	margin-bottom: 0;

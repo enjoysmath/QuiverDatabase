@@ -129,3 +129,14 @@ button.flash {
    padding: 0 !important;
    margin: 0 !important;
 }
+
+a:not([href*="//"]):after {
+    /* CSS for internal links */
+}
+
+a[href*="//"]:after {
+    /*CSS for external links */
+    content: url('../img/external_link.png');
+    margin: 0 0 0 0;
+}
+

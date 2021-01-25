@@ -1,16 +1,16 @@
 
 <div style="{{ style }}">
 {% if user.is_authenticated %}
-    <a href="{{ url('logout') }}?next={{ url('home') }}?full_page={{ full_page }}" 
+    <a href="{% url 'logout_user' %}?next={% url 'home' %}" 
         class="btn btn-primary pull-right" type="button"
         style="border-radius:5px">
-        Sign out
+        Sign Out
     </a>
-    {% elif is_login_template == False %}
-    <a href="{{ url('login') }}?next={{ url('home') }}?full_page={{ full_page }}" 
+{% else %}
+    <a href="{% url 'login_user' %}?next={% url 'home' %}" 
         class="btn btn-success pull-right" type="button"
         style="border-radius:5px">
-        Sign in
+        Sign In
     </a>
 {% endif %}
 </div>

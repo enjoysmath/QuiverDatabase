@@ -1,0 +1,19 @@
+{% extends 'base_generic.html' %}
+
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block login_out_buttons %} {% endblock %}
+
+{% block content %}
+<div class='container-fluid'>
+    <div class="row center-content">
+        <div class="col-md-4">
+            <form  method="post">
+                {% csrf_token %}
+                {% crispy form %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

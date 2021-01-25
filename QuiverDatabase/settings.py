@@ -57,13 +57,13 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'django_jinja',
+    'password_reset',
+    'django.contrib.messages',
     'django_neomodel',    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.messages',
     'django.contrib.staticfiles',
     'database_service.apps.DatabaseServiceConfig',
     'whitenoise.runserver_nostatic',
@@ -74,12 +74,12 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',    
+    'django.contrib.messages.middleware.MessageMiddleware',    
+    'django.middleware.security.SecurityMiddleware',  
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -88,67 +88,21 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'QuiverDatabase.urls'
 
 TEMPLATES = [
-    {
-        "BACKEND": "django_jinja.backend.Jinja2",
-        "DIRS": [os.path.join(BASE_DIR, 'QuiverDatabase', 'templates')],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            # Match the template names ending in .html but not the ones in the admin folder.
-            "match_extension": ".html",
-            "match_regex": r"^(?!admin/).*",
-            "app_dirname": "templates",
-
-            # Can be set to "jinja2.Undefined" or any other subclass.
-            "undefined": None,
-
-            "newstyle_gettext": True,
-            "tests": {
-                #"mytest": "path.to.my.test",
-            },
-            "filters": {
-                #"myfilter": "path.to.my.filter",
-            },
-            "globals": {
-                #"myglobal": "path.to.my.globalfunc",
-            },
-            "constants": {
-               # "foo": "bar",
-            },
-            "extensions": [
-                "jinja2.ext.do",
-                "jinja2.ext.loopcontrols",
-                "jinja2.ext.with_",
-                "jinja2.ext.i18n",
-                "jinja2.ext.autoescape",
-                "django_jinja.builtins.extensions.CsrfExtension",
-                "django_jinja.builtins.extensions.CacheExtension",
-                "django_jinja.builtins.extensions.DebugExtension",
-                "django_jinja.builtins.extensions.TimezoneExtension",
-                "django_jinja.builtins.extensions.UrlsExtension",
-                "django_jinja.builtins.extensions.StaticFilesExtension",
-                "django_jinja.builtins.extensions.DjangoFiltersExtension",
-            ],
-            "bytecode_cache": {
-                "name": "default",
-                "backend": "django_jinja.cache.BytecodeCache",
-                "enabled": False,
-            },
-            "autoescape": True,
-            "auto_reload": DEBUG,
-            "translation_engine": "django.utils.translation",
-        }
-    },
+    # Tried Jinja2 template engine, and it didn't work with crispy forms (unfixable errors when doing forms)
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR.joinpath('QuiverDatabase', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-            'django.template.context_processors.debug',
-            'django.template.context_processors.request',
-            'django.contrib.auth.context_processors.auth',
-            'django.contrib.messages.context_processors.messages']
-    }}]
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages'
+            ]
+        }
+    }
+]
     
 #TEMPLATES = [
     #{
@@ -270,6 +224,9 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MAX_TEXT_LENGTH = 150
 
+MAX_USERNAME_LENGTH = 50
+MAX_PASSWORD_LENGTH = 50
+
 #CSRF_USE_SESSIONS = False
 #CSRF_COOKIE_HTTPONLY = False
 #CSRF_COOKIE_DOMAIN = 'localhost'
@@ -291,8 +248,8 @@ SESSSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 #Note that the cache backend isn't vulnerable to this problem, because caches automatically delete stale data. Neither is the cookie backend, because the session data is stored by the users' browsers.
 
-from jinja2 import Undefined
-JINJA2_ENVIRONMENT_OPTIONS = { 'undefined' : Undefined }
+#from jinja2 import Undefined
+#JINJA2_ENVIRONMENT_OPTIONS = { 'undefined' : Undefined }
 
 # TODO: Enable Click-jacking protection
 X_FRAME_OPTIONS = 'ALLOW'   # ie set this to "DENY"

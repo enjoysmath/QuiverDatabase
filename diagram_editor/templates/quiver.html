@@ -1,5 +1,7 @@
 {% extends 'base_generic.html' %}
 
+{% load static %}
+
 {% block metas %}
     <meta charset="utf-8">
     <!-- Prevent zooming on mobile -->
@@ -9,7 +11,7 @@
     <meta property="og:title" content="quiver">
     <meta property="og:url" content="https://varkor.github.io/quiver">
     <meta property="og:description" content="A modern commutative diagram editor with support for tikz-cd.">
-    <meta property="og:image" content="{{ static('img/icon.png') }}">
+    <meta property="og:image" content="{% static 'img/icon.png' %}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_GB">
     <!-- Viewport -->
@@ -18,29 +20,29 @@
 
     <!-- Preload images that we want to display immediately. -->
 {% block add_resources %}
-    <link rel="icon" href="{{ static('icons/icon.png') }}">
-    <link rel="preload" href="{{ static('img/quiver-blue.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/about.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/centre-view.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/delete.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/deselect-all.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/hide-grid.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/redo.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/reset-zoom.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/save.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/select-all.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/shortcuts.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/show-hints.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/show-queue.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/undo.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/zoom-in.svg') }}" as="image">
-    <link rel="preload" href="{{ static('icons/zoom-out.svg') }}" as="image">
+    <link rel="icon" href="{% static 'icons/icon.png' %}">
+    <link rel="preload" href="{% static 'img/quiver-blue.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/about.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/centre-view.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/delete.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/deselect-all.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/hide-grid.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/redo.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/reset-zoom.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/save.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/select-all.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/shortcuts.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/show-hints.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/show-queue.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/undo.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/zoom-in.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/zoom-out.svg' %}" as="image">
     <!-- Style sheets and scrips -->
-    <link rel="stylesheet" type="text/css" media="screen" href="{{ static('css/main.css') }}">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'css/main.css' %}">
 {% endblock %}
 
 {% block add_scripts %}
-    <script type="text/javascript" src="{{ static('js/javascript_tools.js') }}"></script>
+    <script type="text/javascript" src="{% static 'js/javascript_tools.js' %}"></script>
     <script type="text/javascript">
     
     $.fn.editable.defaults.mode = 'inline';
@@ -49,14 +51,14 @@
     setup_edit_tag_setter_urls(
         [{ 
             'tag_id' : '#category-name-edit',
-            'setter' : "{{ url('set_model_name', Model='Category') }}",
+            'setter' : "{% url 'set_model_name' Model='Category' %}",
             'pk' : "{{ category_id }}",
             'initial' : "{{ category_name }}",
             'enable_ids' : [],
         },
         {
             'tag_id' : '#diagram-name-edit',
-            'setter' : "{{ url('set_model_name', Model='Diagram') }}",
+            'setter' : "{% url 'set_model_name' Model='Diagram' %}",
             'pk' : "{{ diagram_id }}",
             'initial' : "{{ diagram_name }}",
             'enable_ids' : [],
@@ -66,7 +68,7 @@
     {
         const diagram_id = "{{ diagram_id }}";
                
-        fetch("{{ url('save_diagram', diagram_id) }}", 
+        fetch("{% url 'save_diagram' diagram_id %}", 
         {
             headers: {
             'X-CSRFToken': "{{ csrf_token }}",
@@ -87,26 +89,22 @@
     }
                
     </script>
-    <script type="text/javascript" src="{{ static('js/ds.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/dom.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/quiver.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/bezier.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/arrow.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/ui.js') }}"></script>
+    <script type="text/javascript" src="{% static 'js/ds.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/dom.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/quiver.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/bezier.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/arrow.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ui.js' %}"></script>
 {% endblock %}
 
 {% block tagline %} {% endblock %}
 
-{% if full_page %}
-    {% block header %} 
-    {% if full_page == 'yes' %}
-        {% include 'logo.html' %}
-        {% with style="position:absolute; right:1%; top:1%; z-index:1" %}
-            {% include 'login_out_buttons.html' %}
-        {% endwith %}
-    {% endif %}
-    {% endblock %}
-{% endif %}
+{% block header %} 
+{% include 'logo.html' %}
+{% with style="position:absolute; right:1%; top:1%; z-index:1" %}
+    {% include 'login_out_buttons.html' %}
+{% endwith %}
+{% endblock %}
 
 
 {% block body_scripts %}
@@ -122,7 +120,7 @@
             document.addEventListener("keyup", cancel);
 
             const loading_screen = new DOM.Div({ class: "loading-screen" })
-                .add(new DOM.Element("img", { src: "{{ static('quiver-blue.svg') }}", class: "logo", as: "image"}))
+                .add(new DOM.Element("img", { src: "{% static 'quiver-blue.svg' %}", class: "logo", as: "image"}))
                 .add(new DOM.Element("span").add("Loading diagram..."))
                 // Prevent pointer events effected during loading from taking place after loading
                 // has completed.

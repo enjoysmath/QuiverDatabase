@@ -19,9 +19,7 @@ def quiver_editor(request, diagram_id):
     try:
         session = request.session
         user = request.user.username
-        
-        full_page = request.GET.get('full_page', 'yes')
-        
+ 
         if 'diagram ids' not in session:
             session['diagram ids'] = []
     
@@ -45,7 +43,6 @@ def quiver_editor(request, diagram_id):
         context = {
             'diagram_name' : diagram.name,
             'category_name' : diagram.category.single().name,
-            'full_page' : full_page,
             'category_id' : diagram.category.single().uid,
             'diagram_id' : diagram.uid,
         }
@@ -61,11 +58,9 @@ def quiver_editor(request, diagram_id):
 @login_required
 @user_passes_test(is_editor)
 def create_new_diagram(request):
-    full_page = request.GET.get('full_page', 'yes')
     diagram = Diagram.our_create(name='', checked_out_by=request.user.username)
                 
     context={
-        'full_page': full_page, 
         'diagram_id': diagram.uid
     } 
                 

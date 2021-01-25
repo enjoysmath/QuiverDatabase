@@ -19,8 +19,6 @@ def rule_editor(request, rule_id):
         session = request.session
         user = request.user.username
         
-        full_page = request.GET.get('full_page', 'yes')
-        
         if 'rule ids' not in session:
             session['rule ids'] = []
             
@@ -42,7 +40,6 @@ def rule_editor(request, rule_id):
             'rule_title' : rule.name,
             'key_diagram_id' : rule.key_diagram.single().uid,
             'result_diagram_id' : rule.result_diagram.single().uid,
-            'full_page' : full_page,
         }
         
         return render(request, 'rule_editor.html', context)
@@ -56,11 +53,9 @@ def rule_editor(request, rule_id):
 @login_required
 @user_passes_test(is_editor)
 def create_new_rule(request):
-    full_page = request.GET.get('full_page', 'yes')
     rule = Rule.our_create(name='', checked_out_by=request.user.username)
     
     context = {
-        'full_page': full_page,
         'rule_id' : rule.uid 
     }    
     

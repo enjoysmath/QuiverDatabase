@@ -8,7 +8,7 @@
 	setup_edit_tag_setter_urls(
 	[{
 		'tag_id' : '#rule-name-edit',
-		'setter' : "{{ url('set_model_name', Model='Rule') }}",
+		'setter' : "{% url 'set_model_name' Model='Rule') %}",
 		'enable_ids' : [],
 	}]);
 
@@ -41,7 +41,7 @@
 				<div class="col-md-12">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{{ url('create_new_diagram') }}?full_page=no"
+							src="{{ url('create_new_diagram') }}"
 							style="border: 0; width:100%; height:750px;"></iframe>
 					</div>
 				</div>
@@ -53,7 +53,7 @@
 				<div class="col-md-12">
 					<div class="jumbotron card card-block" style="padding:0">
 						<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-							src="{{ url('create_new_diagram') }}?full_page=no"
+							src="{{ url('create_new_diagram') }}"
 							style="border: 0; width:100%; height:750px;"></iframe>
 					</div>
 				</div>					
