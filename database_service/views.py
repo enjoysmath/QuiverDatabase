@@ -44,18 +44,22 @@ def set_model_name(request, Model:str):
 
 @login_required
 def list_open_diagrams(request):
-    diagrams = []
-    diagram_ids = request.session.get('diagram ids', [])
     
-    for diagram_id in diagram_ids:
-        diagram = get_model_by_uid(Diagram, uid=diagram_id)
-        diagrams.append(diagram)
+    try:          
+        diagrams = []
+        diagram_ids = request.session.get('diagram ids', [])
         
-    context = {
-        'diagrams' : diagrams
-    }
-        
-    return render(request, 'diagram_list_page.html', context)
+        for diagram_id in diagram_ids:
+            diagram = get_model_by_uid(Diagram, uid=diagram_id)
+            diagrams.append(diagram)
+            
+        context = {
+            'diagrams' : diagrams
+        }
+            
+        return render(request, 'diagram_list_page.html', context)
+    except Exception as e:
+        return redirect('error', full_qualname(e) + ': ' + str(e))
 
 
 

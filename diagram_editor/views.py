@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import traceback
 from QuiverDatabase.python_tools import deep_get, deep_get
 import json
+from database_service.models import Object, Category, Diagram, get_model_by_uid
 
 # Create your views here.
 
@@ -25,7 +26,7 @@ def quiver_editor(request, diagram_id):
         if 'diagram ids' not in session:
             session['diagram ids'] = []
     
-        diagram = Diagram.nodes.get(uid=diagram_id)
+        diagram = get_model_by_uid(Diagram, uid=diagram_id)
         
         if diagram:
             if diagram.name == '':
@@ -60,7 +61,6 @@ def quiver_editor(request, diagram_id):
     
 
 @login_required
-@user_passes_test(is_editor)
 def quiver_viewer(request, diagram_id:str):
     try:
         session = request.session
@@ -69,7 +69,7 @@ def quiver_viewer(request, diagram_id:str):
         if 'diagram ids' not in session:
             session['diagram ids'] = []
     
-        diagram = Diagram.nodes.get(uid=diagram_id)
+        diagram = get_model_by_uid(Diagram, uid=diagram_id)
         
         if diagram:
             if diagram.name == '':
@@ -94,7 +94,8 @@ def quiver_viewer(request, diagram_id:str):
             'diagram_name' : diagram.name,
             'category_name' : category.name,
             'diagram_id' : diagram.uid,
-            'view_only' : 'true',   # Use 'true/false' as in JS
+            'view_only' : None,   # Existence of this variable is tested for
+            'quiver_str' : json.dumps(diagram.quiver_format()),
         }
                       
         return render(request, 'quiver.html', context)  
@@ -102,6 +103,46 @@ def quiver_viewer(request, diagram_id:str):
     except Exception as e:
         return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
+
+@login_required
+def diagram_result_view(request, diagram_id:str):
+    try:
+        session = request.session
+        user = request.user.username
+ 
+        if 'diagram ids' not in session:
+            session['diagram ids'] = []
+    
+        diagram = get_model_by_uid(Diagram, uid=diagram_id)
+        
+        if diagram.name == '':
+            raise ValueError('Diagram name must not be empty.')
+        
+        if not diagram.checked_out_by:
+            diagram.checked_out_by = user
+            
+            if diagram_id not in session['diagram ids']:
+                session['diagram ids'].append(diagram_id)
+                session.save()
+        else:
+            if diagram.checked_out_by != user:
+                raise OperationalError(
+                    f'The diagram with id "{diagram_id}" is already checked out by {diagram.checked_out_by}')
+                     
+        category = diagram.category.single()
+        
+        context = {
+            'diagram' : diagram,
+            'category' : category,
+            'view_only' : None,  # Test for existence is made
+        }
+                      
+        return render(request, 'quiver_result_preview.html', context)  
+    
+    except Exception as e:
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
+
+
     
 
 @login_required
@@ -115,13 +156,12 @@ def create_new_diagram(request):
     else:
         if diagram.uid not in session['diagram ids']:
             session['diagram ids'].append(diagram.uid)
-        
-    session.save()
-    
+            session.save()
+
     diagrams = []
     
-    for id in session['diagram ids']:
-        diagram = Diagram.nodes.get(uid=id)
+    for diagram_id in session['diagram ids']:
+        diagram = get_model_by_uid(Diagram, uid=diagram_id)
         diagrams.append(diagram)
         
     context={

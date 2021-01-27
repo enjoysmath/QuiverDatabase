@@ -48,13 +48,13 @@
     $.fn.editable.defaults.mode = 'inline';
     setup_ajax_csrf_token('{{ csrf_token }}'); 
     
-    {% if 'view_only' in context %}
-        const quiver_edit_mode = ! {{ view_only }};
+    {% if 'view_only' is None %}        // If defined
+        window.quiver_edit_mode = false;
     {% else %}
-        const quiver_edit_mode = true;
+        window.quiver_edit_mode = true;
     {% endif %}
     
-    if (quiver_edit_mode){
+    if (window.quiver_edit_mode){
         setup_edit_tag_setter_urls(
             [{ 
                 'tag_id' : '#category-name-edit',
@@ -108,7 +108,7 @@
             return response.text(); 
         })
         .then(text => {
-            <!--alert(text);-->
+            alert(text);
             window.ui.load_json_str_from_database(text);
         });
     });

@@ -54,7 +54,7 @@ UIMode.Default = class extends UIMode {
 };
 UIMode.default = new UIMode.Default();
 
-if (quiver_edit_mode) {
+if (window.quiver_edit_mode) {
     UIMode.Modal = class extends UIMode {
         constructor() {
             super();
@@ -243,7 +243,7 @@ if (quiver_edit_mode) {
                 label_alignment: "left",
                 // The default settings for the other options are fine.
             };
-            if (quiver_edit_mode) {
+            if (window.quiver_edit_mode) {
                 const selected_alignment
                     = ui.panel.element.query_selector('input[name="label_alignment"]:checked');
                 if (selected_alignment !== null) {
@@ -567,7 +567,7 @@ class UI {
         // The size of the view (i.e. the document body dimensions).
         this.dimensions = new Dimensions(document.body.offsetWidth, document.body.offsetHeight);
         
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             // Undo/redo for actions.
             this.history = new History();
 
@@ -578,24 +578,24 @@ class UI {
         // A map from cell codes (i.e. IDs) to cells.
         this.codes = new Map();
 
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             // The panel for viewing and editing cell data.
             this.panel = new Panel();
             // The colour picker.
             this.colour_picker = new ColourPicker();
-        }
         
-        // The toolbar.
-        this.toolbar = new Toolbar();
+            // The toolbar.
+            this.toolbar = new Toolbar();
 
-        // LaTeX macro definitions.
-        this.macros = new Map();
+            // LaTeX macro definitions.
+            this.macros = new Map();
 
-        // LaTeX colour definitions.
-        this.colours = new Map();
+            // LaTeX colour definitions.
+            this.colours = new Map();
 
-        // The URL from which the macros have been fetched (if at all).
-        this.macro_url = null;
+            // The URL from which the macros have been fetched (if at all).
+            this.macro_url = null;
+        }
 
         // The user settings, which are stored persistently across sessions in `localStorage`.
         this.settings = new Settings();
@@ -626,7 +626,7 @@ class UI {
         this.positions = new Map();
         this.update_grid();
 
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             // Clear the undo/redo history.
             this.history = new History();
 
@@ -664,7 +664,7 @@ class UI {
         const panes = [];
         
         // Set up the panel for viewing and editing cell data.
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             this.panel.initialise(this);
             this.element.add(this.panel.element);
             this.colour_picker.initialise(this);
@@ -892,7 +892,7 @@ class UI {
         }
 
         // Set up the welcome pane.
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             const welcome_pane = new DOM.Div({
                 id: "welcome-pane",
                 // We only display the welcome pane the first time the user visits quiver.
@@ -927,7 +927,7 @@ class UI {
             }).add_to(welcome_pane);
 
             // QuiverDatabase: stop event propogation on to quiver when click is in the site's button pane
-            const database_control_pane = new DOM.Div({
+            this.database_control_pane = new DOM.Div({
                 id: "lower-control-pane",
                 class: "container-fluid pane",
             })
@@ -969,7 +969,7 @@ class UI {
                     }.bind(this)))));
                 
             
-            panes.push(database_control_pane);
+            panes.push(this.database_control_pane);
 
             for (const pane of panes) {
                 this.element.add(pane);
@@ -987,20 +987,23 @@ class UI {
                     event.stopImmediatePropagation();
                 }, { passive: true });
             }
-        }
 
-        // Add the version information underneath the logo.
-        this.element.add(new DOM.Element(
-            "span",
-            { class: "version hidden" }
-        ).add(`Version ${CONSTANTS.VERSION}`));
+            // Add the version information underneath the logo.
+            this.element.add(new DOM.Element(
+                "span",
+                { class: "version hidden" }
+            ).add(`Version ${CONSTANTS.VERSION}`));
+        }
 
         // Add the focus point for new nodes.
         this.focus_point = new DOM.Div({ class: "focus-point focused smooth" })
             .add(new DOM.Div({ class: "tooltip" }))
             .add_to(this.canvas);
-        this.update_focus_tooltip();
-        this.toolbar.update(this);
+
+        if (window.quiver_edit_mode) {
+            this.update_focus_tooltip();    
+            this.toolbar.update(this);
+        }
 
         // Handle panning via scrolling.
         window.addEventListener("wheel", (event) => {
@@ -1022,25 +1025,26 @@ class UI {
             this.update_grid();
 
             // Centre the panel.
-            this.panel.update_position();
+            if (window.quiver_edit_mode)
+                this.panel.update_position();
         });
 
         // Add a move to the history.
-        const commit_move_event = () => {
-            if (!this.mode.previous.sub(this.mode.origin).is_zero()) {
-                // We only want to commit the move event if it actually did moved things.
-                this.history.add(this, [{
-                    kind: "move",
-                    displacements: Array.from(this.mode.selection).map((vertex) => ({
-                        vertex,
-                        from: vertex.position.sub(this.mode.previous.sub(this.mode.origin)),
-                        to: vertex.position,
-                    })),
-                }]);
-            }
-        };
+        if (window.quiver_edit_mode) {
+            const commit_move_event = () => {
+                if (!this.mode.previous.sub(this.mode.origin).is_zero()) {
+                    // We only want to commit the move event if it actually did moved things.
+                    this.history.add(this, [{
+                        kind: "move",
+                        displacements: Array.from(this.mode.selection).map((vertex) => ({
+                            vertex,
+                            from: vertex.position.sub(this.mode.previous.sub(this.mode.origin)),
+                            to: vertex.position,
+                        })),
+                    }]);
+                }
+            };
 
-        if (quiver_edit_mode) {
             document.addEventListener(pointer_event("move"), (event) => {
                 if (this.in_mode(UIMode.Pan)) {
                     if (this.mode.key !== null) {
@@ -1052,281 +1056,280 @@ class UI {
                     }
                 }
             });
-        }
 
-        // We don't want long presses to trigger the context menu on touchscreens. However, we
-        // can't distinguish between context menus triggered by touchscreens versus, say,
-        // right-clicking. So we manually keep track of whether there are any touch events, and in
-        // this case, disable the context menu.
-        let is_touching = false;
-        // We use long presses to trigger panning mode. We have to detect these manually (in
-        // some implementations, long press is equivalent to `contextmenu`, but not all).
-        let long_press_timer = null;
+            // We don't want long presses to trigger the context menu on touchscreens. However, we
+            // can't distinguish between context menus triggered by touchscreens versus, say,
+            // right-clicking. So we manually keep track of whether there are any touch events, and in
+            // this case, disable the context menu.
+            let is_touching = false;
+            // We use long presses to trigger panning mode. We have to detect these manually (in
+            // some implementations, long press is equivalent to `contextmenu`, but not all).
+            let long_press_timer = null;
 
-        const trigger_on_long_press = (event) => {
-            // Long presses enable panning mode.
-            this.cancel_creation();
-            this.panel.hide_if_unselected(this);
-            this.switch_mode(new UIMode.Pan(null));
-            const touch = event.touches[0];
-            this.mode.origin = this.offset_from_event(touch).sub(this.view);
-        };
-
-        
-        document.addEventListener("touchstart", (event) => {
-            is_touching = true;
-            if (event.touches.length > 1) {
-                // Multiple touches can cause strange behaviours, because they don't follow the
-                // usual rules (e.g. two consecutive `pointerdown`s without an intervening
-                // `pointerup`.)
-                if (this.in_mode(UIMode.Default)) {
-                    this.cancel_creation();
-                }
-            } else if (long_press_timer === null) {
-                long_press_timer = window.setTimeout(
-                    () => trigger_on_long_press(event),
-                    CONSTANTS.LONG_PRESS_DURATION,
-                );
-            }
-        });
-        
-
-        // Prevent double-tap-to-zoom on iOS.
-        document.addEventListener("dblclick", (event) => event.preventDefault());
-
-        // If the touch position moves, we disable the long press. We use `touchmove` instead of
-        // `pointermove`, because that has some leeway around minute changes in the position.
-        document.addEventListener("touchmove", () => {
-            if (!this.in_mode(UIMode.Pan) && long_press_timer !== null) {
-                window.clearTimeout(long_press_timer);
-                long_press_timer = null;
-            }
-        });
-
-        // Disable the context menu on touchscreens. See the comment above `is_touching`.
-        document.addEventListener("contextmenu", (event) => {
-            if (is_touching) {
-                // Don't trigger the context menu.
-                event.preventDefault();
-            }
-        });
-
-        // The touch events don't function like pointer events by default, so we manually trigger
-        // pointer events from the touch events.
-
-        // The element that is currently being touched.
-        let touched_element = null;
-        // We have to track touch enter and touch leave events manually, since this is not directly
-        // available. One might imagine that the `touchmove` event would be ideal for this, but
-        // this appears not to trigger for small movements, whereas `pointermove` does.
-        document.addEventListener(pointer_event("move"), (event) => {
-            if (event.pointerType === "touch") {
-                const prev_touched_element = touched_element;
-                touched_element = document.elementFromPoint(event.clientX, event.clientY);
-                if (touched_element !== prev_touched_element) {
-                    // Trigger a `pointerleave` event on the element we are no longer touching.
-                    if (prev_touched_element !== null) {
-                        // We don't trigger the event if the element that is now being touched is a
-                        // child of the previous element.
-                        const prev_element_contains_next = touched_element !== null
-                            && prev_touched_element.contains(touched_element);
-                            if (!prev_element_contains_next) {
-                                prev_touched_element.dispatchEvent(
-                                    new Event(pointer_event("leave"), { bubbles: true })
-                                );
-                            }
-                    }
-                    // Trigger a `pointerenter` event on the element we are now touching.
-                    if (touched_element !== null) {
-                        touched_element.dispatchEvent(
-                            new Event(pointer_event("enter"), { bubbles: true })
-                        );
-                    }
-                }
-            }
-        });
-
-        // Manually track touch end events, which do not properly trigger `pointerup` events
-        // automatically.
-        document.addEventListener("touchend", (event) => {
-            if (this.in_mode(UIMode.Pan)) {
-                this.switch_mode(UIMode.default);
-            } if (event.changedTouches.length === 1) {
-                const touch = event.changedTouches[0];
-                const touched_element = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (touched_element !== null) {
-                    const pointer_event = new Event(pointer_event("up"), { bubbles: true });
-                    // We overwrite some properties that are necessary for `pointerup` listeners.
-                    pointer_event.button = 0;
-                    pointer_event.pageX = touch.pageX;
-                    pointer_event.pageY = touch.pageY;
-                    touched_element.dispatchEvent(pointer_event);
-                }
-            }
-            is_touching = false;
-            if (long_press_timer !== null) {
-                window.clearTimeout(long_press_timer);
-                long_press_timer = null;
-            }
-            touched_element = null;
-        });
-
-        document.addEventListener(pointer_event("up"), (event) => {
-            if (event.button === 0) {
-                if (event.pointerType !== "touch") {
-                    if (this.in_mode(UIMode.Pan)) {
-                        // We only want to pan when the pointer is held.
-                        this.mode.origin = null;
-                    } else if (this.in_mode(UIMode.PointerMove)) {
-                        commit_move_event();
-                        this.switch_mode(UIMode.default);
-                    } else if (this.in_mode(UIMode.Connect)) {
-                        // Stop trying to connect cells when the pointer is released outside
-                        // the `<body>`.
-                        if (this.mode.forged_vertex) {
-                            this.history.add(this, [{
-                                kind: "create",
-                                cells: new Set([this.mode.source]),
-                            }]);
-                        }
-                        this.switch_mode(UIMode.default);
-                    }
-                }
+            const trigger_on_long_press = (event) => {
+                // Long presses enable panning mode.
+                this.cancel_creation();
                 this.panel.hide_if_unselected(this);
-            }
-        });
+                this.switch_mode(new UIMode.Pan(null));
+                const touch = event.touches[0];
+                this.mode.origin = this.offset_from_event(touch).sub(this.view);
+            };
 
-        this.reposition_focus_point(Position.zero());
-
-        this.element.listen(pointer_event("down"), (event) => {
-            if (event.button === 0) {
-                // Usually, if `Alt` or `Control` have been held we will have already switched to
-                // the Pan mode. However, if the window is not in focus, they will not have been
-                // detected, so we switch modes on pointer click.
-                if (quiver_edit_mode) {
+            
+            document.addEventListener("touchstart", (event) => {
+                is_touching = true;
+                if (event.touches.length > 1) {
+                    // Multiple touches can cause strange behaviours, because they don't follow the
+                    // usual rules (e.g. two consecutive `pointerdown`s without an intervening
+                    // `pointerup`.)
                     if (this.in_mode(UIMode.Default)) {
-                        if (event.altKey) {
-                            this.switch_mode(new UIMode.Pan("Alt"));
-                        } else if (event.ctrlKey) {
-                            this.switch_mode(new UIMode.Pan("Control"));
-                        } else {
-                            if (this.focus_point.class_list.contains("focused")) {
-                                this.focus_point.class_list.remove("focused", "smooth");
-                            }
-
-                            // Reveal the focus point upon a click.
-                            this.reposition_focus_point(this.position_from_event(event));
-                            this.focus_point.class_list.add("revealed", "pending");
-                        }
+                        this.cancel_creation();
                     }
-                    if (this.in_mode(UIMode.Pan)) {
-                        // Hide the focus point if it is visible.
-                        this.focus_point.class_list.remove("revealed");
-                        // Record the position the pointer was pressed at, so we can pan relative
-                        // to that location by dragging.
-                        this.mode.origin = this.offset_from_event(event).sub(this.view);
-                    } else if (this.in_mode(UIMode.KeyMove)) {
-                        this.switch_mode(UIMode.default);
-                    } else if (!this.in_mode(UIMode.Modal)) {
-                        if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                            // Deselect cells when the pointer is pressed (at least when the
-                            // Shift/Command/Control keys are not held).
-                            this.deselect();
-                        } else {
-                            // Otherwise, simply deselect the label input (it's unlikely the user
-                            // wants to modify all the cell labels at once).
-                            this.panel.label_input.element.blur();
+                } else if (long_press_timer === null) {
+                    long_press_timer = window.setTimeout(
+                        () => trigger_on_long_press(event),
+                        CONSTANTS.LONG_PRESS_DURATION,
+                    );
+                }
+            });
+            
+
+            // Prevent double-tap-to-zoom on iOS.
+            document.addEventListener("dblclick", (event) => event.preventDefault());
+
+            // If the touch position moves, we disable the long press. We use `touchmove` instead of
+            // `pointermove`, because that has some leeway around minute changes in the position.
+            document.addEventListener("touchmove", () => {
+                if (!this.in_mode(UIMode.Pan) && long_press_timer !== null) {
+                    window.clearTimeout(long_press_timer);
+                    long_press_timer = null;
+                }
+            });
+
+            // Disable the context menu on touchscreens. See the comment above `is_touching`.
+            document.addEventListener("contextmenu", (event) => {
+                if (is_touching) {
+                    // Don't trigger the context menu.
+                    event.preventDefault();
+                }
+            });
+
+            // The touch events don't function like pointer events by default, so we manually trigger
+            // pointer events from the touch events.
+
+            // The element that is currently being touched.
+            let touched_element = null;
+            // We have to track touch enter and touch leave events manually, since this is not directly
+            // available. One might imagine that the `touchmove` event would be ideal for this, but
+            // this appears not to trigger for small movements, whereas `pointermove` does.
+            document.addEventListener(pointer_event("move"), (event) => {
+                if (event.pointerType === "touch") {
+                    const prev_touched_element = touched_element;
+                    touched_element = document.elementFromPoint(event.clientX, event.clientY);
+                    if (touched_element !== prev_touched_element) {
+                        // Trigger a `pointerleave` event on the element we are no longer touching.
+                        if (prev_touched_element !== null) {
+                            // We don't trigger the event if the element that is now being touched is a
+                            // child of the previous element.
+                            const prev_element_contains_next = touched_element !== null
+                                && prev_touched_element.contains(touched_element);
+                                if (!prev_element_contains_next) {
+                                    prev_touched_element.dispatchEvent(
+                                        new Event(pointer_event("leave"), { bubbles: true })
+                                    );
+                                }
+                        }
+                        // Trigger a `pointerenter` event on the element we are now touching.
+                        if (touched_element !== null) {
+                            touched_element.dispatchEvent(
+                                new Event(pointer_event("enter"), { bubbles: true })
+                            );
                         }
                     }
                 }
-            }
-        });
+            });
 
-        // A helper function for creating a new vertex, as there are
-        // several actions that can trigger the creation of a vertex.
-        const create_vertex = (position) => {
-            const label = "\\bullet";
-            return new Vertex(this, label, position);
-        };
+            // Manually track touch end events, which do not properly trigger `pointerup` events
+            // automatically.
+            document.addEventListener("touchend", (event) => {
+                if (this.in_mode(UIMode.Pan)) {
+                    this.switch_mode(UIMode.default);
+                } if (event.changedTouches.length === 1) {
+                    const touch = event.changedTouches[0];
+                    const touched_element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (touched_element !== null) {
+                        const pointer_event = new Event(pointer_event("up"), { bubbles: true });
+                        // We overwrite some properties that are necessary for `pointerup` listeners.
+                        pointer_event.button = 0;
+                        pointer_event.pageX = touch.pageX;
+                        pointer_event.pageY = touch.pageY;
+                        touched_element.dispatchEvent(pointer_event);
+                    }
+                }
+                is_touching = false;
+                if (long_press_timer !== null) {
+                    window.clearTimeout(long_press_timer);
+                    long_press_timer = null;
+                }
+                touched_element = null;
+            });
 
-        const create_vertex_at_focus_point = (event) => {
-            this.focus_point.class_list.remove("revealed");
-            // We want the new vertex to be the only selected cell, unless we've held
-            // Shift/Command/Control when creating it.
-            if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                this.deselect();
-            }
-            const vertex = create_vertex(this.focus_position);
-            this.select(vertex);
-            return vertex;
-        };
-
-        // We expect `edges.length > 0`.
-        const insert_codes_before = (vertex, ...edges) => {
-            // When we create a target vertex and an edge simultaneously, the new vertex has to be
-            // created first, because the edge needs a target. Therefore, the vertex will get a code
-            // assigned before the edge. However, in practice, it feels more natural to cycle to the
-            // edge before the vertex, because this aligns with the diagrammatic order. In these
-            // situations, we manually insert the edge codes before the vertex code.
-            const vertex_code = vertex.code;
-            edges.push(vertex);
-            for (let i = edges.length - 1; i > 0; --i) {
-                edges[i].code = edges[i - 1].code;
-            }
-            edges[0].code = vertex_code;
-            for (const cell of edges) {
-                this.codes.set(cell.code, cell);
-                const element = cell.element.query_selector("kbd");
-                element.set_attributes({ "data-code": cell.code });
-            }
-        };
-
-        // Clicking on the focus point reveals it, after which another click adds a new node.
-        if (quiver_edit_mode) {
-            this.focus_point.listen(pointer_event("down"), (event) => {
+            document.addEventListener(pointer_event("up"), (event) => {
                 if (event.button === 0) {
-                    if (this.in_mode(UIMode.Default)) {
-                        event.preventDefault();
-                        // If we prevent the default behaviour, then the global inputs won't be blurred,
-                        // so we need to do that manually.
-                        const global = this.panel.global;
-                        for (const input of global.query_selector_all('input[type="text"]')) {
-                            input.element.blur();
+                    if (event.pointerType !== "touch") {
+                        if (this.in_mode(UIMode.Pan)) {
+                            // We only want to pan when the pointer is held.
+                            this.mode.origin = null;
+                        } else if (this.in_mode(UIMode.PointerMove)) {
+                            commit_move_event();
+                            this.switch_mode(UIMode.default);
+                        } else if (this.in_mode(UIMode.Connect)) {
+                            // Stop trying to connect cells when the pointer is released outside
+                            // the `<body>`.
+                            if (this.mode.forged_vertex) {
+                                this.history.add(this, [{
+                                    kind: "create",
+                                    cells: new Set([this.mode.source]),
+                                }]);
+                            }
+                            this.switch_mode(UIMode.default);
                         }
-                        if (this.focus_point.class_list.contains("revealed")) {
-                            // We only stop propagation in this branch, so that clicking once in an
-                            // empty grid cell will deselect any selected cells, but clicking a second
-                            // time to add a new vertex will not deselect the new, selected vertex we've
-                            // just added. Note that it's not possible to select other cells in between
-                            // the first and second click, because leaving the grid cell with the cursor
-                            // (to select other cells) hides the focus point again.
-                            event.stopPropagation();
-                            const vertex = create_vertex_at_focus_point(event);
-                            this.historystory.add(this, [{
-                                kind: "create",
-                                cells: new Set([vertex]),
-                            }]);
-                            // When the user is creating a vertex and adding it to the selection,
-                            // it is unlikely they expect to edit all the labels simultaneously,
-                            // so in this case we do not focus the input.
+                    }
+                    this.panel.hide_if_unselected(this);
+                }
+            });
+
+            this.reposition_focus_point(Position.zero());
+
+            this.element.listen(pointer_event("down"), (event) => {
+                if (event.button === 0) {
+                    // Usually, if `Alt` or `Control` have been held we will have already switched to
+                    // the Pan mode. However, if the window is not in focus, they will not have been
+                    // detected, so we switch modes on pointer click.
+                    if (window.quiver_edit_mode) {
+                        if (this.in_mode(UIMode.Default)) {
+                            if (event.altKey) {
+                                this.switch_mode(new UIMode.Pan("Alt"));
+                            } else if (event.ctrlKey) {
+                                this.switch_mode(new UIMode.Pan("Control"));
+                            } else {
+                                if (this.focus_point.class_list.contains("focused")) {
+                                    this.focus_point.class_list.remove("focused", "smooth");
+                                }
+
+                                // Reveal the focus point upon a click.
+                                this.reposition_focus_point(this.position_from_event(event));
+                                this.focus_point.class_list.add("revealed", "pending");
+                            }
+                        }
+                        if (this.in_mode(UIMode.Pan)) {
+                            // Hide the focus point if it is visible.
+                            this.focus_point.class_list.remove("revealed");
+                            // Record the position the pointer was pressed at, so we can pan relative
+                            // to that location by dragging.
+                            this.mode.origin = this.offset_from_event(event).sub(this.view);
+                        } else if (this.in_mode(UIMode.KeyMove)) {
+                            this.switch_mode(UIMode.default);
+                        } else if (!this.in_mode(UIMode.Modal)) {
                             if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                                this.panel.label_input.element.select();
+                                // Deselect cells when the pointer is pressed (at least when the
+                                // Shift/Command/Control keys are not held).
+                                this.deselect();
+                            } else {
+                                // Otherwise, simply deselect the label input (it's unlikely the user
+                                // wants to modify all the cell labels at once).
+                                this.panel.label_input.element.blur();
                             }
                         }
                     }
                 }
             });
-        }
 
-        // If we release the pointer while hovering over the focus point, there are two
-        // possibilities. Either we haven't moved the pointer, in which case the focus point loses
-        // its `"pending"` or `"active"` state; or we have, in which case we're mid-connection and
-        // we need to create a new vertex and connect it. We add the event listener to the
-        // container, rather than the focus point, so that we don't have to worry about the
-        // focus point being exactly the same size as a grid cell (there is some padding for
-        // aesthetic purposes) or the focus point being covered by other elements (like edge
-        // endpoints).
-        if (quiver_edit_mode) {
+            // A helper function for creating a new vertex, as there are
+            // several actions that can trigger the creation of a vertex.
+            const create_vertex = (position) => {
+                const label = "\\bullet";
+                return new Vertex(this, label, position);
+            };
+
+            this.create_vertex_at_focus_point = (event) => {
+                this.focus_point.class_list.remove("revealed");
+                // We want the new vertex to be the only selected cell, unless we've held
+                // Shift/Command/Control when creating it.
+                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                    this.deselect();
+                }
+                const vertex = create_vertex(this.focus_position);
+                this.select(vertex);
+                return vertex;
+            };
+
+            // We expect `edges.length > 0`.
+            const insert_codes_before = (vertex, ...edges) => {
+                // When we create a target vertex and an edge simultaneously, the new vertex has to be
+                // created first, because the edge needs a target. Therefore, the vertex will get a code
+                // assigned before the edge. However, in practice, it feels more natural to cycle to the
+                // edge before the vertex, because this aligns with the diagrammatic order. In these
+                // situations, we manually insert the edge codes before the vertex code.
+                const vertex_code = vertex.code;
+                edges.push(vertex);
+                for (let i = edges.length - 1; i > 0; --i) {
+                    edges[i].code = edges[i - 1].code;
+                }
+                edges[0].code = vertex_code;
+                for (const cell of edges) {
+                    this.codes.set(cell.code, cell);
+                    const element = cell.element.query_selector("kbd");
+                    element.set_attributes({ "data-code": cell.code });
+                }
+            };
+
+            // Clicking on the focus point reveals it, after which another click adds a new node.
+            if (window.quiver_edit_mode) {
+                this.focus_point.listen(pointer_event("down"), (event) => {
+                    if (event.button === 0) {
+                        if (this.in_mode(UIMode.Default)) {
+                            event.preventDefault();
+                            // If we prevent the default behaviour, then the global inputs won't be blurred,
+                            // so we need to do that manually.
+                            const global = this.panel.global;
+                            for (const input of global.query_selector_all('input[type="text"]')) {
+                                input.element.blur();
+                            }
+                            if (this.focus_point.class_list.contains("revealed")) {
+                                // We only stop propagation in this branch, so that clicking once in an
+                                // empty grid cell will deselect any selected cells, but clicking a second
+                                // time to add a new vertex will not deselect the new, selected vertex we've
+                                // just added. Note that it's not possible to select other cells in between
+                                // the first and second click, because leaving the grid cell with the cursor
+                                // (to select other cells) hides the focus point again.
+                                event.stopPropagation();
+                                const vertex = this.create_vertex_at_focus_point(event);
+                                this.history.add(this, [{
+                                    kind: "create",
+                                    cells: new Set([vertex]),
+                                }]);
+                                // When the user is creating a vertex and adding it to the selection,
+                                // it is unlikely they expect to edit all the labels simultaneously,
+                                // so in this case we do not focus the input.
+                                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                                    this.panel.label_input.element.select();
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // If we release the pointer while hovering over the focus point, there are two
+            // possibilities. Either we haven't moved the pointer, in which case the focus point loses
+            // its `"pending"` or `"active"` state; or we have, in which case we're mid-connection and
+            // we need to create a new vertex and connect it. We add the event listener to the
+            // container, rather than the focus point, so that we don't have to worry about the
+            // focus point being exactly the same size as a grid cell (there is some padding for
+            // aesthetic purposes) or the focus point being covered by other elements (like edge
+            // endpoints).
+        
             this.container.listen(pointer_event("up"), (event) => {
                 if (event.button === 0 && event.pointerType !== "touch") {
                     // Handle pointer releases without having moved the cursor from the initial cell.
@@ -1345,7 +1348,7 @@ class UI {
                                 // Usually this vertex will be immediately deselected, except when Shift
                                 // is held, in which case we want to select the forged vertices *and*
                                 // the new edge.
-                                this.mode.target = create_vertex_at_focus_point(event);
+                                this.mode.target = this.create_vertex_at_focus_point(event);
                                 const created = new Set([this.mode.target]);
                                 const actions = [{
                                     kind: "create",
@@ -1416,7 +1419,7 @@ class UI {
         // be `"active"` and we create a new vertex and immediately start
         // connecting it to something (possibly an empty grid cell, which will
         // create a new vertex and connect them both).
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             this.focus_point.listen(pointer_event("leave"), (event) => {
                 if (event.pointerType !== "touch") {
                     this.focus_point.class_list.remove("pending");
@@ -1425,7 +1428,7 @@ class UI {
                         // If the focus point is `"active"`, we're going to create
                         // a vertex and start connecting it.
                         this.focus_point.class_list.remove("active");
-                        const vertex = create_vertex_at_focus_point(event);
+                        const vertex = this.create_vertex_at_focus_point(event);
                         this.switch_mode(new UIMode.Connect(this, vertex, true));
                         vertex.element.class_list.add("source");
                     } else if (!this.in_mode(UIMode.Connect)) {
@@ -1435,714 +1438,714 @@ class UI {
                     }
                 }
             });
-        }
-
-        // Moving the focus point, panning, and rearranging cells.
-        this.element.listen(pointer_event("move"), (event) => {
-            if (this.in_mode(UIMode.Pan) && this.mode.origin !== null) {
-                const new_offset = this.offset_from_event(event).sub(this.view);
-                this.pan_view(this.mode.origin.sub(new_offset));
-                this.mode.origin = new_offset;
-            }
-
-            // If we move the pointer (without releasing it) while the insertion
-            // point is revealed, it will transition from a `"pending"` state
-            // to an `"active"` state. Moving the pointer off the insertion
-            // point in this state will create a new vertex and trigger the
-            // connection mode.
-            if (this.focus_point.class_list.contains("pending")) {
-                this.focus_point.class_list.remove("pending");
-                this.focus_point.class_list.add("active");
-            }
-
-            const position = this.position_from_event(event);
-
-            // Moving cells around with the pointer.
-            if (this.in_mode(UIMode.PointerMove)) {
-                // Prevent dragging from selecting random elements.
-                event.preventDefault();
-
-                const new_position = (cell) => cell.position.add(position).sub(this.mode.previous);
-
-                // We will only try to reposition if the new position is actually different
-                // (rather than the cursor simply having moved within the same grid cell).
-                // On top of this, we prevent vertices from being moved into grid cells that
-                // are already occupied by vertices.
-                const occupied = Array.from(this.mode.selection).some((cell) => {
-                    return cell.is_vertex() && this.positions.has(`${new_position(cell)}`);
-                });
-
-                if (!position.eq(this.mode.previous) && !occupied) {
-                    // We'll need to move all of the edges connected to the moved vertices,
-                    // so we keep track of the root vertices in `moved.`
-                    const moved = new Set();
-                    // Move all the selected vertices.
-                    for (const cell of this.mode.selection) {
-                        if (cell.is_vertex()) {
-                            cell.set_position(this, new_position(cell));
-                            moved.add(cell);
-                        }
-                    }
-
-                    // Update the column and row sizes in response to the new positions of the
-                    // vertices.
-                    if (!this.update_col_row_size(...Array.from(moved)
-                        // Undo the transformation performed by `new_position`.
-                        .map((vertex) => vertex.position.sub(position).add(this.mode.previous))
-                    )) {
-                        // If we haven't rerendered the entire canvas due to a resize, then
-                        // rerender the dependencies to make sure we move all of the edges connected
-                        // to cells that have moved.
-                        for (const cell of this.quiver.transitive_dependencies(moved)) {
-                            cell.render(this);
-                        }
-                    }
-
-                    this.mode.previous = position;
-
-                    // Update the panel, so that the interface is kept in sync (e.g. the
-                    // rotation of the label alignment buttons).
-                    this.panel.update(this);
-                }
-            }
-
-            // If the user has currently clicked to place a vertex, or activated keyboard controls,
-            // then don't reposition the focus point until the new vertex has been created:
-            // otherwise we might move the focus point before the vertex has been created and
-            // accidentally place the vertex in the new position of the focus point, rather than
-            // the old one.
-            if (!this.in_mode(UIMode.Connect) && (this.focus_point.class_list.contains("revealed")
-                || this.focus_point.class_list.contains("focused"))
-            ) {
-                return;
-            }
-
-            // We permanently change the focus point position if we are dragging to connect an edge,
-            // so that the focus point will be in the location we drag to.
-            this.reposition_focus_point(position, this.in_mode(UIMode.Connect));
-
-            // We want to reveal the focus point if and only if it is
-            // not at the same position as an existing vertex (i.e. over an
-            // empty grid cell).
-            if (this.in_mode(UIMode.Connect)) {
-                // Prevent dragging from selecting random elements.
-                event.preventDefault();
-
-                // We only permit the forgery of vertices, not edges.
-                if (this.mode.source.is_vertex() && this.mode.target === null) {
-                    this.focus_point.class_list
-                        .toggle("revealed", !this.positions.has(`${position}`));
+        
+            // Moving the focus point, panning, and rearranging cells.
+            this.element.listen(pointer_event("move"), (event) => {
+                if (this.in_mode(UIMode.Pan) && this.mode.origin !== null) {
+                    const new_offset = this.offset_from_event(event).sub(this.view);
+                    this.pan_view(this.mode.origin.sub(new_offset));
+                    this.mode.origin = new_offset;
                 }
 
-                // Update the position of the cursor.
-                const offset = this.offset_from_event(event);
-                this.mode.update(this, offset);
-            }
-        });
+                // If we move the pointer (without releasing it) while the insertion
+                // point is revealed, it will transition from a `"pending"` state
+                // to an `"active"` state. Moving the pointer off the insertion
+                // point in this state will create a new vertex and trigger the
+                // connection mode.
+                if (this.focus_point.class_list.contains("pending")) {
+                    this.focus_point.class_list.remove("pending");
+                    this.focus_point.class_list.add("active");
+                }
 
-        // Add various keyboard shortcuts.
+                const position = this.position_from_event(event);
 
-        this.shortcuts.add([{ key: "Enter", context: Shortcuts.SHORTCUT_PRIORITY.Always }], () => {
-            if (!this.in_mode(UIMode.Modal)) {
-                if (this.in_mode(UIMode.Command)) {
-                    // Get the list of IDs to select.
-                    const mode = this.mode.mode;
+                // Moving cells around with the pointer.
+                if (this.in_mode(UIMode.PointerMove)) {
+                    // Prevent dragging from selecting random elements.
+                    event.preventDefault();
 
-                    const codes = new Set(this.panel.label_input.element.value.split(" "));
-                    if (mode === "Select") {
-                        // Deselect all selected cells.
-                        this.deselect();
+                    const new_position = (cell) => cell.position.add(position).sub(this.mode.previous);
+
+                    // We will only try to reposition if the new position is actually different
+                    // (rather than the cursor simply having moved within the same grid cell).
+                    // On top of this, we prevent vertices from being moved into grid cells that
+                    // are already occupied by vertices.
+                    const occupied = Array.from(this.mode.selection).some((cell) => {
+                        return cell.is_vertex() && this.positions.has(`${new_position(cell)}`);
+                    });
+
+                    if (!position.eq(this.mode.previous) && !occupied) {
+                        // We'll need to move all of the edges connected to the moved vertices,
+                        // so we keep track of the root vertices in `moved.`
+                        const moved = new Set();
+                        // Move all the selected vertices.
+                        for (const cell of this.mode.selection) {
+                            if (cell.is_vertex()) {
+                                cell.set_position(this, new_position(cell));
+                                moved.add(cell);
+                            }
+                        }
+
+                        // Update the column and row sizes in response to the new positions of the
+                        // vertices.
+                        if (!this.update_col_row_size(...Array.from(moved)
+                            // Undo the transformation performed by `new_position`.
+                            .map((vertex) => vertex.position.sub(position).add(this.mode.previous))
+                        )) {
+                            // If we haven't rerendered the entire canvas due to a resize, then
+                            // rerender the dependencies to make sure we move all of the edges connected
+                            // to cells that have moved.
+                            for (const cell of this.quiver.transitive_dependencies(moved)) {
+                                cell.render(this);
+                            }
+                        }
+
+                        this.mode.previous = position;
+
+                        // Update the panel, so that the interface is kept in sync (e.g. the
+                        // rotation of the label alignment buttons).
+                        this.panel.update(this);
                     }
-                    let repositioned_focus_point = false;
-                    let final_selection = null;
-                    const actions = [];
-                    for (const code of codes) {
-                        const cell = this.codes.get(code);
-                        if (cell !== undefined && this.quiver.contains_cell(cell)) {
-                            switch (mode) {
-                                case "Select":
-                                case "Toggle":
-                                    if (!this.selection.has(cell)) {
-                                        this.select(cell);
-                                    } else {
-                                        this.deselect(cell);
-                                    }
-                                    // Focus on the first vertex that the user typed.
-                                    if (!repositioned_focus_point && cell.is_vertex()) {
-                                        this.reposition_focus_point(cell.position);
-                                        repositioned_focus_point = true;
-                                    }
-                                    break;
-                                case "Source":
-                                case "Target":
-                                    const end = mode.toLowerCase();
-                                    const edges = Array.from(this.selection)
-                                        .filter((cell) => cell.is_edge());
-                                    for (const edge of edges) {
-                                        const source = mode === "Source" ? cell : edge.source;
-                                        const target = mode === "Target" ? cell : edge.target;
-                                        const valid_connection = UIMode.Connect.valid_connection(
-                                            this,
-                                            { source: target, target: source }[end],
-                                            { source, target }[end],
-                                            { end, edge },
-                                        );
-                                        if (valid_connection) {
-                                            actions.push({
-                                                kind: "connect",
-                                                edge,
-                                                end,
-                                                from: edge[end],
-                                                to: cell,
-                                            });
-                                            edge.reconnect(this, source, target);
+                }
+
+                // If the user has currently clicked to place a vertex, or activated keyboard controls,
+                // then don't reposition the focus point until the new vertex has been created:
+                // otherwise we might move the focus point before the vertex has been created and
+                // accidentally place the vertex in the new position of the focus point, rather than
+                // the old one.
+                if (!this.in_mode(UIMode.Connect) && (this.focus_point.class_list.contains("revealed")
+                    || this.focus_point.class_list.contains("focused"))
+                ) {
+                    return;
+                }
+
+                // We permanently change the focus point position if we are dragging to connect an edge,
+                // so that the focus point will be in the location we drag to.
+                this.reposition_focus_point(position, this.in_mode(UIMode.Connect));
+
+                // We want to reveal the focus point if and only if it is
+                // not at the same position as an existing vertex (i.e. over an
+                // empty grid cell).
+                if (this.in_mode(UIMode.Connect)) {
+                    // Prevent dragging from selecting random elements.
+                    event.preventDefault();
+
+                    // We only permit the forgery of vertices, not edges.
+                    if (this.mode.source.is_vertex() && this.mode.target === null) {
+                        this.focus_point.class_list
+                            .toggle("revealed", !this.positions.has(`${position}`));
+                    }
+
+                    // Update the position of the cursor.
+                    const offset = this.offset_from_event(event);
+                    this.mode.update(this, offset);
+                }
+            });
+
+            // Add various keyboard shortcuts.
+
+            this.shortcuts.add([{ key: "Enter", context: Shortcuts.SHORTCUT_PRIORITY.Always }], () => {
+                if (!this.in_mode(UIMode.Modal)) {
+                    if (this.in_mode(UIMode.Command)) {
+                        // Get the list of IDs to select.
+                        const mode = this.mode.mode;
+
+                        const codes = new Set(this.panel.label_input.element.value.split(" "));
+                        if (mode === "Select") {
+                            // Deselect all selected cells.
+                            this.deselect();
+                        }
+                        let repositioned_focus_point = false;
+                        let final_selection = null;
+                        const actions = [];
+                        for (const code of codes) {
+                            const cell = this.codes.get(code);
+                            if (cell !== undefined && this.quiver.contains_cell(cell)) {
+                                switch (mode) {
+                                    case "Select":
+                                    case "Toggle":
+                                        if (!this.selection.has(cell)) {
+                                            this.select(cell);
+                                        } else {
+                                            this.deselect(cell);
                                         }
-                                    }
-                                    break;
-                                case "Create":
-                                    const created = new Set();
-                                    for (const source of this.selection) {
-                                        const valid_connection = UIMode.Connect.valid_connection(
-                                            this,
-                                            source,
-                                            cell,
-                                        );
-                                        if (valid_connection) {
-                                            created.add(
-                                                UIMode.Connect.create_edge(this, source, cell)
+                                        // Focus on the first vertex that the user typed.
+                                        if (!repositioned_focus_point && cell.is_vertex()) {
+                                            this.reposition_focus_point(cell.position);
+                                            repositioned_focus_point = true;
+                                        }
+                                        break;
+                                    case "Source":
+                                    case "Target":
+                                        const end = mode.toLowerCase();
+                                        const edges = Array.from(this.selection)
+                                            .filter((cell) => cell.is_edge());
+                                        for (const edge of edges) {
+                                            const source = mode === "Source" ? cell : edge.source;
+                                            const target = mode === "Target" ? cell : edge.target;
+                                            const valid_connection = UIMode.Connect.valid_connection(
+                                                this,
+                                                { source: target, target: source }[end],
+                                                { source, target }[end],
+                                                { end, edge },
                                             );
+                                            if (valid_connection) {
+                                                actions.push({
+                                                    kind: "connect",
+                                                    edge,
+                                                    end,
+                                                    from: edge[end],
+                                                    to: cell,
+                                                });
+                                                edge.reconnect(this, source, target);
+                                            }
                                         }
-                                    }
-                                    if (created.size > 0) {
-                                        if (final_selection === null) {
-                                            final_selection = new Set();
+                                        break;
+                                    case "Create":
+                                        const created = new Set();
+                                        for (const source of this.selection) {
+                                            const valid_connection = UIMode.Connect.valid_connection(
+                                                this,
+                                                source,
+                                                cell,
+                                            );
+                                            if (valid_connection) {
+                                                created.add(
+                                                    UIMode.Connect.create_edge(this, source, cell)
+                                                );
+                                            }
                                         }
-                                        final_selection = new Set([...final_selection, ...created]);
-                                        actions.push({
-                                            kind: "create",
-                                            cells: created,
-                                        });
-                                    }
-                                    break;
+                                        if (created.size > 0) {
+                                            if (final_selection === null) {
+                                                final_selection = new Set();
+                                            }
+                                            final_selection = new Set([...final_selection, ...created]);
+                                            actions.push({
+                                                kind: "create",
+                                                cells: created,
+                                            });
+                                        }
+                                        break;
+                                }
                             }
                         }
-                    }
-                    if (final_selection !== null) {
-                        this.deselect();
-                        this.select(...final_selection);
-                    }
-                    if (actions.length > 0) {
-                        this.history.add(this, actions);
-                    }
-                    this.switch_mode(UIMode.default);
-                } else {
-                    // Toggle the focus of the label input.
-                    const input = this.panel.label_input.element;
-                    if (document.activeElement !== input) {
-                        if (this.selection.size === 0) {
-                            // If no cells are selected, check whether there is one targeted by the
-                            // keyboard: in this case, select it.
-                            const cell_under_focus_point = this.cell_under_focus_point();
-                            if (cell_under_focus_point !== null) {
-                                this.select(cell_under_focus_point);
-                            }
+                        if (final_selection !== null) {
+                            this.deselect();
+                            this.select(...final_selection);
                         }
+                        if (actions.length > 0) {
+                            this.history.add(this, actions);
+                        }
+                        this.switch_mode(UIMode.default);
+                    } else {
+                        // Toggle the focus of the label input.
+                        const input = this.panel.label_input.element;
+                        if (document.activeElement !== input) {
+                            if (this.selection.size === 0) {
+                                // If no cells are selected, check whether there is one targeted by the
+                                // keyboard: in this case, select it.
+                                const cell_under_focus_point = this.cell_under_focus_point();
+                                if (cell_under_focus_point !== null) {
+                                    this.select(cell_under_focus_point);
+                                }
+                            }
+                            this.panel.defocus_inputs();
+                            if (this.selection.size > 0) {
+                                this.panel.focus_label_input();
+                            }
+                        } else {
+                            // Pressing Enter "confirms" the currently selected queued cells.
+                            this.panel.unqueue_selected(this);
+                            input.blur();
+                        }
+                    }
+                }
+            });
+
+            this.shortcuts.add([
+                // We will mostly ignore the Shift key, apart from selecting queued cells.
+                { key: "Tab", shift: null, context: Shortcuts.SHORTCUT_PRIORITY.Always },
+            ], (event) => {
+                if (!this.in_mode(UIMode.Modal)) {
+                    if (this.in_mode(UIMode.Default)) {
                         this.panel.defocus_inputs();
-                        if (this.selection.size > 0) {
+                        this.cancel_creation();
+                        this.focus_point.class_list.remove("focused", "smooth");
+
+                        // If there are any cells in the queue, we may cycle through them using Tab. To
+                        // cycle through the cells, we find the first cell in the queue after any
+                        // selected cell (queued or not). Holding Shift cycles in reverse order.
+                        const unselected = Array.from(
+                            this.element.query_selector_all(".cell:not(.selected) kbd.queue")
+                        );
+                        if (unselected.length > 0) {
+                            const sign = !event.shiftKey ? 1 : -1;
+                            let select = this.codes.get((
+                                sign > 0 ? unselected[0] : unselected[unselected.length - 1]
+                            ).get_attribute("data-code"));
+
+                            // Check there is a selected cell. If not, we will use the default `select`
+                            // (i.e. the first or last queued cell).
+                            if (this.element.query_selector(".cell.selected kbd") !== null) {
+                                // Find the first selected cell.
+                                const codes = Array.from(this.codes).filter(([, cell]) => {
+                                    // We currently do not flush the `codes`, so we need to make sure
+                                    // we're only considering cells that currently exist (and haven't
+                                    // been deleted).
+                                    return this.quiver.contains_cell(cell);
+                                });
+                                const selected_index = codes.findIndex(([, cell]) => {
+                                    return cell.element.class_list.contains("selected");
+                                });
+                                // Find the first queued cell after the selected cell.
+                                for (
+                                    let i = selected_index + sign;
+                                    i !== selected_index;
+                                    i += sign
+                                ) {
+                                    // When we reach the end (or the start when Shift is pressed), we
+                                    // cycle back to the beginning, so we eventually iterate through the
+                                    // entirety of `code` (which has been cyclically shifted).
+                                    if (i === codes.length) {
+                                        i = 0;
+                                    }
+                                    if (i === -1) {
+                                        i = codes.length - 1;
+                                    }
+                                    const [, cell] = codes[i];
+                                    if (!cell.element.class_list.contains("selected")
+                                        && cell.element.query_selector("kbd.queue") !== null
+                                    ) {
+                                        select = cell;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Deselect all other cells.
+                            this.deselect();
+                            this.select(select);
+                            // Update the panel.
+                            this.panel.update(this);
+                            this.panel.hide_if_unselected(this);
+                            // Display the queue.
+                            this.element.class_list.add("show-queue");
+                            this.toolbar.element.query_selector('.btn[data-name="Show queue"] .name')
+                                .replace("Hide queue");
+                            // Bring up the label input and select the text.
+                            this.panel.focus_label_input();
+                        } else if (document.activeElement === this.panel.label_input.element) {
+                            // After emptying the queue, it is natural to press Tab again to conclude.
+                            // In this case, we do not want to bring up the command interface. Thus,
+                            // when the label input is focused, Tab instead defocuses everything.
+                            this.deselect();
+                            this.panel.update(this);
+                            this.panel.hide_if_unselected(this);
+                        } else if (this.element.query_selector("kbd.queue") !== null) {
+                            // In this case, we have no other cells in the queue to switch to. We simply
+                            // focus the label input if it is not focused, and otherwise do nothing.
                             this.panel.focus_label_input();
                         }
-                    } else {
-                        // Pressing Enter "confirms" the currently selected queued cells.
-                        this.panel.unqueue_selected(this);
-                        input.blur();
-                    }
-                }
-            }
-        });
-
-        this.shortcuts.add([
-            // We will mostly ignore the Shift key, apart from selecting queued cells.
-            { key: "Tab", shift: null, context: Shortcuts.SHORTCUT_PRIORITY.Always },
-        ], (event) => {
-            if (!this.in_mode(UIMode.Modal)) {
-                if (this.in_mode(UIMode.Default)) {
-                    this.panel.defocus_inputs();
-                    this.cancel_creation();
-                    this.focus_point.class_list.remove("focused", "smooth");
-
-                    // If there are any cells in the queue, we may cycle through them using Tab. To
-                    // cycle through the cells, we find the first cell in the queue after any
-                    // selected cell (queued or not). Holding Shift cycles in reverse order.
-                    const unselected = Array.from(
-                        this.element.query_selector_all(".cell:not(.selected) kbd.queue")
-                    );
-                    if (unselected.length > 0) {
-                        const sign = !event.shiftKey ? 1 : -1;
-                        let select = this.codes.get((
-                            sign > 0 ? unselected[0] : unselected[unselected.length - 1]
-                        ).get_attribute("data-code"));
-
-                        // Check there is a selected cell. If not, we will use the default `select`
-                        // (i.e. the first or last queued cell).
-                        if (this.element.query_selector(".cell.selected kbd") !== null) {
-                            // Find the first selected cell.
-                            const codes = Array.from(this.codes).filter(([, cell]) => {
-                                // We currently do not flush the `codes`, so we need to make sure
-                                // we're only considering cells that currently exist (and haven't
-                                // been deleted).
-                                return this.quiver.contains_cell(cell);
-                            });
-                            const selected_index = codes.findIndex(([, cell]) => {
-                                return cell.element.class_list.contains("selected");
-                            });
-                            // Find the first queued cell after the selected cell.
-                            for (
-                                let i = selected_index + sign;
-                                i !== selected_index;
-                                i += sign
-                            ) {
-                                // When we reach the end (or the start when Shift is pressed), we
-                                // cycle back to the beginning, so we eventually iterate through the
-                                // entirety of `code` (which has been cyclically shifted).
-                                if (i === codes.length) {
-                                    i = 0;
-                                }
-                                if (i === -1) {
-                                    i = codes.length - 1;
-                                }
-                                const [, cell] = codes[i];
-                                if (!cell.element.class_list.contains("selected")
-                                    && cell.element.query_selector("kbd.queue") !== null
-                                ) {
-                                    select = cell;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // Deselect all other cells.
-                        this.deselect();
-                        this.select(select);
-                        // Update the panel.
-                        this.panel.update(this);
-                        this.panel.hide_if_unselected(this);
-                        // Display the queue.
-                        this.element.class_list.add("show-queue");
-                        this.toolbar.element.query_selector('.btn[data-name="Show queue"] .name')
-                            .replace("Hide queue");
-                        // Bring up the label input and select the text.
-                        this.panel.focus_label_input();
-                    } else if (document.activeElement === this.panel.label_input.element) {
-                        // After emptying the queue, it is natural to press Tab again to conclude.
-                        // In this case, we do not want to bring up the command interface. Thus,
-                        // when the label input is focused, Tab instead defocuses everything.
-                        this.deselect();
-                        this.panel.update(this);
-                        this.panel.hide_if_unselected(this);
-                    } else if (this.element.query_selector("kbd.queue") !== null) {
-                        // In this case, we have no other cells in the queue to switch to. We simply
-                        // focus the label input if it is not focused, and otherwise do nothing.
-                        this.panel.focus_label_input();
-                    }
-                } else {
-                    this.switch_mode(UIMode.default);
-                }
-            }
-        });
-
-        this.shortcuts.add([
-            { key: ",", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
-            { key: ".", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
-            { key: "/", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
-            { key: ";", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
-            { key: "'", context: Shortcuts.SHORTCUT_PRIORITY.Defer }
-        ], (event) => {
-            if (this.in_mode(UIMode.Default) || this.in_mode(UIMode.Command)) {
-                if (
-                    this.selection_contains_edge()
-                        || this.selection.size > 0 && event.key === "/"
-                        || event.key === ";"
-                        || event.key === "'"
-                ) {
-                    const mode = {
-                        ";": "Select",
-                        "'": "Toggle",
-                        ",": "Source",
-                        ".": "Target",
-                        "/": "Create",
-                    }[event.key];
-                    if (this.in_mode(UIMode.Default)) {
-                        // We use `Defer` instead of `Conservative` so that we can switch modes by
-                        // pressing the various command keys (when the input will be focused), but
-                        // when we are in the default mode, we don't want to trigger command mode
-                        // if we are editing any input.
-                        if (!this.input_is_active()) {
-                            this.panel.defocus_inputs();
-                            // We won't actually be creating anything, but the focus point might be
-                            // visible, in which case the following will hide it.
-                            this.cancel_creation();
-                            this.focus_point.class_list.remove("focused", "smooth");
-                            this.switch_mode(new UIMode.Command(this, mode));
-                        }
-                    } else if (this.mode.mode !== mode) {
-                        this.mode.switch_mode(this, mode);
                     } else {
                         this.switch_mode(UIMode.default);
                     }
                 }
-            }
-        });
+            });
 
-        this.shortcuts.add([
-            { key: "Escape", shift: null, context: Shortcuts.SHORTCUT_PRIORITY.Always }
-        ], () => {
-            // In the following, we return if we perform any successful action. This means Escape
-            // will do at most one thing, and the user may press Escape repeatedly if necessary.
-
-            // If an error banner is visible, the first thing Escape will do is dismiss the banner.
-            if (UI.dismiss_error()) {
-                return;
-            }
-
-            // Close any open panes.
-            if (this.panel.dismiss_export_pane(this)) {
-                return;
-            }
-
-            const unhidden_pane = this.element.query_selector(".pane:not(.hidden)");
-            if (unhidden_pane !== null) {
-                unhidden_pane.class_list.add("hidden");
-                this.element.query_selector(".version").class_list.add("hidden");
-                return;
-            }
-
-            if (this.in_mode(UIMode.KeyMove)) {
-                this.switch_mode(UIMode.default);
-                return;
-            }
-
-            if (this.cancel_creation()) {
-                return;
-            }
-
-            // Defocus the label input. This works both in normal mode and in command mode.
-            const input = this.input_is_active();
-            if (input) {
-                input.blur();
-                return;
-            }
-
-            // Defocus any sliders.
-            const focused_elements = this.panel.element.query_selector_all(".focused");
-            if (focused_elements.length > 0) {
-                this.panel.defocus_inputs();
-                return;
-            }
-
-            // Close the colour picker.
-            if (!this.colour_picker.element.class_list.contains("hidden")) {
-                this.colour_picker.close();
-                return;
-            }
-
-            // Defocus selected cells.
-            if (this.element.query_selector(".cell.selected")) {
-                this.deselect();
-                this.panel.hide(this);
-                this.panel.label_input.parent.class_list.add("hidden");
-                this.colour_picker.close();
-                return;
-            }
-
-            if (this.focus_point.class_list.contains("focused")) {
-                this.focus_point.class_list.remove("focused", "smooth");
-                this.toolbar.update(this);
-                return;
-            }
-
-            // Unqueue queued cells.
-            if (this.element.class_list.contains("show-queue")) {
-                for (const element of this.element.query_selector_all("kbd.queue")) {
-                    element.class_list.remove("queue");
-                }
-            }
-        });
-
-        // Holding Option or Control triggers panning mode (and releasing ends panning mode).
-        this.shortcuts.add([
-            { key: "Alt", context: Shortcuts.SHORTCUT_PRIORITY.Always },
-            { key: "Control", context: Shortcuts.SHORTCUT_PRIORITY.Always },
-        ], (event) => {
-            if (this.in_mode(UIMode.Default)) {
-                this.switch_mode(new UIMode.Pan(event.key));
-            }
-        }, null, (event) => {
-            if (this.in_mode(UIMode.Pan) && this.mode.key === event.key) {
-                this.switch_mode(UIMode.default);
-            }
-        });
-
-        // "B" for "Bring".
-        this.shortcuts.add([{ key: "B" }], () => {
-            if (this.in_mode(UIMode.Default)) {
-                let selection_contains_vertex = this.selection_contains_vertex();
-                const cell_under_focus_point = this.cell_under_focus_point();
-                if (!selection_contains_vertex && cell_under_focus_point !== null) {
-                    this.select(cell_under_focus_point);
-                    selection_contains_vertex = true;
-                }
-                if (selection_contains_vertex) {
-                    this.switch_mode(new UIMode.KeyMove(this));
-                }
-            } else if (this.in_mode(UIMode.KeyMove)) {
-                this.switch_mode(UIMode.default);
-            }
-        });
-
-        // "S" for "Select".
-        this.shortcuts.add([{ key: "S" }], () => {
-            if (this.in_mode(UIMode.Default)) {
-                if (this.focus_point.class_list.contains("focused")) {
-                    const cell_under_focus_point = this.cell_under_focus_point();
-                    if (cell_under_focus_point !== null) {
-                        if (!this.selection.has(cell_under_focus_point)) {
-                            this.select(cell_under_focus_point);
+            this.shortcuts.add([
+                { key: ",", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
+                { key: ".", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
+                { key: "/", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
+                { key: ";", context: Shortcuts.SHORTCUT_PRIORITY.Defer },
+                { key: "'", context: Shortcuts.SHORTCUT_PRIORITY.Defer }
+            ], (event) => {
+                if (this.in_mode(UIMode.Default) || this.in_mode(UIMode.Command)) {
+                    if (
+                        this.selection_contains_edge()
+                            || this.selection.size > 0 && event.key === "/"
+                            || event.key === ";"
+                            || event.key === "'"
+                    ) {
+                        const mode = {
+                            ";": "Select",
+                            "'": "Toggle",
+                            ",": "Source",
+                            ".": "Target",
+                            "/": "Create",
+                        }[event.key];
+                        if (this.in_mode(UIMode.Default)) {
+                            // We use `Defer` instead of `Conservative` so that we can switch modes by
+                            // pressing the various command keys (when the input will be focused), but
+                            // when we are in the default mode, we don't want to trigger command mode
+                            // if we are editing any input.
+                            if (!this.input_is_active()) {
+                                this.panel.defocus_inputs();
+                                // We won't actually be creating anything, but the focus point might be
+                                // visible, in which case the following will hide it.
+                                this.cancel_creation();
+                                this.focus_point.class_list.remove("focused", "smooth");
+                                this.switch_mode(new UIMode.Command(this, mode));
+                            }
+                        } else if (this.mode.mode !== mode) {
+                            this.mode.switch_mode(this, mode);
                         } else {
-                            this.deselect(cell_under_focus_point);
-                            this.panel.hide_if_unselected(this);
+                            this.switch_mode(UIMode.default);
                         }
                     }
                 }
-            }
-        });
+            });
 
-        // Space bar.
-        this.shortcuts.add([{ key: " ", shift: null, modifier: null }], (event) => {
-            if (this.in_mode(UIMode.Default)) {
+            this.shortcuts.add([
+                { key: "Escape", shift: null, context: Shortcuts.SHORTCUT_PRIORITY.Always }
+            ], () => {
+                // In the following, we return if we perform any successful action. This means Escape
+                // will do at most one thing, and the user may press Escape repeatedly if necessary.
+
+                // If an error banner is visible, the first thing Escape will do is dismiss the banner.
+                if (UI.dismiss_error()) {
+                    return;
+                }
+
+                // Close any open panes.
+                if (this.panel.dismiss_export_pane(this)) {
+                    return;
+                }
+
+                const unhidden_pane = this.element.query_selector(".pane:not(.hidden)");
+                if (unhidden_pane !== null && unhidden_pane.id != "lower-control-pane")
+                {
+                    unhidden_pane.class_list.add("hidden");
+                    this.element.query_selector(".version").class_list.add("hidden");
+                    return;
+                }
+
+                if (this.in_mode(UIMode.KeyMove)) {
+                    this.switch_mode(UIMode.default);
+                    return;
+                }
+
+                if (this.cancel_creation()) {
+                    return;
+                }
+
+                // Defocus the label input. This works both in normal mode and in command mode.
+                const input = this.input_is_active();
+                if (input) {
+                    input.blur();
+                    return;
+                }
+
+                // Defocus any sliders.
+                const focused_elements = this.panel.element.query_selector_all(".focused");
+                if (focused_elements.length > 0) {
+                    this.panel.defocus_inputs();
+                    return;
+                }
+
+                // Close the colour picker.
+                if (!this.colour_picker.element.class_list.contains("hidden")) {
+                    this.colour_picker.close();
+                    return;
+                }
+
+                // Defocus selected cells.
+                if (this.element.query_selector(".cell.selected")) {
+                    this.deselect();
+                    this.panel.hide(this);
+                    this.panel.label_input.parent.class_list.add("hidden");
+                    this.colour_picker.close();
+                    return;
+                }
+
                 if (this.focus_point.class_list.contains("focused")) {
-                    const selected = Array.from(this.codes)
-                        .filter(([, cell]) => cell.is_vertex() && this.selection.has(cell));
-                    if (!this.positions.has(`${this.focus_position}`)) {
-                        const target = create_vertex_at_focus_point(event);
-                        // Connect any selected vertices to the target.
-                        const edges = selected.map(([, source]) => {
-                            return UIMode.Connect.create_edge(this, source, target);
-                        });
-                        insert_codes_before(target, ...edges);
-                        const actions = [{
-                            kind: "create",
-                            cells: new Set([target, ...edges]),
-                        }];
-                        this.history.add(
-                            this,
-                            actions,
-                        );
+                    this.focus_point.class_list.remove("focused", "smooth");
+                    this.toolbar.update(this);
+                    return;
+                }
+
+                // Unqueue queued cells.
+                if (this.element.class_list.contains("show-queue")) {
+                    for (const element of this.element.query_selector_all("kbd.queue")) {
+                        element.class_list.remove("queue");
+                    }
+                }
+            });
+
+            // Holding Option or Control triggers panning mode (and releasing ends panning mode).
+            this.shortcuts.add([
+                { key: "Alt", context: Shortcuts.SHORTCUT_PRIORITY.Always },
+                { key: "Control", context: Shortcuts.SHORTCUT_PRIORITY.Always },
+            ], (event) => {
+                if (this.in_mode(UIMode.Default)) {
+                    this.switch_mode(new UIMode.Pan(event.key));
+                }
+            }, null, (event) => {
+                if (this.in_mode(UIMode.Pan) && this.mode.key === event.key) {
+                    this.switch_mode(UIMode.default);
+                }
+            });
+
+            // "B" for "Bring".
+            this.shortcuts.add([{ key: "B" }], () => {
+                if (this.in_mode(UIMode.Default)) {
+                    let selection_contains_vertex = this.selection_contains_vertex();
+                    const cell_under_focus_point = this.cell_under_focus_point();
+                    if (!selection_contains_vertex && cell_under_focus_point !== null) {
+                        this.select(cell_under_focus_point);
+                        selection_contains_vertex = true;
+                    }
+                    if (selection_contains_vertex) {
+                        this.switch_mode(new UIMode.KeyMove(this));
+                    }
+                } else if (this.in_mode(UIMode.KeyMove)) {
+                    this.switch_mode(UIMode.default);
+                }
+            });
+
+            // "S" for "Select".
+            this.shortcuts.add([{ key: "S" }], () => {
+                if (this.in_mode(UIMode.Default)) {
+                    if (this.focus_point.class_list.contains("focused")) {
+                        const cell_under_focus_point = this.cell_under_focus_point();
+                        if (cell_under_focus_point !== null) {
+                            if (!this.selection.has(cell_under_focus_point)) {
+                                this.select(cell_under_focus_point);
+                            } else {
+                                this.deselect(cell_under_focus_point);
+                                this.panel.hide_if_unselected(this);
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Space bar.
+            this.shortcuts.add([{ key: " ", shift: null, modifier: null }], (event) => {
+                if (this.in_mode(UIMode.Default)) {
+                    if (this.focus_point.class_list.contains("focused")) {
+                        const selected = Array.from(this.codes)
+                            .filter(([, cell]) => cell.is_vertex() && this.selection.has(cell));
+                        if (!this.positions.has(`${this.focus_position}`)) {
+                            const target = this.create_vertex_at_focus_point(event);
+                            // Connect any selected vertices to the target.
+                            const edges = selected.map(([, source]) => {
+                                return UIMode.Connect.create_edge(this, source, target);
+                            });
+                            insert_codes_before(target, ...edges);
+                            const actions = [{
+                                kind: "create",
+                                cells: new Set([target, ...edges]),
+                            }];
+                            this.history.add(
+                                this,
+                                actions,
+                            );
+                        } else {
+                            const target = this.positions.get(`${this.focus_position}`);
+                            selected.forEach(([, source]) => {
+                                // The `target` vertex already exists, so it may already be selected.
+                                // In this case, we do not want to try to connect it to itself.
+                                if (source !== target) {
+                                    const edge = UIMode.Connect.create_edge(this, source, target);
+                                    this.history.add(
+                                        this,
+                                        [{
+                                            kind: "create",
+                                            cells: new Set([edge]),
+                                        }],
+                                    );
+                                }
+                            });
+                            if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                                this.deselect();
+                            }
+                            this.select(target);
+                        }
                     } else {
-                        const target = this.positions.get(`${this.focus_position}`);
-                        selected.forEach(([, source]) => {
-                            // The `target` vertex already exists, so it may already be selected.
-                            // In this case, we do not want to try to connect it to itself.
-                            if (source !== target) {
-                                const edge = UIMode.Connect.create_edge(this, source, target);
-                                this.history.add(
-                                    this,
-                                    [{
-                                        kind: "create",
-                                        cells: new Set([edge]),
-                                    }],
-                                );
-                            }
-                        });
-                        if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                            this.deselect();
-                        }
-                        this.select(target);
+                        // Move the focus point back to where it was the last time it was moved using
+                        // the keyboard (or the user clicked somewhere on the canvas).
+                        this.reposition_focus_point(this.focus_position);
+                        this.focus_point.class_list.remove("revealed", "pending", "active");
+                        this.focus_point.class_list.add("focused");
+                        this.toolbar.update(this);
+                        delay(() => this.focus_point.class_list.add("smooth"));
                     }
-                } else {
-                    // Move the focus point back to where it was the last time it was moved using
-                    // the keyboard (or the user clicked somewhere on the canvas).
-                    this.reposition_focus_point(this.focus_position);
-                    this.focus_point.class_list.remove("revealed", "pending", "active");
-                    this.focus_point.class_list.add("focused");
-                    this.toolbar.update(this);
-                    delay(() => this.focus_point.class_list.add("smooth"));
                 }
-            }
-        });
+            });
 
-        // Use the arrow keys for moving vertices around, as well as changing slider values via the
-        // keyboard.
-        this.shortcuts.add([
-            { key: "ArrowLeft", shift: null },
-            { key: "ArrowDown", shift: null },
-            { key: "ArrowRight", shift: null },
-            { key: "ArrowUp", shift: null },
-        ], (event) => {
-            let delta = 0;
-            if (event.key === "ArrowLeft") {
-                --delta;
-            }
-            if (event.key === "ArrowRight") {
-                ++delta;
-            }
-            if (this.panel.modify_sliders(delta)) {
-                // If there were any focused sliders, don't move selected vertices.
-                return;
-            }
+            // Use the arrow keys for moving vertices around, as well as changing slider values via the
+            // keyboard.
+            this.shortcuts.add([
+                { key: "ArrowLeft", shift: null },
+                { key: "ArrowDown", shift: null },
+                { key: "ArrowRight", shift: null },
+                { key: "ArrowUp", shift: null },
+            ], (event) => {
+                let delta = 0;
+                if (event.key === "ArrowLeft") {
+                    --delta;
+                }
+                if (event.key === "ArrowRight") {
+                    ++delta;
+                }
+                if (this.panel.modify_sliders(delta)) {
+                    // If there were any focused sliders, don't move selected vertices.
+                    return;
+                }
 
-            let position_delta;
-            switch (event.key) {
-                case "ArrowLeft":
-                    position_delta = new Position(-1, 0);
-                    break;
-                case "ArrowDown":
-                    position_delta = new Position(0, 1);
-                    break;
-                case "ArrowRight":
-                    position_delta = new Position(1, 0);
-                    break;
-                case "ArrowUp":
-                    position_delta = new Position(0, -1);
-                    break;
-            }
+                let position_delta;
+                switch (event.key) {
+                    case "ArrowLeft":
+                        position_delta = new Position(-1, 0);
+                        break;
+                    case "ArrowDown":
+                        position_delta = new Position(0, 1);
+                        break;
+                    case "ArrowRight":
+                        position_delta = new Position(1, 0);
+                        break;
+                    case "ArrowUp":
+                        position_delta = new Position(0, -1);
+                        break;
+                }
 
-            if (this.in_mode(UIMode.Default)) {
-                // Reveal the focus point if it wasn't already visible.
-                if (!this.focus_point.class_list.contains("focused")) {
-                    this.focus_point.class_list.remove("revealed", "pending", "active");
-                    this.focus_point.class_list.add("focused");
-                    this.toolbar.update(this);
-                    // We first reposition to the correct location, then add the delta after adding
-                    // the `smooth` class (directly below), so that it animates to the new position.
-                    this.reposition_focus_point(this.focus_position);
-                    delay(() => {
-                        this.focus_point.class_list.add("smooth");
+                if (this.in_mode(UIMode.Default)) {
+                    // Reveal the focus point if it wasn't already visible.
+                    if (!this.focus_point.class_list.contains("focused")) {
+                        this.focus_point.class_list.remove("revealed", "pending", "active");
+                        this.focus_point.class_list.add("focused");
+                        this.toolbar.update(this);
+                        // We first reposition to the correct location, then add the delta after adding
+                        // the `smooth` class (directly below), so that it animates to the new position.
+                        this.reposition_focus_point(this.focus_position);
+                        delay(() => {
+                            this.focus_point.class_list.add("smooth");
+                            this.reposition_focus_point(this.focus_position.add(position_delta));
+                        });
+                    } else {
                         this.reposition_focus_point(this.focus_position.add(position_delta));
-                    });
-                } else {
-                    this.reposition_focus_point(this.focus_position.add(position_delta));
-                }
+                    }
 
-                this.update_focus_tooltip();
+                    this.update_focus_tooltip();
 
-                // Reposition the view if the focus point is not complete in-view.
-                const offset = this.offset_from_position(this.focus_position);
-                const width = this.cell_size(this.cell_width, this.focus_position.x);
-                const height = this.cell_size(this.cell_height, this.focus_position.y);
-                const view = new Dimensions(
-                    document.body.offsetWidth / 2 ** this.scale,
-                    document.body.offsetHeight / 2 ** this.scale,
-                ).sub(Dimensions.diag(CONSTANTS.VIEW_PADDING * 2));
-                const pan = Offset.zero();
-                // We only adjust in the direction of movement, to avoid issues with edge cases,
-                // e.g. where the height of the screen is too small, which can cause panning
-                // vertically back and forth with each key press.
-                if (position_delta.x !== 0) {
-                    // Left.
-                    pan.x += Math.min(offset.x - (this.view.x - view.width / 2), 0);
-                    // Right.
-                    pan.x += Math.max(offset.x + width - (this.view.x + view.width / 2), 0);
-                }
-                if (position_delta.y !== 0) {
-                    // Top.
-                    pan.y += Math.min(offset.y - (this.view.y - view.height / 2), 0);
-                    // Bottom.
-                    pan.y += Math.max(offset.y + height - (this.view.y + view.height / 2), 0);
-                }
+                    // Reposition the view if the focus point is not complete in-view.
+                    const offset = this.offset_from_position(this.focus_position);
+                    const width = this.cell_size(this.cell_width, this.focus_position.x);
+                    const height = this.cell_size(this.cell_height, this.focus_position.y);
+                    const view = new Dimensions(
+                        document.body.offsetWidth / 2 ** this.scale,
+                        document.body.offsetHeight / 2 ** this.scale,
+                    ).sub(Dimensions.diag(CONSTANTS.VIEW_PADDING * 2));
+                    const pan = Offset.zero();
+                    // We only adjust in the direction of movement, to avoid issues with edge cases,
+                    // e.g. where the height of the screen is too small, which can cause panning
+                    // vertically back and forth with each key press.
+                    if (position_delta.x !== 0) {
+                        // Left.
+                        pan.x += Math.min(offset.x - (this.view.x - view.width / 2), 0);
+                        // Right.
+                        pan.x += Math.max(offset.x + width - (this.view.x + view.width / 2), 0);
+                    }
+                    if (position_delta.y !== 0) {
+                        // Top.
+                        pan.y += Math.min(offset.y - (this.view.y - view.height / 2), 0);
+                        // Bottom.
+                        pan.y += Math.max(offset.y + height - (this.view.y + view.height / 2), 0);
+                    }
 
-                const start = performance.now();
-                const view_origin = new Offset(this.view.x, this.view.y);
-                // We want to transition the view smoothly. We can animate the offset with CSS, but
-                // the grid is drawn using a <canvas> and so must be updated manually.
-                const partial_pan = () => {
-                    requestAnimationFrame(() => {
-                        // The panning animation lasts for 0.1 seconds.
-                        const x
-                            = Math.max(Math.min((performance.now() - start) / (1000 * 0.1), 1), 0);
-                        // The definition of the `ease` transition duration in CSS, which is the
-                        // default transition and the one we use.
-                        const ease = new CubicBezier(
-                            Point.zero(),
-                            new Point(0.25, 0.1),
-                            new Point(0.25, 1.0),
-                            Point.diag(1),
-                        );
+                    const start = performance.now();
+                    const view_origin = new Offset(this.view.x, this.view.y);
+                    // We want to transition the view smoothly. We can animate the offset with CSS, but
+                    // the grid is drawn using a <canvas> and so must be updated manually.
+                    const partial_pan = () => {
+                        requestAnimationFrame(() => {
+                            // The panning animation lasts for 0.1 seconds.
+                            const x
+                                = Math.max(Math.min((performance.now() - start) / (1000 * 0.1), 1), 0);
+                            // The definition of the `ease` transition duration in CSS, which is the
+                            // default transition and the one we use.
+                            const ease = new CubicBezier(
+                                Point.zero(),
+                                new Point(0.25, 0.1),
+                                new Point(0.25, 1.0),
+                                Point.diag(1),
+                            );
 
-                        // Do a binary search to find the value of `t` corresponding to the x
-                        // co-ordinate `x`. The value of `p.y` thereat is the distance through the
-                        // animation.
-                        let p;
-                        let [min, max] = [ease.point(0), ease.point(1)];
+                            // Do a binary search to find the value of `t` corresponding to the x
+                            // co-ordinate `x`. The value of `p.y` thereat is the distance through the
+                            // animation.
+                            let p;
+                            let [min, max] = [ease.point(0), ease.point(1)];
 
-                        if (x === 0) {
-                            p = min;
-                        } else if (x === 1) {
-                            p = max;
-                        } else if (x > 0 && x < 1) {
-                            const EPSILON = 0.01;
-                            const BAIL_OUT = 128;
-                            let i = 0;
-                            while (true) {
-                                p = ease.point((max.t + min.t) / 2);
-                                if (p.x === x || max.t - min.t <= EPSILON || ++i >= BAIL_OUT) {
-                                    break;
-                                }
-                                if (x > p.x) {
-                                    min = p;
-                                }
-                                if (x < p.x) {
-                                    max = p;
+                            if (x === 0) {
+                                p = min;
+                            } else if (x === 1) {
+                                p = max;
+                            } else if (x > 0 && x < 1) {
+                                const EPSILON = 0.01;
+                                const BAIL_OUT = 128;
+                                let i = 0;
+                                while (true) {
+                                    p = ease.point((max.t + min.t) / 2);
+                                    if (p.x === x || max.t - min.t <= EPSILON || ++i >= BAIL_OUT) {
+                                        break;
+                                    }
+                                    if (x > p.x) {
+                                        min = p;
+                                    }
+                                    if (x < p.x) {
+                                        max = p;
+                                    }
                                 }
                             }
-                        }
 
-                        this.pan_to(view_origin.add(pan.mul(p.y)));
-                        if (x < 1) {
-                            partial_pan();
-                        }
-                    })
-                };
-                partial_pan();
-            }
+                            this.pan_to(view_origin.add(pan.mul(p.y)));
+                            if (x < 1) {
+                                partial_pan();
+                            }
+                        })
+                    };
+                    partial_pan();
+                }
 
-            if (this.in_mode(UIMode.KeyMove)) {
-                // Move vertices around.
-                const vertices = Array.from(this.selection).filter((cell) => cell.is_vertex());
-                if (vertices.length > 0) {
-                    // Find the first available space for all selected vertices, in the direction of
-                    // the key press.
-                    // We are guaranteed to eventually satisfy `all_new_positions_free`, because
-                    // diagrams are finite.
-                    for (let distance = 1;; ++distance) {
-                        for (const vertex of vertices) {
-                            this.positions.delete(`${vertex.position}`);
-                        }
-                        const all_new_positions_free = vertices.every((vertex) => {
-                            return !this.positions.has(`${
-                                vertex.position.add(position_delta.mul(distance))
-                            }`);
-                        });
-                        for (const vertex of vertices) {
-                            this.positions.set(`${vertex.position}`, vertex);
-                        }
-                        if (all_new_positions_free) {
-                            this.history.add(this, [{
-                                kind: "move",
-                                displacements: vertices.map((vertex) => ({
-                                    vertex,
-                                    from: vertex.position,
-                                    to: vertex.position.add(position_delta.mul(distance)),
-                                })),
-                            }], true);
-                            break;
+                if (this.in_mode(UIMode.KeyMove)) {
+                    // Move vertices around.
+                    const vertices = Array.from(this.selection).filter((cell) => cell.is_vertex());
+                    if (vertices.length > 0) {
+                        // Find the first available space for all selected vertices, in the direction of
+                        // the key press.
+                        // We are guaranteed to eventually satisfy `all_new_positions_free`, because
+                        // diagrams are finite.
+                        for (let distance = 1;; ++distance) {
+                            for (const vertex of vertices) {
+                                this.positions.delete(`${vertex.position}`);
+                            }
+                            const all_new_positions_free = vertices.every((vertex) => {
+                                return !this.positions.has(`${
+                                    vertex.position.add(position_delta.mul(distance))
+                                }`);
+                            });
+                            for (const vertex of vertices) {
+                                this.positions.set(`${vertex.position}`, vertex);
+                            }
+                            if (all_new_positions_free) {
+                                this.history.add(this, [{
+                                    kind: "move",
+                                    displacements: vertices.map((vertex) => ({
+                                        vertex,
+                                        from: vertex.position,
+                                        to: vertex.position.add(position_delta.mul(distance)),
+                                    })),
+                                }], true);
+                                break;
+                            }
                         }
                     }
                 }
-            }
-        });
-
-        // Centre the cell at (0, 0) in the view, which looks prettier.
-        this.pan_view(Offset.diag(this.default_cell_size / 2));
+            });
+            // Centre the cell at (0, 0) in the view, which looks prettier.
+            this.pan_view(Offset.diag(this.default_cell_size / 2));
+        }
     }
 
     /// Returns whether the UI is in a particular mode.
@@ -2166,7 +2169,8 @@ class UI {
                 }
             }
             this.mode = mode;
-            this.toolbar.update(this);
+            if (window.quiver_edit_mode)
+                this.toolbar.update(this);
             if (this.mode.name !== null) {
                 this.element.class_list.add(this.mode.name);
             }
@@ -5362,7 +5366,7 @@ class Toolbar {
 
         // Add all of the toolbar buttons.
 
-        if (quiver_edit_mode) {
+        if (window.quiver_edit_mode) {
             // "Saving" updates the URL to reflect the current diagram.
             //add_action(
                 //"Save",
@@ -5431,11 +5435,11 @@ class Toolbar {
                 () => {
                     // If the focus point is focused, we centre on it; otherwise we centre on the
                     // selection, or the entire quiver if no cells are selected.
-                    if (ui.element.query_selector(".focus-point.focused")) {
-                        ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
-                    } else {
+                    // if (ui.element.query_selector(".focus-point.focused")) {
+                    //     ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
+                    // } else {
                         ui.centre_view();
-                    }
+                    // }
                 },
             );
 
@@ -5959,11 +5963,11 @@ class Cell {
         const content_element = this.content_element;
 
         // Set the label colour.
-        if (this.label_colour.is_not_black()) {
-            this.element.query_selector(".label").set_style({
-                color: this.label_colour.css(),
-            });
-        }
+        // if (this.label_colour.is_not_black()) {
+        this.element.query_selector(".label").set_style({
+            color: this.label_colour.css(),
+        });
+        // }
 
         // For cells with a separate `content_element`, we allow the cell to be moved
         // by dragging its `element` (under the assumption it doesn't totally overlap

@@ -205,7 +205,9 @@ class Colour extends Encodable {
     }
 
     static black() {
-        return new Colour(0, 0, 0);
+        const colour = new Colour(0, 0, 0);
+        // alert(JSON.stringify(colour.rgba()));
+        return colour;
     }
 
     /// Returns a standard colour name associated to the `[h, s, l, a]` value, or `null` if none

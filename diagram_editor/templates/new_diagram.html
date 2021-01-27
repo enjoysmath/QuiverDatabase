@@ -2,8 +2,6 @@
 
 {% extends "base_generic.html" %}
 
-{{ csrf_token }} <!-- BUGFIX. it doesn't work without this -->
-
 {% block add_scripts %}
     <script type="text/javascript">
         $.fn.editable.defaults.mode = 'inline';

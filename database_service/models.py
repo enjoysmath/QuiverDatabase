@@ -59,7 +59,7 @@ class Morphism(StructuredRel):
     body_style = IntegerProperty(choices=BODY_STYLE, default=0)
     
     color_hue = IntegerProperty(default=0)
-    color_sat = IntegerProperty(default=100)   # BUGFIX: default (black) is 0,100,0 in hsl, not 0,0,0
+    color_sat = IntegerProperty(default=0)   # BUGFIX: default (black) is 0,0,0 in hsl, not 0,100,0
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0)
     
@@ -108,7 +108,7 @@ class Morphism(StructuredRel):
             elif 'colour' in options:
                 color = options['colour']
             else:
-                color = [0, 100, 0, 1.0]  # BUGFIX: black is hsl: 0,100,0 not 0,0,0
+                color = [0, 0, 0, 1.0]  # BUGFIX: black is hsl:  0,0,0 not 0,100,0
                 
             self.color_hue = color[0]
             self.color_sat = color[1]
@@ -145,7 +145,8 @@ class Morphism(StructuredRel):
                 'body': {
                     'name' : self.BODY_STYLE[self.body_style],
                 }                    
-            }
+            },
+            'colour' : [self.color_hue, self.color_sat, self.color_lum, self.color_alph],
         }
         format.append(options)
         format.append([self.color_hue, self.color_sat, self.color_lum, self.color_alph])

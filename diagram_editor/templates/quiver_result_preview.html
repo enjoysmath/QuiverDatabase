@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+{% extends 'base_generic.html' %}
+
+{% load static %}
+
+{% block metas %}
+    <meta charset="utf-8">
+    <!-- Prevent zooming on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+{% endblock %}
+
+    <!-- Preload images that we want to display immediately. -->
+{% block scripts %}
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript">
+         
+    window.quiver_edit_mode = false;
+        
+    $(document).ready(function()
+    {
+        fetch("{% url 'load_diagram' diagram.uid %}", 
+        {
+            headers: {
+                'Accept': 'text/plain; charset=utf8',
+                'X-Requested-With': 'XMLHttpRequest',   //Necessary to work with request.is_ajax()
+            }
+        })
+        .then(response => {
+            return response.text(); 
+        })
+        .then(text => {
+            <!--alert(text);-->
+            window.ui.load_json_str_from_database(text);
+            window.ui.centre_view(); 
+        });
+    });
+                     
+    </script>
+    <script type="text/javascript" src="{% static 'js/ds.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/dom.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/quiver.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/bezier.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/arrow.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ui.js' %}"></script>
+{% endblock %}
+
+{% block tagline %} {% endblock %}
+
+{% block header %} 
+{% endblock %}
+
+
+{% block body_scripts %}
+    <noscript>JavaScript must be enabled to use quiver.</noscript>
+    <script>
+        // If we are loading a diagram, display a loading screen to prevent a flash of empty canvas.
+        // We do this in a `<script>` tag here to make sure that it loads immediately.
+        const query_data = query_parameters();
+        if (query_data.has("q")) {
+            // Prevent keyboard events effected during loading from taking place after loading
+            // has completed.
+            document.addEventListener("keydown", cancel);
+            document.addEventListener("keyup", cancel);
+
+            const loading_screen = new DOM.Div({ class: "loading-screen" })
+                .add(new DOM.Element("img", { src: "{% static 'quiver-blue.svg' %}", class: "logo", as: "image"}))
+                .add(new DOM.Element("span").add("Loading diagram..."))
+                // Prevent pointer events effected during loading from taking place after loading
+                // has completed.
+                .listen(pointer_event("down"), cancel)
+                .listen(pointer_event("move"), cancel)
+                .listen(pointer_event("up"), cancel)
+                .listen("wheel", cancel, { passive: true });
+            document.body.appendChild(loading_screen.element);
+        }
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
