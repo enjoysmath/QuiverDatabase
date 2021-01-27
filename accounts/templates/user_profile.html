@@ -22,15 +22,12 @@
                      {% endif %}
                     </div>
                     <div class="tab-pane" id="profile-tab2">
+                    {{ diagrams }}
+                    
                     {% if diagrams %}
-                        <h2>Opened Diagrams:</h2>
-                        {% for diagram in diagrams %}
-                            <h1>diagram.name</h1>
-                            <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                                src="{% url 'diagram_editor' diagram_id=diagram.uid %}"
-                                style="border: 0; width:100%; height:300px;"></iframe>
-                            <h2>{{ diagram.details }}</h2>
-                        {% endfor %}
+                        <a href="{% url 'list_open_diagrams' %}" class="btn btn-success" type="button">
+                            Opened Diagrams
+                        </a>
                     {% endif %}
                     <a href="{% url 'create_new_diagram' %}" class="btn btn-success" type="button">
                         Create Diagram

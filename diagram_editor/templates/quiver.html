@@ -48,45 +48,70 @@
     $.fn.editable.defaults.mode = 'inline';
     setup_ajax_csrf_token('{{ csrf_token }}'); 
     
-    setup_edit_tag_setter_urls(
-        [{ 
-            'tag_id' : '#category-name-edit',
-            'setter' : "{% url 'set_model_name' Model='Category' %}",
-            'pk' : "{{ category_id }}",
-            'initial' : "{{ category_name }}",
-            'enable_ids' : [],
-        },
-        {
-            'tag_id' : '#diagram-name-edit',
-            'setter' : "{% url 'set_model_name' Model='Diagram' %}",
-            'pk' : "{{ diagram_id }}",
-            'initial' : "{{ diagram_name }}",
-            'enable_ids' : [],
-        }]); 
-        
-    function save_diagram_to_database(json_str) 
+    {% if 'view_only' in context %}
+        const quiver_edit_mode = ! {{ view_only }};
+    {% else %}
+        const quiver_edit_mode = true;
+    {% endif %}
+    
+    if (quiver_edit_mode){
+        setup_edit_tag_setter_urls(
+            [{ 
+                'tag_id' : '#category-name-edit',
+                'setter' : "{% url 'set_model_name' Model='Category' %}",
+                'pk' : "{{ category_id }}",
+                'initial' : "{{ category_name }}",
+                'enable_ids' : [],
+            },
+            {
+                'tag_id' : '#diagram-name-edit',
+                'setter' : "{% url 'set_model_name' Model='Diagram' %}",
+                'pk' : "{{ diagram_id }}",
+                'initial' : "{{ diagram_name }}",
+                'enable_ids' : [],
+            }]); 
+            
+        function save_diagram_to_database(json_str) 
+        {               
+            fetch("{% url 'save_diagram' diagram_id %}", 
+            {
+                headers: {
+                'X-CSRFToken': "{{ csrf_token }}",
+                "x-Requested-With": "XMLHttpRequest",
+                "Content-Type": "application/json; charset=utf-8",
+            },
+            method: 'POST',
+            body: json_str,
+            mode: 'same-origin',
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Success: " + JSON.stringify(data));
+            })
+            .catch(error => {
+                alert(error);
+                console.error('Error: ' + error);
+            });
+        }
+    }
+    
+    $(document).ready(function()
     {
-        const diagram_id = "{{ diagram_id }}";
-               
-        fetch("{% url 'save_diagram' diagram_id %}", 
+        fetch("{% url 'load_diagram' diagram_id %}", 
         {
             headers: {
-            'X-CSRFToken': "{{ csrf_token }}",
-            "x-Requested-With": "XMLHttpRequest",
-            "Content-Type": "application/json; charset=utf-8",
-        },
-        method: 'POST',
-        body: json_str,
-        mode: 'same-origin',
+                'Accept': 'text/plain; charset=utf8',
+                'X-Requested-With': 'XMLHttpRequest',   //Necessary to work with request.is_ajax()
+            }
         })
-        .then(response => response.json())
-        .then(data => {
-            alert("Success: " + data);
+        .then(response => {
+            return response.text(); 
         })
-        .catch((error) => {
-            console.error('Error:', error);
+        .then(text => {
+            <!--alert(text);-->
+            window.ui.load_json_str_from_database(text);
         });
-    }
+    });
                      
     </script>
     <script type="text/javascript" src="{% static 'js/ds.js' %}"></script>

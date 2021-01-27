@@ -54,453 +54,458 @@ UIMode.Default = class extends UIMode {
 };
 UIMode.default = new UIMode.Default();
 
-UIMode.Modal = class extends UIMode {
-    constructor() {
-        super();
+if (quiver_edit_mode) {
+    UIMode.Modal = class extends UIMode {
+        constructor() {
+            super();
 
-        this.name = "modal";
-    }
-}
-
-/// Two k-cells are being connected by an (k + 1)-cell.
-UIMode.Connect = class extends UIMode {
-    constructor(ui, source, forged_vertex, reconnect = null) {
-        super();
-
-        this.name = "connect";
-
-        // The source of a connection between two cells.
-        this.source = source;
-
-        // The target of a connection between two cells.
-        this.target = null;
-
-        // Whether the source of this connection was created with the start
-        // of the connection itself (i.e. a vertex was created after dragging
-        // from an empty grid cell).
-        this.forged_vertex = forged_vertex;
-
-        // If `reconnect` is not null, then we're reconnecting an existing edge.
-        // In that case, rather than drawing a phantom arrow, we'll actually
-        // reposition the existing edge.
-        // `reconnect` is of the form `{ edge, end }` where `end` is either
-        // `"source"` or `"target"`.
-        this.reconnect = reconnect;
-
-        if (this.reconnect === null) {
-            // The overlay for drawing an edge between the source and the cursor.
-            this.overlay = new DOM.Div({ class: "overlay" });
-            this.arrow = new Arrow(
-                new Shape.Endpoint(Point.zero()),
-                new Shape.Endpoint(Point.zero()),
-            );
-            this.overlay.add(this.arrow.element);
-            ui.canvas.add(this.overlay);
-        } else {
-            this.reconnect.edge.element.class_list.add("reconnecting");
+            this.name = "modal";
         }
     }
 
-    release(ui) {
-        this.source.element.class_list.remove("source");
-        if (this.target !== null) {
-            this.target.element.class_list.remove("target");
+    /// Two k-cells are being connected by an (k + 1)-cell.
+    UIMode.Connect = class extends UIMode {
+        constructor(ui, source, forged_vertex, reconnect = null) {
+            super();
+
+            this.name = "connect";
+
+            // The source of a connection between two cells.
+            this.source = source;
+
+            // The target of a connection between two cells.
             this.target = null;
-        }
-        // If we're connecting from an focus point, then we need to hide it again.
-        ui.focus_point.class_list.remove("revealed");
-        if (this.reconnect === null) {
-            this.overlay.remove();
-            this.arrow = null;
-        } else {
-            this.reconnect.edge.element.class_list.remove("reconnecting");
-            for (const cell of ui.quiver.transitive_dependencies([this.reconnect.edge])) {
-                cell.render(ui);
-            }
-            this.reconnect = null;
-        }
-    }
 
-    /// Update the overlay with a new cursor position.
-    update(ui, offset) {
-        // If we're creating a new edge...
-        if (this.reconnect === null) {
-            // We're drawing the edge again from scratch, so we need to remove all existing
-            // elements.
-            const svg = this.overlay.query_selector("svg");
-            svg.clear();
-            // Lock on to the target if present, otherwise simply draw the edge
-            // to the position of the cursor.
-            const target = this.target !== null ? {
-                shape: this.target.shape,
-                level: this.target.level,
-            } : {
-                shape: new Shape.Endpoint(offset),
-                level: 0,
-            };
+            // Whether the source of this connection was created with the start
+            // of the connection itself (i.e. a vertex was created after dragging
+            // from an empty grid cell).
+            this.forged_vertex = forged_vertex;
 
-            this.arrow.source = this.source.shape;
-            this.arrow.target = target.shape;
-            const level = Math.max(this.source.level, target.level) + 1;
-            this.arrow.style = UI.arrow_style_for_options(
-                this.arrow,
-                Edge.default_options({
-                    level,
-                    shorten: {
-                        source: this.source.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
-                        target: target.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
-                    }
-                }),
-            );
-            this.arrow.redraw();
-        } else {
-            // We're reconnecting an existing edge.
-            this.reconnect.edge.render(ui, offset);
-            for (const cell of ui.quiver.transitive_dependencies([this.reconnect.edge], true)) {
-                cell.render(ui);
+            // If `reconnect` is not null, then we're reconnecting an existing edge.
+            // In that case, rather than drawing a phantom arrow, we'll actually
+            // reposition the existing edge.
+            // `reconnect` is of the form `{ edge, end }` where `end` is either
+            // `"source"` or `"target"`.
+            this.reconnect = reconnect;
+
+            if (this.reconnect === null) {
+                // The overlay for drawing an edge between the source and the cursor.
+                this.overlay = new DOM.Div({ class: "overlay" });
+                this.arrow = new Arrow(
+                    new Shape.Endpoint(Point.zero()),
+                    new Shape.Endpoint(Point.zero()),
+                );
+                this.overlay.add(this.arrow.element);
+                ui.canvas.add(this.overlay);
+            } else {
+                this.reconnect.edge.element.class_list.add("reconnecting");
             }
         }
-    }
 
-    /// Returns whether the `source` is compatible with the specified `target`.
-    /// This first checks that the source is valid at all.
-    static valid_connection(ui, source, target, reconnect = null) {
-        // To allow `valid_connection` to be used to simply check whether the source is valid,
-        // we ignore source--target compatibility if `target` is null.
-        // We allow cells to be connected even if they do not have the same level. This is
-        // because it's often useful when drawing diagrams, even if it may not always be
-        // semantically valid.
-        if (source === target) {
-            // We don't currently permit loops.
-            return false;
-        }
-        const source_target_level = Math.max(source.level, target === null ? 0 : target.level);
-        if (source_target_level + 1 > CONSTANTS.MAXIMUM_CELL_LEVEL) {
-            return false;
+        release(ui) {
+            this.source.element.class_list.remove("source");
+            if (this.target !== null) {
+                this.target.element.class_list.remove("target");
+                this.target = null;
+            }
+            // If we're connecting from an focus point, then we need to hide it again.
+            ui.focus_point.class_list.remove("revealed");
+            if (this.reconnect === null) {
+                this.overlay.remove();
+                this.arrow = null;
+            } else {
+                this.reconnect.edge.element.class_list.remove("reconnecting");
+                for (const cell of ui.quiver.transitive_dependencies([this.reconnect.edge])) {
+                    cell.render(ui);
+                }
+                this.reconnect = null;
+            }
         }
 
-        if (reconnect === null) {
-            // If there are no edges depending on this one, then there are no other obstructions to
-            // being connectable.
-            return true;
-        } else {
-            if (target === reconnect.edge) {
-                // We obviously can't connect an edge to itself.
+        /// Update the overlay with a new cursor position.
+        update(ui, offset) {
+            // If we're creating a new edge...
+            if (this.reconnect === null) {
+                // We're drawing the edge again from scratch, so we need to remove all existing
+                // elements.
+                const svg = this.overlay.query_selector("svg");
+                svg.clear();
+                // Lock on to the target if present, otherwise simply draw the edge
+                // to the position of the cursor.
+                const target = this.target !== null ? {
+                    shape: this.target.shape,
+                    level: this.target.level,
+                } : {
+                    shape: new Shape.Endpoint(offset),
+                    level: 0,
+                };
+
+                this.arrow.source = this.source.shape;
+                this.arrow.target = target.shape;
+                const level = Math.max(this.source.level, target.level) + 1;
+                this.arrow.style = UI.arrow_style_for_options(
+                    this.arrow,
+                    Edge.default_options({
+                        level,
+                        shorten: {
+                            source: this.source.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
+                            target: target.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
+                        }
+                    }),
+                );
+                this.arrow.redraw();
+            } else {
+                // We're reconnecting an existing edge.
+                this.reconnect.edge.render(ui, offset);
+                for (const cell of ui.quiver.transitive_dependencies([this.reconnect.edge], true)) {
+                    cell.render(ui);
+                }
+            }
+        }
+
+        /// Returns whether the `source` is compatible with the specified `target`.
+        /// This first checks that the source is valid at all.
+        static valid_connection(ui, source, target, reconnect = null) {
+            // To allow `valid_connection` to be used to simply check whether the source is valid,
+            // we ignore source--target compatibility if `target` is null.
+            // We allow cells to be connected even if they do not have the same level. This is
+            // because it's often useful when drawing diagrams, even if it may not always be
+            // semantically valid.
+            if (source === target) {
+                // We don't currently permit loops.
+                return false;
+            }
+            const source_target_level = Math.max(source.level, target === null ? 0 : target.level);
+            if (source_target_level + 1 > CONSTANTS.MAXIMUM_CELL_LEVEL) {
                 return false;
             }
 
-            // We need to check that the dependencies also don't have too great a level after
-            // reconnecting.
-            // We're going to temporarily increase the level of the edge to what it would be,
-            // and check for any edges that then exceed the `MAXIMUM_CELL_LEVEL`. This is
-            // conceptually the simplest version of the check.
-            const edge_level = reconnect.edge.level;
-            reconnect.edge.level = source_target_level + 1;
+            if (reconnect === null) {
+                // If there are no edges depending on this one, then there are no other obstructions to
+                // being connectable.
+                return true;
+            } else {
+                if (target === reconnect.edge) {
+                    // We obviously can't connect an edge to itself.
+                    return false;
+                }
 
-            let exceeded_max_level = false;
+                // We need to check that the dependencies also don't have too great a level after
+                // reconnecting.
+                // We're going to temporarily increase the level of the edge to what it would be,
+                // and check for any edges that then exceed the `MAXIMUM_CELL_LEVEL`. This is
+                // conceptually the simplest version of the check.
+                const edge_level = reconnect.edge.level;
+                reconnect.edge.level = source_target_level + 1;
 
-            const update_levels = () => {
-                for (const cell of ui.quiver.transitive_dependencies([reconnect.edge], true)) {
-                    if (target === cell) {
-                        // We shouldn't be able to connect to an edge that's connected to this one.
-                        exceeded_max_level = true;
-                        break;
+                let exceeded_max_level = false;
+
+                const update_levels = () => {
+                    for (const cell of ui.quiver.transitive_dependencies([reconnect.edge], true)) {
+                        if (target === cell) {
+                            // We shouldn't be able to connect to an edge that's connected to this one.
+                            exceeded_max_level = true;
+                            break;
+                        }
+                        cell.level = Math.max(cell.source.level, cell.target.level) + 1;
+                        if (cell.level > CONSTANTS.MAXIMUM_CELL_LEVEL) {
+                            exceeded_max_level = true;
+                            break;
+                        }
                     }
-                    cell.level = Math.max(cell.source.level, cell.target.level) + 1;
-                    if (cell.level > CONSTANTS.MAXIMUM_CELL_LEVEL) {
-                        exceeded_max_level = true;
-                        break;
+                };
+
+                // Check for violations of `MAXIMUM_CELL_LEVEL`.
+                update_levels();
+                // Reset the edge level.
+                reconnect.edge.level = edge_level;
+                // Reset the levels of its dependencies.
+                update_levels();
+
+                return !exceeded_max_level;
+            }
+        }
+
+        /// Creates a new edge.
+        static create_edge(ui, source, target) {
+            // We attempt to guess what the intended label alignment is and what the intended edge
+            // offset is, if the cells being connected form some path with existing connections.
+            // Otherwise we revert to the currently-selected label alignment in the panel and the
+            // default offset (0).
+            const options = {
+                // By default, 2-cells and above have a little padding for aesthetic purposes.
+                shorten: {
+                    source: source.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
+                    target: target.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
+                },
+                // We will guess the label alignment below, but in case there's no selected label
+                // alignment, we default to "left".
+                label_alignment: "left",
+                // The default settings for the other options are fine.
+            };
+            if (quiver_edit_mode) {
+                const selected_alignment
+                    = ui.panel.element.query_selector('input[name="label_alignment"]:checked');
+                if (selected_alignment !== null) {
+                    // If multiple edges are selected and not all selected edges have the same label
+                    // alignment, there will be no checked input.
+                    options.label_alignment = selected_alignment.element.value;
+                }
+            }
+            // If *every* existing connection to source and target has a consistent label alignment,
+            // then `align` will be a singleton, in which case we use that element as the alignment.
+            // If it has `left` and `right` in equal measure (regardless of `centre`), then
+            // we will pick `centre`. Otherwise we keep the default. And similarly for `offset` and
+            // `curve`.
+            const align = new Map();
+            const offset = new Map();
+            const curve = new Map();
+            // We only want to pick `centre` when the source and target are equally constraining
+            // (otherwise we end up picking `centre` far too often). So we check that they're both
+            // being considered equally. This means `centre` is chosen only rarely, but often in
+            // the situations you want it. (This has no analogue in `offset` or `curve`.)
+            let balance = 0;
+
+            const swap = (options) => {
+                return {
+                    label_alignment: {
+                        left: "right",
+                        centre: "centre",
+                        over: "over",
+                        right: "left",
+                    }[options.label_alignment],
+                    offset: -options.offset,
+                    curve: -options.curve,
+                };
+            };
+
+            const conserve = (options, between) => {
+                return {
+                    label_alignment: options.label_alignment,
+                    // We ignore the offsets and curves of edges that aren't directly `between` the
+                    // source and target.
+                    offset: between ? options.offset : null,
+                    curve: between ? options.curve : null,
+                };
+            };
+
+            const consider = (options, tip) => {
+                if (!align.has(options.label_alignment)) {
+                    align.set(options.label_alignment, 0);
+                }
+                align.set(options.label_alignment, align.get(options.label_alignment) + 1);
+                if (options.offset !== null) {
+                    if (!offset.has(options.offset)) {
+                        offset.set(options.offset, 0);
+                    }
+                    offset.set(options.offset, offset.get(options.offset) + 1);
+                }
+                if (options.curve !== null) {
+                    if (!curve.has(options.curve)) {
+                        curve.set(options.curve, 0);
+                    }
+                    curve.set(options.curve, curve.get(options.curve) + 1);
+                }
+                balance += tip;
+            };
+
+            const source_dependencies = ui.quiver.dependencies_of(source);
+            const target_dependencies = ui.quiver.dependencies_of(target);
+            for (const [edge, relationship] of source_dependencies) {
+                consider({
+                    source: swap,
+                    target: options => conserve(options, target_dependencies.has(edge)),
+                }[relationship](edge.options), -1);
+            }
+            for (const [edge, relationship] of target_dependencies) {
+                consider({
+                    source: options => conserve(options, source_dependencies.has(edge)),
+                    target: swap,
+                }[relationship](edge.options), 1);
+            }
+
+            if (align.size === 1) {
+                options.label_alignment = align.keys().next().value;
+            } else if (align.size > 0 && align.get("left") === align.get("right") && balance === 0) {
+                options.label_alignment = "centre";
+            }
+
+            if (offset.size === 1) {
+                options.offset = offset.keys().next().value;
+            }
+            if (curve.size === 1) {
+                options.curve = curve.keys().next().value;
+            }
+
+            const label = "";
+            // The edge itself does all the set up, such as adding itself to the page.
+            return new Edge(ui, label, source, target, options);
+        }
+
+        /// Connects the source and target. Note that this does *not* check whether the source and
+        /// target are compatible with each other.
+        connect(ui, event) {
+            if (this.reconnect === null) {
+                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                    ui.deselect();
+                }
+                const edge = UIMode.Connect.create_edge(ui, this.source, this.target);
+                ui.select(edge);
+                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                    if (event.isTrusted) {
+                        // Don't focus the input on touchscreens, since this can be
+                        // offputting, as it often brings up a virtual keyboard.
+                        ui.panel.label_input.element.focus();
                     }
                 }
-            };
-
-            // Check for violations of `MAXIMUM_CELL_LEVEL`.
-            update_levels();
-            // Reset the edge level.
-            reconnect.edge.level = edge_level;
-            // Reset the levels of its dependencies.
-            update_levels();
-
-            return !exceeded_max_level;
-        }
-    }
-
-    /// Creates a new edge.
-    static create_edge(ui, source, target) {
-        // We attempt to guess what the intended label alignment is and what the intended edge
-        // offset is, if the cells being connected form some path with existing connections.
-        // Otherwise we revert to the currently-selected label alignment in the panel and the
-        // default offset (0).
-        const options = {
-            // By default, 2-cells and above have a little padding for aesthetic purposes.
-            shorten: {
-                source: source.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
-                target: target.level === 0 ? 0 : CONSTANTS.EDGE_EDGE_PADDING,
-            },
-            // We will guess the label alignment below, but in case there's no selected label
-            // alignment, we default to "left".
-            label_alignment: "left",
-            // The default settings for the other options are fine.
-        };
-        const selected_alignment
-            = ui.panel.element.query_selector('input[name="label_alignment"]:checked');
-        if (selected_alignment !== null) {
-            // If multiple edges are selected and not all selected edges have the same label
-            // alignment, there will be no checked input.
-            options.label_alignment = selected_alignment.element.value;
-        }
-        // If *every* existing connection to source and target has a consistent label alignment,
-        // then `align` will be a singleton, in which case we use that element as the alignment.
-        // If it has `left` and `right` in equal measure (regardless of `centre`), then
-        // we will pick `centre`. Otherwise we keep the default. And similarly for `offset` and
-        // `curve`.
-        const align = new Map();
-        const offset = new Map();
-        const curve = new Map();
-        // We only want to pick `centre` when the source and target are equally constraining
-        // (otherwise we end up picking `centre` far too often). So we check that they're both
-        // being considered equally. This means `centre` is chosen only rarely, but often in
-        // the situations you want it. (This has no analogue in `offset` or `curve`.)
-        let balance = 0;
-
-        const swap = (options) => {
-            return {
-                label_alignment: {
-                    left: "right",
-                    centre: "centre",
-                    over: "over",
-                    right: "left",
-                }[options.label_alignment],
-                offset: -options.offset,
-                curve: -options.curve,
-            };
-        };
-
-        const conserve = (options, between) => {
-            return {
-                label_alignment: options.label_alignment,
-                // We ignore the offsets and curves of edges that aren't directly `between` the
-                // source and target.
-                offset: between ? options.offset : null,
-                curve: between ? options.curve : null,
-            };
-        };
-
-        const consider = (options, tip) => {
-            if (!align.has(options.label_alignment)) {
-                align.set(options.label_alignment, 0);
+                return edge;
+            } else {
+                // Reconnect an existing edge.
+                const { edge, end } = this.reconnect;
+                // We might be reconnecting an edge by its source, in which case, we need to switch
+                // the traditional order of `source` and `target`, because the "source" will actually
+                // be the target and vice versa.
+                // Generally, the fixed end is always `this.source`, even if it isn't actually the
+                // edge's source. This makes the interaction behaviour simpler elsewhere, because
+                // one can always assume that `mode.target` is the possibly-null, moving endpoint
+                // that is the one of interest.
+                const [source, target] = {
+                    source: [this.target, this.source],
+                    target: [this.source, this.target],
+                }[end];
+                edge.reconnect(ui, source, target);
+                return edge;
             }
-            align.set(options.label_alignment, align.get(options.label_alignment) + 1);
-            if (options.offset !== null) {
-                if (!offset.has(options.offset)) {
-                    offset.set(options.offset, 0);
-                }
-                offset.set(options.offset, offset.get(options.offset) + 1);
+        }
+    };
+
+    /// Cells are being moved to a different position, via the pointer.
+    UIMode.PointerMove = class extends UIMode {
+        constructor(ui, origin, selection) {
+            super();
+
+            this.name = "pointer-move";
+
+            /// The location from which the move was initiated.
+            this.origin = origin;
+
+            /// The location relative to which positions were last updated.
+            this.previous = this.origin;
+
+            /// The group of cells that should be moved.
+            this.selection = selection;
+
+            // Cells that are being moved are not considered part of the grid of cells
+            // and therefore do not interact with one another.
+            for (const cell of selection) {
+                ui.positions.delete(`${cell.position}`);
             }
-            if (options.curve !== null) {
-                if (!curve.has(options.curve)) {
-                    curve.set(options.curve, 0);
-                }
-                curve.set(options.curve, curve.get(options.curve) + 1);
-            }
-            balance += tip;
-        };
-
-        const source_dependencies = ui.quiver.dependencies_of(source);
-        const target_dependencies = ui.quiver.dependencies_of(target);
-        for (const [edge, relationship] of source_dependencies) {
-            consider({
-                source: swap,
-                target: options => conserve(options, target_dependencies.has(edge)),
-            }[relationship](edge.options), -1);
-        }
-        for (const [edge, relationship] of target_dependencies) {
-            consider({
-                source: options => conserve(options, source_dependencies.has(edge)),
-                target: swap,
-            }[relationship](edge.options), 1);
         }
 
-        if (align.size === 1) {
-            options.label_alignment = align.keys().next().value;
-        } else if (align.size > 0 && align.get("left") === align.get("right") && balance === 0) {
-            options.label_alignment = "centre";
-        }
-
-        if (offset.size === 1) {
-            options.offset = offset.keys().next().value;
-        }
-        if (curve.size === 1) {
-            options.curve = curve.keys().next().value;
-        }
-
-        const label = "";
-        // The edge itself does all the set up, such as adding itself to the page.
-        return new Edge(ui, label, source, target, options);
-    }
-
-    /// Connects the source and target. Note that this does *not* check whether the source and
-    /// target are compatible with each other.
-    connect(ui, event) {
-        if (this.reconnect === null) {
-            if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                ui.deselect();
-            }
-            const edge = UIMode.Connect.create_edge(ui, this.source, this.target);
-            ui.select(edge);
-            if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                if (event.isTrusted) {
-                    // Don't focus the input on touchscreens, since this can be
-                    // offputting, as it often brings up a virtual keyboard.
-                    ui.panel.label_input.element.focus();
+        release(ui) {
+            // Make sure we're not trying to release any cells on top of existing ones.
+            for (const cell of this.selection) {
+                if (ui.positions.has(`${cell.position}`)) {
+                    throw new Error(
+                        "new cell position already contains a cell:",
+                        ui.positions.get(`${cell.position}`),
+                    );
                 }
             }
-            return edge;
-        } else {
-            // Reconnect an existing edge.
-            const { edge, end } = this.reconnect;
-            // We might be reconnecting an edge by its source, in which case, we need to switch
-            // the traditional order of `source` and `target`, because the "source" will actually
-            // be the target and vice versa.
-            // Generally, the fixed end is always `this.source`, even if it isn't actually the
-            // edge's source. This makes the interaction behaviour simpler elsewhere, because
-            // one can always assume that `mode.target` is the possibly-null, moving endpoint
-            // that is the one of interest.
-            const [source, target] = {
-                source: [this.target, this.source],
-                target: [this.source, this.target],
-            }[end];
-            edge.reconnect(ui, source, target);
-            return edge;
-        }
-    }
-};
-
-/// Cells are being moved to a different position, via the pointer.
-UIMode.PointerMove = class extends UIMode {
-    constructor(ui, origin, selection) {
-        super();
-
-        this.name = "pointer-move";
-
-        /// The location from which the move was initiated.
-        this.origin = origin;
-
-        /// The location relative to which positions were last updated.
-        this.previous = this.origin;
-
-        /// The group of cells that should be moved.
-        this.selection = selection;
-
-        // Cells that are being moved are not considered part of the grid of cells
-        // and therefore do not interact with one another.
-        for (const cell of selection) {
-            ui.positions.delete(`${cell.position}`);
-        }
-    }
-
-    release(ui) {
-        // Make sure we're not trying to release any cells on top of existing ones.
-        for (const cell of this.selection) {
-            if (ui.positions.has(`${cell.position}`)) {
-                throw new Error(
-                    "new cell position already contains a cell:",
-                    ui.positions.get(`${cell.position}`),
-                );
+            // Now we know the positions are free, we can set them with impunity.
+            for (const cell of this.selection) {
+                ui.positions.set(`${cell.position}`, cell);
             }
         }
-        // Now we know the positions are free, we can set them with impunity.
-        for (const cell of this.selection) {
-            ui.positions.set(`${cell.position}`, cell);
+    };
+
+
+    /// Cells are being moved to a different position, via the keyboard.
+    UIMode.KeyMove = class extends UIMode {
+        constructor(ui) {
+            super();
+
+            this.name = "key-move";
+
+            this.tooltip = new DOM.Div({ class: "tooltip" })
+                    .add("Move the selected objects with the arrow keys.")
+                    .add(new DOM.Element("br"))
+                    .add("Press ")
+                    .add(new DOM.Element("kbd").add("B"))
+                    .add(" or ")
+                    .add(new DOM.Element("kbd").add("esc"))
+                    .add(" to finish moving.");
+
+            // Hide various inputs and panels.
+            ui.panel.hide(ui);
+            ui.panel.label_input.parent.class_list.add("hidden");
+            ui.colour_picker.close();
+            ui.focus_point.class_list.remove("focused", "smooth");
+            // Add the tooltip.
+            ui.element.add(this.tooltip);
         }
-    }
-};
 
-/// Cells are being moved to a different position, via the keyboard.
-UIMode.KeyMove = class extends UIMode {
-    constructor(ui) {
-        super();
-
-        this.name = "key-move";
-
-        this.tooltip = new DOM.Div({ class: "tooltip" })
-                .add("Move the selected objects with the arrow keys.")
-                .add(new DOM.Element("br"))
-                .add("Press ")
-                .add(new DOM.Element("kbd").add("B"))
-                .add(" or ")
-                .add(new DOM.Element("kbd").add("esc"))
-                .add(" to finish moving.");
-
-        // Hide various inputs and panels.
-        ui.panel.hide(ui);
-        ui.panel.label_input.parent.class_list.add("hidden");
-        ui.colour_picker.close();
-        ui.focus_point.class_list.remove("focused", "smooth");
-        // Add the tooltip.
-        ui.element.add(this.tooltip);
-    }
-
-    release(ui) {
-        this.tooltip.remove();
-        if (ui.selection_contains_edge()) {
-            ui.panel.element.class_list.remove("hidden");
+        release(ui) {
+            this.tooltip.remove();
+            if (ui.selection_contains_edge()) {
+                ui.panel.element.class_list.remove("hidden");
+            }
+            ui.panel.label_input.parent.class_list.remove("hidden");
         }
-        ui.panel.label_input.parent.class_list.remove("hidden");
-    }
-};
+    };
 
-/// The UI view is being panned.
-UIMode.Pan = class extends UIMode {
-    constructor(key) {
-        super();
+    /// The UI view is being panned.
+    UIMode.Pan = class extends UIMode {
+        constructor(key) {
+            super();
 
-        this.name = "pan";
+            this.name = "pan";
 
-        /// The location from which the pan was initiated (used to update the view relative to the
-        /// origin).
-        this.origin = null;
+            /// The location from which the pan was initiated (used to update the view relative to the
+            /// origin).
+            this.origin = null;
 
-        /// The key with which the pan was initiated. Multiple keys (Option and Control) can be used
-        /// for panning, so we need to make sure that we're consistent about the key we listen for
-        /// when panning.
-        this.key = key;
-    }
-};
-
-/// The user is jumping to a cell.
-UIMode.Command = class extends UIMode {
-    constructor(ui, mode) {
-        super();
-
-        this.name = "command";
-
-        ui.panel.label_input.element.value = "";
-        this.switch_mode(ui, mode);
-        ui.panel.label_input.parent.class_list.remove("hidden");
-        ui.panel.label_input.remove_attributes("disabled");
-        ui.panel.label_input.element.focus();
-    }
-
-    release(ui) {
-        const focused_cells = ui.element.query_selector_all(
-            ".cell kbd.focused, .cell kbd.partially-focused"
-        );
-        for (const element of focused_cells) {
-            element.class_list.remove("focused", "partially-focused");
-            element.clear();
+            /// The key with which the pan was initiated. Multiple keys (Option and Control) can be used
+            /// for panning, so we need to make sure that we're consistent about the key we listen for
+            /// when panning.
+            this.key = key;
         }
-        ui.panel.label_input.element.blur();
-        ui.panel.update(ui);
-        ui.toolbar.update(ui);
-        ui.panel.hide_if_unselected(ui);
-    }
+    };
 
-    switch_mode(ui, mode) {
-        this.mode = mode;
-        ui.element.query_selector(".input-mode").replace(this.mode);
-    }
-};
+    /// The user is jumping to a cell.
+    UIMode.Command = class extends UIMode {
+        constructor(ui, mode) {
+            super();
+
+            this.name = "command";
+
+            ui.panel.label_input.element.value = "";
+            this.switch_mode(ui, mode);
+            ui.panel.label_input.parent.class_list.remove("hidden");
+            ui.panel.label_input.remove_attributes("disabled");
+            ui.panel.label_input.element.focus();
+        }
+
+        release(ui) {
+            const focused_cells = ui.element.query_selector_all(
+                ".cell kbd.focused, .cell kbd.partially-focused"
+            );
+            for (const element of focused_cells) {
+                element.class_list.remove("focused", "partially-focused");
+                element.clear();
+            }
+            ui.panel.label_input.element.blur();
+            ui.panel.update(ui);
+            ui.toolbar.update(ui);
+            ui.panel.hide_if_unselected(ui);
+        }
+
+        switch_mode(ui, mode) {
+            this.mode = mode;
+            ui.element.query_selector(".input-mode").replace(this.mode);
+        }
+    };
+}
 
 /// The object responsible for controlling all aspects of the user interface.
 class UI {
@@ -561,22 +566,25 @@ class UI {
 
         // The size of the view (i.e. the document body dimensions).
         this.dimensions = new Dimensions(document.body.offsetWidth, document.body.offsetHeight);
+        
+        if (quiver_edit_mode) {
+            // Undo/redo for actions.
+            this.history = new History();
 
-        // Undo/redo for actions.
-        this.history = new History();
-
-        // Keyboard shortcuts.
-        this.shortcuts = new Shortcuts(this);
+            // Keyboard shortcuts.
+            this.shortcuts = new Shortcuts(this);
+        }
 
         // A map from cell codes (i.e. IDs) to cells.
         this.codes = new Map();
 
-        // The panel for viewing and editing cell data.
-        this.panel = new Panel();
-
-        // The colour picker.
-        this.colour_picker = new ColourPicker();
-
+        if (quiver_edit_mode) {
+            // The panel for viewing and editing cell data.
+            this.panel = new Panel();
+            // The colour picker.
+            this.colour_picker = new ColourPicker();
+        }
+        
         // The toolbar.
         this.toolbar = new Toolbar();
 
@@ -591,6 +599,10 @@ class UI {
 
         // The user settings, which are stored persistently across sessions in `localStorage`.
         this.settings = new Settings();
+    }
+
+    load_json_str_from_database(json_str) {
+        QuiverImportExport.database.import(this, json_str);
     }
 
     /// Reset most of the UI. We don't bother resetting current zoom, etc.: just enough to make
@@ -614,19 +626,21 @@ class UI {
         this.positions = new Map();
         this.update_grid();
 
-        // Clear the undo/redo history.
-        this.history = new History();
+        if (quiver_edit_mode) {
+            // Clear the undo/redo history.
+            this.history = new History();
 
-        // Update UI elements.
-        this.panel.update(this);
-        this.toolbar.update(this);
-        // While the following does work without a delay, it currently experiences some stutters.
-        // Using a delay makes the transition much smoother.
-        delay(() => {
-            this.panel.hide(this);
-            this.panel.label_input.parent.class_list.add("hidden");
-            this.colour_picker.close();
-        });
+            // Update UI elements.
+            this.panel.update(this);
+            this.toolbar.update(this);
+            // While the following does work without a delay, it currently experiences some stutters.
+            // Using a delay makes the transition much smoother.
+            delay(() => {
+                this.panel.hide(this);
+                this.panel.label_input.parent.class_list.add("hidden");
+                this.colour_picker.close();
+            });
+        }
     }
 
     /// Returns definitions of macros and colours that are recognised by LaTeX.
@@ -646,227 +660,228 @@ class UI {
         this.container = new DOM.Div({ class: "container" }).add_to(this.element);
         this.canvas = new DOM.Div({ class: "canvas" }).add_to(this.container);
 
-        // Set up the panel for viewing and editing cell data.
-        this.panel.initialise(this);
-        this.element.add(this.panel.element);
-        this.colour_picker.initialise(this);
-        this.element.add(this.colour_picker.element);
-        this.panel.update_position();
-        this.element.add(this.panel.global);
-
-        // The label colour picker.
-        const shortcut = { key: "Y" };
-        const action = () => {
-            this.colour_picker.open_or_close(this, ColourPicker.TARGET.Label);
-            this.colour_picker.set_colour(this, this.panel.label_colour);
-        };
-        const colour_indicator = new DOM.Div({ class: "colour-indicator" })
-            .listen("click", action);
-        this.shortcuts.add([shortcut], (event) => {
-            if (!colour_indicator.class_list.contains("disabled")) {
-                action(event);
-            }
-        });
-        this.element.add(
-            new DOM.Div({ class: "label-input-container hidden" })
-                .add(new DOM.Div({ class: "input-mode" }))
-                .add(this.panel.label_input)
-                .add(colour_indicator)
-                .listen(pointer_event("down"), (event) => event.stopPropagation())
-        );
-        delay(() => {
-            this.panel.label_input.parent.add(
-                new DOM.Element("kbd", { class: "hint input" })
-                    .add(Shortcuts.name([{ key: "Enter" }]))
-            );
-            this.panel.label_input.parent.add(
-                new DOM.Element("kbd", { class: "hint colour" }).add(Shortcuts.name([shortcut]))
-            );
-        });
-
-        // Prevent the label input being dismissed when clicked on in command mode, when no cells
-        // are selected.
-        this.panel.label_input.parent.listen(pointer_event("up"), (event) => {
-            if (event.button === 0 && event.pointerType !== "touch") {
-                event.stopPropagation();
-            }
-        });
-
-        // Set up the toolbar.
-        this.toolbar.initialise(this);
-        this.element.add(this.toolbar.element);
-
         // Set up the keyboard shortcuts, and about, panes.
         const panes = [];
+        
+        // Set up the panel for viewing and editing cell data.
+        if (quiver_edit_mode) {
+            this.panel.initialise(this);
+            this.element.add(this.panel.element);
+            this.colour_picker.initialise(this);
+            this.element.add(this.colour_picker.element);
+            this.panel.update_position();
+            this.element.add(this.panel.global);
 
-        // Set up the keyboard shortcuts pane.
-        // For now, we simply keep this in sync with the various keyboard shortcuts manually.
-        panes.push(new DOM.Div({ id: "keyboard-shortcuts-pane", class: "pane hidden" })
-            .add(
-                new DOM.Element("h1")
-                    .add("Keyboard shortcuts")
-                    .add(Shortcuts.element(
-                        new DOM.Element("span", { class: "right" }),
-                        [{ key: "/", modifier: true }],
-                    ))
-            )
-            .add(new DOM.Element("h2").add("General"))
-            .add(new DOM.Table([
-                ["Dismiss errors, and panels;\nCancel modification or movement;\n"
-                    + "Hide focus point;\nDeselect, and dequeue cells", (td) =>
-                        Shortcuts.element(td, [{ key: "Escape" }])],
-                ["Export to LaTeX", (td) => Shortcuts.element(td, [{ key: "E", modifier: true }])]
-            ]))
-            .add(new DOM.Element("h2").add("Navigation"))
-            .add(new DOM.Table([
-                // Technically "pointer panning", but "mouse panning" is likely less confusing
-                // overall for users.
-                ["Enable mouse panning", (td) => Shortcuts.element(td, [
-                    { key: "Control" }, { key: "Alt" }
-                ])],
-                ["Enable touch panning", "Long press"],
-                ["Move focus point", (td) => Shortcuts.element(td, [
-                    { key: "ArrowLeft" },
-                    { key: "ArrowUp" },
-                    { key: "ArrowDown" },
-                    { key: "ArrowRight" },
-                ])],
-                ["Select next queued cell", (td) => Shortcuts.element(td, [{ key: "Tab" }])],
-                ["Select previous queued cell", (td) => Shortcuts.element(td, [
-                    { key: "Tab", shift: true }
-                ])],
-                ["Select / deselect object", (td) => Shortcuts.element(td, [{ key: "S" }])],
-                ["Select cells", (td) => Shortcuts.element(td, [{ key: ";" }])],
-                ["Toggle cell selection", (td) => Shortcuts.element(td, [
-                    { key: "'" }
-                ])],
-            ]))
-            .add(new DOM.Element("h2").add("Modification"))
-            .add(new DOM.Table([
-                ["Focus / defocus label input", (td) => Shortcuts.element(td, [{ key: "Enter" }])],
-                ["Create object, and connect to selection", (td) => Shortcuts.element(td, [
-                    { key: " " }
-                ])],
-                ["Move selected objects", (td) => Shortcuts.element(td, [{ key: "B" }])],
-                ["Change source", (td) => Shortcuts.element(td, [{ key: "," }])],
-                ["Change target", (td) => Shortcuts.element(td, [{ key: "." }])],
-                ["Create arrows from selection", (td) => Shortcuts.element(td, [{ key: "/" }])],
-            ]))
-            .add(new DOM.Element("h2").add("Styling"))
-            .add(new DOM.Table([
-                ["Reverse arrows", (td) => Shortcuts.element(td, [{ key: "R" }])],
-                ["Flip arrows", (td) => Shortcuts.element(td, [{ key: "E" }])],
-                ["Flip labels", (td) => Shortcuts.element(td, [{ key: "F" }])],
-                ["Left-align labels", (td) => Shortcuts.element(td, [{ key: "V" }])],
-                ["Centre-align labels", (td) => Shortcuts.element(td, [{ key: "C" }])],
-                ["Over-align labels", (td) => Shortcuts.element(td, [{ key: "X" }])],
-                ["Modify label position", (td) => Shortcuts.element(td, [{ key: "I" }])],
-                ["Modify offset", (td) => Shortcuts.element(td, [{ key: "O" }])],
-                ["Modify curve", (td) => Shortcuts.element(td, [{ key: "K" }])],
-                ["Modify length", (td) => {
-                    Shortcuts.element(td, [{ key: "L" }]);
-                    td.add(" (hold ");
-                    // The `span` here is to avoid a CSS `margin-left` rule.
-                    Shortcuts.element(td.add(new DOM.Element("span")), [{ key: "Shift" }]);
-                    td.add(" to shorten symmetrically)");
-                }],
-                ["Modify level", (td) => Shortcuts.element(td, [{ key: "M" }])],
-                ["Modify style", (td) => Shortcuts.element(td, [{ key: "D" }])],
-                ["Display as arrow", (td) => Shortcuts.element(td, [{ key: "A" }])],
-                ["Display as adjunction", (td) => Shortcuts.element(td, [{ key: "J" }])],
-                ["Display as pullback/pushout", (td) => {
-                    Shortcuts.element(td, [{ key: "P" }]);
-                    td.add(" (press again to switch corner style)");
-                }],
-                ["Modify label colour", (td) => Shortcuts.element(td, [{ key: "Y" }])],
-                ["Modify arrow colour", (td) => Shortcuts.element(td, [{ key: "U" }])]
-            ]))
-            .add(new DOM.Element("h2").add("Toolbar"))
-            .add(new DOM.Table([
-                ["Save diagram in URL", (td) => Shortcuts.element(td, [
-                    { key: "S", modifier: true }
-                ])],
-                ["Undo", (td) => Shortcuts.element(td, [{ key: "Z", modifier: true }])],
-                ["Redo", (td) => Shortcuts.element(td, [
-                    { key: "Z", modifier: true, shift: true }
-                ])],
-                ["Select all", (td) => Shortcuts.element(td, [{ key: "A", modifier: true }])],
-                ["Deselect all", (td) => Shortcuts.element(td, [
-                    { key: "A", modifier: true, shift: true }
-                ])],
-                ["Delete", (td) => Shortcuts.element(td, [
-                    { key: "Backspace" }, { key: "Delete" }
-                ])],
-                ["Centre view", (td) => Shortcuts.element(td, [{ key: "G" }])],
-                ["Zoom out", (td) => Shortcuts.element(td, [{ key: "-", modifier: true }])],
-                ["Zoom in", (td) => Shortcuts.element(td, [{ key: "=", modifier: true }])],
-                ["Toggle grid", (td) => Shortcuts.element(td, [{ key: "H" }])],
-                ["Toggle help", (td) => Shortcuts.element(td, [{
-                    key: "H", modifier: true, shift: true
-                }])]
-            ]))
-            .add(new DOM.Element("h2").add("Export"))
-            .add(new DOM.Table([
-                ["Toggle diagram centring", (td) => Shortcuts.element(td, [{ key: "C" }])]
-            ])));
+            // The label colour picker.
+            const shortcut = { key: "Y" };
+            const action = () => {
+                this.colour_picker.open_or_close(this, ColourPicker.TARGET.Label);
+                this.colour_picker.set_colour(this, this.panel.label_colour);
+            };
+            const colour_indicator = new DOM.Div({ class: "colour-indicator" })
+                .listen("click", action);
+            this.shortcuts.add([shortcut], (event) => {
+                if (!colour_indicator.class_list.contains("disabled")) {
+                    action(event);
+                }
+            });
+            this.element.add(
+                new DOM.Div({ class: "label-input-container hidden" })
+                    .add(new DOM.Div({ class: "input-mode" }))
+                    .add(this.panel.label_input)
+                    .add(colour_indicator)
+                    .listen(pointer_event("down"), (event) => event.stopPropagation())
+            );
+            delay(() => {
+                this.panel.label_input.parent.add(
+                    new DOM.Element("kbd", { class: "hint input" })
+                        .add(Shortcuts.name([{ key: "Enter" }]))
+                );
+                this.panel.label_input.parent.add(
+                    new DOM.Element("kbd", { class: "hint colour" }).add(Shortcuts.name([shortcut]))
+                );
+            });
 
-        // Set up the "About" pane.
-        panes.push(new DOM.Div({ id: "about-pane", class: "pane hidden" })
-            .add(new DOM.Element("h1").add("About"))
-            .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
-                " is a modern, graphical editor for commutative and pasting " +
-                "diagrams, capable of rendering high-quality diagrams for screen viewing, and " +
-                "exporting to LaTeX via tikz-cd."
-            ))
-            .add(new DOM.Element("p")
-                .add("Creating and modifying diagrams with ")
-                .add(new DOM.Element("b").add("quiver"))
+            // Prevent the label input being dismissed when clicked on in command mode, when no cells
+            // are selected.
+            this.panel.label_input.parent.listen(pointer_event("up"), (event) => {
+                if (event.button === 0 && event.pointerType !== "touch") {
+                    event.stopPropagation();
+                }
+            });
+
+            // Set up the toolbar.
+            this.toolbar.initialise(this);
+            this.element.add(this.toolbar.element);
+
+            // Set up the keyboard shortcuts pane.
+            // For now, we simply keep this in sync with the various keyboard shortcuts manually.
+            panes.push(new DOM.Div({ id: "keyboard-shortcuts-pane", class: "pane hidden" })
                 .add(
-                    " is orders of magnitude faster than writing the equivalent LaTeX by hand " +
-                    "and, with a little experience, competes with pen-and-paper."
+                    new DOM.Element("h1")
+                        .add("Keyboard shortcuts")
+                        .add(Shortcuts.element(
+                            new DOM.Element("span", { class: "right" }),
+                            [{ key: "/", modifier: true }],
+                        ))
                 )
-            )
-            .add(new DOM.Element("p")
-                .add("The editor is open source and may be found ")
-                .add(new DOM.Link("https://github.com/varkor/quiver", "on GitHub", true))
-                .add(
-                    ". If you would like to request a feature, or want to report an issue, you can "
-                ).add(new DOM.Link("https://github.com/varkor/quiver/issues", "do so here", true))
-                .add(".")
-            )
-            .add(new DOM.Element("p").add("You can follow ")
-                .add(new DOM.Element("b").add("quiver")).add(" ")
-                .add(new DOM.Link("https://twitter.com/q_uiver_app", "on Twitter", true))
-                .add(" for updates on new features.")
-            )
-            .add(new DOM.Element("h2").add("Thanks to"))
-            .add(new DOM.List(false, [
-                new DOM.Element("li").add(
-                    new DOM.Link("https://www.cl.cam.ac.uk/~scs62/", "S. C. Steenkamp", true)
-                ).add(", for helpful discussions regarding the aesthetic rendering of arrows."),
-                new DOM.Element("li").add(
-                    new DOM.Link(
-                        "https://tex.stackexchange.com/users/138900/andr%c3%a9c",
-                        "AndréC",
-                        true,
-                    )
-                ).add(", for the custom TikZ style for curves of a fixed height."),
-                new DOM.Element("li").add(
-                    "Everyone who has improved "
-                ).add(new DOM.Element("b").add("quiver"))
-                .add(" by reporting issues or suggesting improvements.")
-            ]))
-            .add(new DOM.Element("footer")
-                .add("Created by ")
-                .add(new DOM.Link("https://github.com/varkor", "varkor", true))
-                .add(".")
-            )
-        );
+                .add(new DOM.Element("h2").add("General"))
+                .add(new DOM.Table([
+                    ["Dismiss errors, and panels;\nCancel modification or movement;\n"
+                        + "Hide focus point;\nDeselect, and dequeue cells", (td) =>
+                            Shortcuts.element(td, [{ key: "Escape" }])],
+                    ["Export to LaTeX", (td) => Shortcuts.element(td, [{ key: "E", modifier: true }])]
+                ]))
+                .add(new DOM.Element("h2").add("Navigation"))
+                .add(new DOM.Table([
+                    // Technically "pointer panning", but "mouse panning" is likely less confusing
+                    // overall for users.
+                    ["Enable mouse panning", (td) => Shortcuts.element(td, [
+                        { key: "Control" }, { key: "Alt" }
+                    ])],
+                    ["Enable touch panning", "Long press"],
+                    ["Move focus point", (td) => Shortcuts.element(td, [
+                        { key: "ArrowLeft" },
+                        { key: "ArrowUp" },
+                        { key: "ArrowDown" },
+                        { key: "ArrowRight" },
+                    ])],
+                    ["Select next queued cell", (td) => Shortcuts.element(td, [{ key: "Tab" }])],
+                    ["Select previous queued cell", (td) => Shortcuts.element(td, [
+                        { key: "Tab", shift: true }
+                    ])],
+                    ["Select / deselect object", (td) => Shortcuts.element(td, [{ key: "S" }])],
+                    ["Select cells", (td) => Shortcuts.element(td, [{ key: ";" }])],
+                    ["Toggle cell selection", (td) => Shortcuts.element(td, [
+                        { key: "'" }
+                    ])],
+                ]))
+                .add(new DOM.Element("h2").add("Modification"))
+                .add(new DOM.Table([
+                    ["Focus / defocus label input", (td) => Shortcuts.element(td, [{ key: "Enter" }])],
+                    ["Create object, and connect to selection", (td) => Shortcuts.element(td, [
+                        { key: " " }
+                    ])],
+                    ["Move selected objects", (td) => Shortcuts.element(td, [{ key: "B" }])],
+                    ["Change source", (td) => Shortcuts.element(td, [{ key: "," }])],
+                    ["Change target", (td) => Shortcuts.element(td, [{ key: "." }])],
+                    ["Create arrows from selection", (td) => Shortcuts.element(td, [{ key: "/" }])],
+                ]))
+                .add(new DOM.Element("h2").add("Styling"))
+                .add(new DOM.Table([
+                    ["Reverse arrows", (td) => Shortcuts.element(td, [{ key: "R" }])],
+                    ["Flip arrows", (td) => Shortcuts.element(td, [{ key: "E" }])],
+                    ["Flip labels", (td) => Shortcuts.element(td, [{ key: "F" }])],
+                    ["Left-align labels", (td) => Shortcuts.element(td, [{ key: "V" }])],
+                    ["Centre-align labels", (td) => Shortcuts.element(td, [{ key: "C" }])],
+                    ["Over-align labels", (td) => Shortcuts.element(td, [{ key: "X" }])],
+                    ["Modify label position", (td) => Shortcuts.element(td, [{ key: "I" }])],
+                    ["Modify offset", (td) => Shortcuts.element(td, [{ key: "O" }])],
+                    ["Modify curve", (td) => Shortcuts.element(td, [{ key: "K" }])],
+                    ["Modify length", (td) => {
+                        Shortcuts.element(td, [{ key: "L" }]);
+                        td.add(" (hold ");
+                        // The `span` here is to avoid a CSS `margin-left` rule.
+                        Shortcuts.element(td.add(new DOM.Element("span")), [{ key: "Shift" }]);
+                        td.add(" to shorten symmetrically)");
+                    }],
+                    ["Modify level", (td) => Shortcuts.element(td, [{ key: "M" }])],
+                    ["Modify style", (td) => Shortcuts.element(td, [{ key: "D" }])],
+                    ["Display as arrow", (td) => Shortcuts.element(td, [{ key: "A" }])],
+                    ["Display as adjunction", (td) => Shortcuts.element(td, [{ key: "J" }])],
+                    ["Display as pullback/pushout", (td) => {
+                        Shortcuts.element(td, [{ key: "P" }]);
+                        td.add(" (press again to switch corner style)");
+                    }],
+                    ["Modify label colour", (td) => Shortcuts.element(td, [{ key: "Y" }])],
+                    ["Modify arrow colour", (td) => Shortcuts.element(td, [{ key: "U" }])]
+                ]))
+                .add(new DOM.Element("h2").add("Toolbar"))
+                .add(new DOM.Table([
+                    ["Save diagram in URL", (td) => Shortcuts.element(td, [
+                        { key: "S", modifier: true }
+                    ])],
+                    ["Undo", (td) => Shortcuts.element(td, [{ key: "Z", modifier: true }])],
+                    ["Redo", (td) => Shortcuts.element(td, [
+                        { key: "Z", modifier: true, shift: true }
+                    ])],
+                    ["Select all", (td) => Shortcuts.element(td, [{ key: "A", modifier: true }])],
+                    ["Deselect all", (td) => Shortcuts.element(td, [
+                        { key: "A", modifier: true, shift: true }
+                    ])],
+                    ["Delete", (td) => Shortcuts.element(td, [
+                        { key: "Backspace" }, { key: "Delete" }
+                    ])],
+                    ["Centre view", (td) => Shortcuts.element(td, [{ key: "G" }])],
+                    ["Zoom out", (td) => Shortcuts.element(td, [{ key: "-", modifier: true }])],
+                    ["Zoom in", (td) => Shortcuts.element(td, [{ key: "=", modifier: true }])],
+                    ["Toggle grid", (td) => Shortcuts.element(td, [{ key: "H" }])],
+                    ["Toggle help", (td) => Shortcuts.element(td, [{
+                        key: "H", modifier: true, shift: true
+                    }])]
+                ]))
+                .add(new DOM.Element("h2").add("Export"))
+                .add(new DOM.Table([
+                    ["Toggle diagram centring", (td) => Shortcuts.element(td, [{ key: "C" }])]
+                ])));
 
-        // The version of quiver last used by the user. If they have not used quiver before, this
-        // will be `null`. If it's `null`, we display the welcome pane. If it's non-null, but
-        // doesn't match the current version of quiver, we may display the new features of the
-        // current version of quiver. Otherwise, we do nothing.
+            // Set up the "About" pane.
+            panes.push(new DOM.Div({ id: "about-pane", class: "pane hidden" })
+                .add(new DOM.Element("h1").add("About"))
+                .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
+                    " is a modern, graphical editor for commutative and pasting " +
+                    "diagrams, capable of rendering high-quality diagrams for screen viewing, and " +
+                    "exporting to LaTeX via tikz-cd."
+                ))
+                .add(new DOM.Element("p")
+                    .add("Creating and modifying diagrams with ")
+                    .add(new DOM.Element("b").add("quiver"))
+                    .add(
+                        " is orders of magnitude faster than writing the equivalent LaTeX by hand " +
+                        "and, with a little experience, competes with pen-and-paper."
+                    )
+                )
+                .add(new DOM.Element("p")
+                    .add("The editor is open source and may be found ")
+                    .add(new DOM.Link("https://github.com/varkor/quiver", "on GitHub", true))
+                    .add(
+                        ". If you would like to request a feature, or want to report an issue, you can "
+                    ).add(new DOM.Link("https://github.com/varkor/quiver/issues", "do so here", true))
+                    .add(".")
+                )
+                .add(new DOM.Element("p").add("You can follow ")
+                    .add(new DOM.Element("b").add("quiver")).add(" ")
+                    .add(new DOM.Link("https://twitter.com/q_uiver_app", "on Twitter", true))
+                    .add(" for updates on new features.")
+                )
+                .add(new DOM.Element("h2").add("Thanks to"))
+                .add(new DOM.List(false, [
+                    new DOM.Element("li").add(
+                        new DOM.Link("https://www.cl.cam.ac.uk/~scs62/", "S. C. Steenkamp", true)
+                    ).add(", for helpful discussions regarding the aesthetic rendering of arrows."),
+                    new DOM.Element("li").add(
+                        new DOM.Link(
+                            "https://tex.stackexchange.com/users/138900/andr%c3%a9c",
+                            "AndréC",
+                            true,
+                        )
+                    ).add(", for the custom TikZ style for curves of a fixed height."),
+                    new DOM.Element("li").add(
+                        "Everyone who has improved "
+                    ).add(new DOM.Element("b").add("quiver"))
+                    .add(" by reporting issues or suggesting improvements.")
+                ]))
+                .add(new DOM.Element("footer")
+                    .add("Created by ")
+                    .add(new DOM.Link("https://github.com/varkor", "varkor", true))
+                    .add(".")
+                )
+            );
+        }
+            // The version of quiver last used by the user. If they have not used quiver before, this
+            // will be `null`. If it's `null`, we display the welcome pane. If it's non-null, but
+            // doesn't match the current version of quiver, we may display the new features of the
+            // current version of quiver. Otherwise, we do nothing.
         const version_previous_use = window.localStorage.getItem("version-previous-use");
 
         if (version_previous_use) {
@@ -877,99 +892,101 @@ class UI {
         }
 
         // Set up the welcome pane.
-        const welcome_pane = new DOM.Div({
-            id: "welcome-pane",
-            // We only display the welcome pane the first time the user visits quiver.
-            class: "pane" + (version_previous_use ? " hidden" : "")
-        }).add(new DOM.Element("h1").add("Welcome"))
-            .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
-                " is a modern, graphical editor for commutative and pasting " +
-                "diagrams, capable of rendering high-quality diagrams for screen viewing, and " +
-                "exporting to LaTeX via tikz-cd."
-            ))
-            .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
-                " is intended to be intuitive to use and easy to pick up. Here are a few tips to " +
-                "help you get started:"
-            ))
-            .add(new DOM.List(false, [
-                "Click and drag to create new arrows: the source and target objects will be " +
-                "created automatically.",
-                "Double-click to create a new object.",
-                "Edit labels with the input bar at the bottom of the screen.",
-                "Click and drag the empty space around a object to move it around.",
-                "Hold Shift (⇧) to select multiple cells to edit them simultaneously."
-            ]));
-        panes.push(welcome_pane);
-        new DOM.Element("button").add("Get started").listen("click", () => {
-            // There are technically other ways to dismiss the welcome pane (e.g. opening the
-            // keyboard shortcuts pane without clicking this button). We choose not to set the
-            // `version-previous-use` variable in these edge cases: the user may have dismissed the
-            // welcome pane accidentally, in which case refreshing the page will be enough to get
-            // the pane back.
-            window.localStorage.setItem("version-previous-use", CONSTANTS.VERSION);
-            welcome_pane.class_list.add("hidden");
-        }).add_to(welcome_pane);
+        if (quiver_edit_mode) {
+            const welcome_pane = new DOM.Div({
+                id: "welcome-pane",
+                // We only display the welcome pane the first time the user visits quiver.
+                class: "pane" + (version_previous_use ? " hidden" : "")
+            }).add(new DOM.Element("h1").add("Welcome"))
+                .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
+                    " is a modern, graphical editor for commutative and pasting " +
+                    "diagrams, capable of rendering high-quality diagrams for screen viewing, and " +
+                    "exporting to LaTeX via tikz-cd."
+                ))
+                .add(new DOM.Element("p").add(new DOM.Element("b").add("quiver")).add(
+                    " is intended to be intuitive to use and easy to pick up. Here are a few tips to " +
+                    "help you get started:"
+                ))
+                .add(new DOM.List(false, [
+                    "Click and drag to create new arrows: the source and target objects will be " +
+                    "created automatically.",
+                    "Double-click to create a new object.",
+                    "Edit labels with the input bar at the bottom of the screen.",
+                    "Click and drag the empty space around a object to move it around.",
+                    "Hold Shift (⇧) to select multiple cells to edit them simultaneously."
+                ]));
+            panes.push(welcome_pane);
+            new DOM.Element("button").add("Get started").listen("click", () => {
+                // There are technically other ways to dismiss the welcome pane (e.g. opening the
+                // keyboard shortcuts pane without clicking this button). We choose not to set the
+                // `version-previous-use` variable in these edge cases: the user may have dismissed the
+                // welcome pane accidentally, in which case refreshing the page will be enough to get
+                // the pane back.
+                window.localStorage.setItem("version-previous-use", CONSTANTS.VERSION);
+                welcome_pane.class_list.add("hidden");
+            }).add_to(welcome_pane);
 
-        // QuiverDatabase: stop event propogation on to quiver when click is in the site's button pane
-        const database_control_pane = new DOM.Div({
-            id: "lower-control-pane",
-            class: "container-fluid pane",
-        })
-        .add(new DOM.Div({class: "row"})
-            .add(new DOM.Div({class:"col-md-12"})
-            .add(new DOM.Element("h4")
-            .add(new DOM.Element("strong", {class:"text-muted"})
-            .add("Diagram Name:"))
-            .add(new DOM.Element("a", {
-                "id":"diagram-name-edit",
-                "data-type": "text",
-                "href": "#",
-                "style": "border:none; margin-left:10px",
-            })))))
-        .add(new DOM.Div({class: "row"})
-            .add(new DOM.Div({class:"col-md-12"})
-            .add(new DOM.Element("h4")
-            .add(new DOM.Element("strong", {class:"text-muted"})
-            .add("Category:"))
-            .add(new DOM.Element("a", {
-                "id":"category-name-edit",
-                "data-type": "text",
-                "href": "#",
-                "style": "border:none; margin-left:10px",
-            })))))
-        .add(new DOM.Div({class: "row"})
-            .add(new DOM.Div({class: "col-md-2"})
+            // QuiverDatabase: stop event propogation on to quiver when click is in the site's button pane
+            const database_control_pane = new DOM.Div({
+                id: "lower-control-pane",
+                class: "container-fluid pane",
+            })
+            .add(new DOM.Div({class: "row"})
+                .add(new DOM.Div({class:"col-md-12"})
+                .add(new DOM.Element("h4")
+                .add(new DOM.Element("strong", {class:"text-muted"})
+                .add("Diagram Name:"))
                 .add(new DOM.Element("a", {
-                    "id" : "save-to-database-button",
-                    "class" : "btn btn-primary",
-                    // "style" : "border-radius: 8px",
-                    // "url" : TODO set in html script with diagram_id
-                    // "onclick": ui.
-                }).add("Save Diagram")
-                .listen("click", function() {
-                    const {data} = this.quiver.export("database", this.settings, this.definitions());
-                    save_diagram_to_database(data);
-                    // history.pushState({}, "", data);  TODO do we want this?
-                }.bind(this)))));
-             
-        
-        panes.push(database_control_pane);
+                    "id":"diagram-name-edit",
+                    "data-type": "text",
+                    "href": "#",
+                    "style": "border:none; margin-left:10px",
+                })))))
+            .add(new DOM.Div({class: "row"})
+                .add(new DOM.Div({class:"col-md-12"})
+                .add(new DOM.Element("h4")
+                .add(new DOM.Element("strong", {class:"text-muted"})
+                .add("Category:"))
+                .add(new DOM.Element("a", {
+                    "id":"category-name-edit",
+                    "data-type": "text",
+                    "href": "#",
+                    "style": "border:none; margin-left:10px",
+                })))))
+            .add(new DOM.Div({class: "row"})
+                .add(new DOM.Div({class: "col-md-2"})
+                    .add(new DOM.Element("a", {
+                        "id" : "save-to-database-button",
+                        "class" : "btn btn-primary",
+                        // "style" : "border-radius: 8px",
+                        // "url" : TODO set in html script with diagram_id
+                        // "onclick": ui.
+                    }).add("Save Diagram")
+                    .listen("click", function() {
+                        const {data} = this.quiver.export("database", this.settings, this.definitions());
+                        save_diagram_to_database(data);
+                        // history.pushState({}, "", data);  TODO do we want this?
+                    }.bind(this)))));
+                
+            
+            panes.push(database_control_pane);
 
-        for (const pane of panes) {
-            this.element.add(pane);
+            for (const pane of panes) {
+                this.element.add(pane);
 
-            // Prevent propagation of pointer events when interacting with the pane.
-            pane.listen(pointer_event("down"), (event) => {
-                if (event.button === 0) {
+                // Prevent propagation of pointer events when interacting with the pane.
+                pane.listen(pointer_event("down"), (event) => {
+                    if (event.button === 0) {
+                        event.stopImmediatePropagation();
+                    }
+                });
+
+                // Prevent propagation of scrolling when the cursor is over the pane.
+                // This allows the user to scroll the pane when not all the content fits.
+                pane.listen("wheel", (event) => {
                     event.stopImmediatePropagation();
-                }
-            });
-
-            // Prevent propagation of scrolling when the cursor is over the pane.
-            // This allows the user to scroll the pane when not all the content fits.
-            pane.listen("wheel", (event) => {
-                event.stopImmediatePropagation();
-            }, { passive: true });
+                }, { passive: true });
+            }
         }
 
         // Add the version information underneath the logo.
@@ -1023,17 +1040,19 @@ class UI {
             }
         };
 
-        document.addEventListener(pointer_event("move"), (event) => {
-            if (this.in_mode(UIMode.Pan)) {
-                if (this.mode.key !== null) {
-                    // If we're panning, but no longer holding the requisite key, stop.
-                    // This can happen if we release the key when the document is not focused.
-                    if (!{ Control: event.ctrlKey, Alt: event.altKey }[this.mode.key]) {
-                        this.switch_mode(UIMode.default);
+        if (quiver_edit_mode) {
+            document.addEventListener(pointer_event("move"), (event) => {
+                if (this.in_mode(UIMode.Pan)) {
+                    if (this.mode.key !== null) {
+                        // If we're panning, but no longer holding the requisite key, stop.
+                        // This can happen if we release the key when the document is not focused.
+                        if (!{ Control: event.ctrlKey, Alt: event.altKey }[this.mode.key]) {
+                            this.switch_mode(UIMode.default);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // We don't want long presses to trigger the context menu on touchscreens. However, we
         // can't distinguish between context menus triggered by touchscreens versus, say,
@@ -1053,6 +1072,7 @@ class UI {
             this.mode.origin = this.offset_from_event(touch).sub(this.view);
         };
 
+        
         document.addEventListener("touchstart", (event) => {
             is_touching = true;
             if (event.touches.length > 1) {
@@ -1069,6 +1089,7 @@ class UI {
                 );
             }
         });
+        
 
         // Prevent double-tap-to-zoom on iOS.
         document.addEventListener("dblclick", (event) => event.preventDefault());
@@ -1182,38 +1203,40 @@ class UI {
                 // Usually, if `Alt` or `Control` have been held we will have already switched to
                 // the Pan mode. However, if the window is not in focus, they will not have been
                 // detected, so we switch modes on pointer click.
-                if (this.in_mode(UIMode.Default)) {
-                    if (event.altKey) {
-                        this.switch_mode(new UIMode.Pan("Alt"));
-                    } else if (event.ctrlKey) {
-                        this.switch_mode(new UIMode.Pan("Control"));
-                    } else {
-                        if (this.focus_point.class_list.contains("focused")) {
-                            this.focus_point.class_list.remove("focused", "smooth");
-                        }
+                if (quiver_edit_mode) {
+                    if (this.in_mode(UIMode.Default)) {
+                        if (event.altKey) {
+                            this.switch_mode(new UIMode.Pan("Alt"));
+                        } else if (event.ctrlKey) {
+                            this.switch_mode(new UIMode.Pan("Control"));
+                        } else {
+                            if (this.focus_point.class_list.contains("focused")) {
+                                this.focus_point.class_list.remove("focused", "smooth");
+                            }
 
-                        // Reveal the focus point upon a click.
-                        this.reposition_focus_point(this.position_from_event(event));
-                        this.focus_point.class_list.add("revealed", "pending");
+                            // Reveal the focus point upon a click.
+                            this.reposition_focus_point(this.position_from_event(event));
+                            this.focus_point.class_list.add("revealed", "pending");
+                        }
                     }
-                }
-                if (this.in_mode(UIMode.Pan)) {
-                    // Hide the focus point if it is visible.
-                    this.focus_point.class_list.remove("revealed");
-                    // Record the position the pointer was pressed at, so we can pan relative
-                    // to that location by dragging.
-                    this.mode.origin = this.offset_from_event(event).sub(this.view);
-                } else if (this.in_mode(UIMode.KeyMove)) {
-                    this.switch_mode(UIMode.default);
-                } else if (!this.in_mode(UIMode.Modal)) {
-                    if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                        // Deselect cells when the pointer is pressed (at least when the
-                        // Shift/Command/Control keys are not held).
-                        this.deselect();
-                    } else {
-                        // Otherwise, simply deselect the label input (it's unlikely the user
-                        // wants to modify all the cell labels at once).
-                        this.panel.label_input.element.blur();
+                    if (this.in_mode(UIMode.Pan)) {
+                        // Hide the focus point if it is visible.
+                        this.focus_point.class_list.remove("revealed");
+                        // Record the position the pointer was pressed at, so we can pan relative
+                        // to that location by dragging.
+                        this.mode.origin = this.offset_from_event(event).sub(this.view);
+                    } else if (this.in_mode(UIMode.KeyMove)) {
+                        this.switch_mode(UIMode.default);
+                    } else if (!this.in_mode(UIMode.Modal)) {
+                        if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                            // Deselect cells when the pointer is pressed (at least when the
+                            // Shift/Command/Control keys are not held).
+                            this.deselect();
+                        } else {
+                            // Otherwise, simply deselect the label input (it's unlikely the user
+                            // wants to modify all the cell labels at once).
+                            this.panel.label_input.element.blur();
+                        }
                     }
                 }
             }
@@ -1259,39 +1282,41 @@ class UI {
         };
 
         // Clicking on the focus point reveals it, after which another click adds a new node.
-        this.focus_point.listen(pointer_event("down"), (event) => {
-            if (event.button === 0) {
-                if (this.in_mode(UIMode.Default)) {
-                    event.preventDefault();
-                    // If we prevent the default behaviour, then the global inputs won't be blurred,
-                    // so we need to do that manually.
-                    const global = this.panel.global;
-                    for (const input of global.query_selector_all('input[type="text"]')) {
-                        input.element.blur();
-                    }
-                    if (this.focus_point.class_list.contains("revealed")) {
-                        // We only stop propagation in this branch, so that clicking once in an
-                        // empty grid cell will deselect any selected cells, but clicking a second
-                        // time to add a new vertex will not deselect the new, selected vertex we've
-                        // just added. Note that it's not possible to select other cells in between
-                        // the first and second click, because leaving the grid cell with the cursor
-                        // (to select other cells) hides the focus point again.
-                        event.stopPropagation();
-                        const vertex = create_vertex_at_focus_point(event);
-                        this.history.add(this, [{
-                            kind: "create",
-                            cells: new Set([vertex]),
-                        }]);
-                        // When the user is creating a vertex and adding it to the selection,
-                        // it is unlikely they expect to edit all the labels simultaneously,
-                        // so in this case we do not focus the input.
-                        if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                            this.panel.label_input.element.select();
+        if (quiver_edit_mode) {
+            this.focus_point.listen(pointer_event("down"), (event) => {
+                if (event.button === 0) {
+                    if (this.in_mode(UIMode.Default)) {
+                        event.preventDefault();
+                        // If we prevent the default behaviour, then the global inputs won't be blurred,
+                        // so we need to do that manually.
+                        const global = this.panel.global;
+                        for (const input of global.query_selector_all('input[type="text"]')) {
+                            input.element.blur();
+                        }
+                        if (this.focus_point.class_list.contains("revealed")) {
+                            // We only stop propagation in this branch, so that clicking once in an
+                            // empty grid cell will deselect any selected cells, but clicking a second
+                            // time to add a new vertex will not deselect the new, selected vertex we've
+                            // just added. Note that it's not possible to select other cells in between
+                            // the first and second click, because leaving the grid cell with the cursor
+                            // (to select other cells) hides the focus point again.
+                            event.stopPropagation();
+                            const vertex = create_vertex_at_focus_point(event);
+                            this.historystory.add(this, [{
+                                kind: "create",
+                                cells: new Set([vertex]),
+                            }]);
+                            // When the user is creating a vertex and adding it to the selection,
+                            // it is unlikely they expect to edit all the labels simultaneously,
+                            // so in this case we do not focus the input.
+                            if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                                this.panel.label_input.element.select();
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // If we release the pointer while hovering over the focus point, there are two
         // possibilities. Either we haven't moved the pointer, in which case the focus point loses
@@ -1301,87 +1326,89 @@ class UI {
         // focus point being exactly the same size as a grid cell (there is some padding for
         // aesthetic purposes) or the focus point being covered by other elements (like edge
         // endpoints).
-        this.container.listen(pointer_event("up"), (event) => {
-            if (event.button === 0 && event.pointerType !== "touch") {
-                // Handle pointer releases without having moved the cursor from the initial cell.
-                this.focus_point.class_list.remove("pending", "active");
+        if (quiver_edit_mode) {
+            this.container.listen(pointer_event("up"), (event) => {
+                if (event.button === 0 && event.pointerType !== "touch") {
+                    // Handle pointer releases without having moved the cursor from the initial cell.
+                    this.focus_point.class_list.remove("pending", "active");
 
-                // We only want to create a connection if the focus point is visible. E.g. not
-                // if we're hovering over a grid cell that contains a vertex, but not hovering over
-                // the vertex itself (i.e. the whitespace around the vertex).
-                if (this.focus_point.class_list.contains("revealed")) {
-                    // When releasing the pointer over an empty grid cell, we want to create a new
-                    // cell and connect it to the source.
-                    if (this.in_mode(UIMode.Connect)) {
-                        event.stopImmediatePropagation();
-                        // We only want to forge vertices, not edges (and thus 1-cells).
-                        if (this.mode.source.is_vertex()) {
-                            // Usually this vertex will be immediately deselected, except when Shift
-                            // is held, in which case we want to select the forged vertices *and*
-                            // the new edge.
-                            this.mode.target = create_vertex_at_focus_point(event);
-                            const created = new Set([this.mode.target]);
-                            const actions = [{
-                                kind: "create",
-                                cells: created,
-                            }];
+                    // We only want to create a connection if the focus point is visible. E.g. not
+                    // if we're hovering over a grid cell that contains a vertex, but not hovering over
+                    // the vertex itself (i.e. the whitespace around the vertex).
+                    if (this.focus_point.class_list.contains("revealed")) {
+                        // When releasing the pointer over an empty grid cell, we want to create a new
+                        // cell and connect it to the source.
+                        if (this.in_mode(UIMode.Connect)) {
+                            event.stopImmediatePropagation();
+                            // We only want to forge vertices, not edges (and thus 1-cells).
+                            if (this.mode.source.is_vertex()) {
+                                // Usually this vertex will be immediately deselected, except when Shift
+                                // is held, in which case we want to select the forged vertices *and*
+                                // the new edge.
+                                this.mode.target = create_vertex_at_focus_point(event);
+                                const created = new Set([this.mode.target]);
+                                const actions = [{
+                                    kind: "create",
+                                    cells: created,
+                                }];
 
-                            if (this.mode.forged_vertex) {
-                                created.add(this.mode.source);
-                            }
-
-                            if (this.mode.reconnect === null) {
-                                // If we're not reconnecting an existing edge, then we need
-                                // to create a new one.
-                                const edge = this.mode.connect(this, event);
-                                created.add(edge);
-                                insert_codes_before(this.mode.target, edge);
-                            } else {
-                                // Unless we're holding Shift/Command/Control (in which case we just
-                                // add the new vertex to the selection) we want to focus and select
-                                // the new vertex.
-                                const { edge, end } = this.mode.reconnect;
-                                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                                    this.panel.label_input.element.select();
+                                if (this.mode.forged_vertex) {
+                                    created.add(this.mode.source);
                                 }
-                                actions.push({
-                                    kind: "connect",
-                                    edge,
-                                    end,
-                                    from: edge[end],
-                                    to: this.mode.target,
-                                });
-                                this.mode.connect(this, event);
-                            }
 
-                            // If we've forged a source vertex, then we select the source, which
-                            // allows us to tab sequentially through the source, morphism, and
-                            // target.
-                            if (this.mode.forged_vertex) {
-                                if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
-                                    this.deselect();
-                                    this.select(this.mode.source);
-                                    this.panel.hide_if_unselected(this);
-                                    if (event.isTrusted) {
-                                        // Don't focus the input on touchscreens, since this can be
-                                        // offputting, as it often brings up a virtual keyboard.
-                                        this.panel.focus_label_input();
+                                if (this.mode.reconnect === null) {
+                                    // If we're not reconnecting an existing edge, then we need
+                                    // to create a new one.
+                                    const edge = this.mode.connect(this, event);
+                                    created.add(edge);
+                                    insert_codes_before(this.mode.target, edge);
+                                } else {
+                                    // Unless we're holding Shift/Command/Control (in which case we just
+                                    // add the new vertex to the selection) we want to focus and select
+                                    // the new vertex.
+                                    const { edge, end } = this.mode.reconnect;
+                                    if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                                        this.panel.label_input.element.select();
+                                    }
+                                    actions.push({
+                                        kind: "connect",
+                                        edge,
+                                        end,
+                                        from: edge[end],
+                                        to: this.mode.target,
+                                    });
+                                    this.mode.connect(this, event);
+                                }
+
+                                // If we've forged a source vertex, then we select the source, which
+                                // allows us to tab sequentially through the source, morphism, and
+                                // target.
+                                if (this.mode.forged_vertex) {
+                                    if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+                                        this.deselect();
+                                        this.select(this.mode.source);
+                                        this.panel.hide_if_unselected(this);
+                                        if (event.isTrusted) {
+                                            // Don't focus the input on touchscreens, since this can be
+                                            // offputting, as it often brings up a virtual keyboard.
+                                            this.panel.focus_label_input();
+                                        }
                                     }
                                 }
-                            }
 
-                            this.history.add(
-                                this,
-                                actions,
-                                false,
-                                this.selection_excluding(created),
-                            );
+                                this.history.add(
+                                    this,
+                                    actions,
+                                    false,
+                                    this.selection_excluding(created),
+                                );
+                            }
+                            this.switch_mode(UIMode.default);
                         }
-                        this.switch_mode(UIMode.default);
                     }
                 }
-            }
-        });
+            });
+        }
 
         // If the cursor leaves the focus point and the pointer has *not*
         // been held, it gets hidden again. However, if the cursor leaves the
@@ -1389,24 +1416,26 @@ class UI {
         // be `"active"` and we create a new vertex and immediately start
         // connecting it to something (possibly an empty grid cell, which will
         // create a new vertex and connect them both).
-        this.focus_point.listen(pointer_event("leave"), (event) => {
-            if (event.pointerType !== "touch") {
-                this.focus_point.class_list.remove("pending");
+        if (quiver_edit_mode) {
+            this.focus_point.listen(pointer_event("leave"), (event) => {
+                if (event.pointerType !== "touch") {
+                    this.focus_point.class_list.remove("pending");
 
-                if (this.focus_point.class_list.contains("active")) {
-                    // If the focus point is `"active"`, we're going to create
-                    // a vertex and start connecting it.
-                    this.focus_point.class_list.remove("active");
-                    const vertex = create_vertex_at_focus_point(event);
-                    this.switch_mode(new UIMode.Connect(this, vertex, true));
-                    vertex.element.class_list.add("source");
-                } else if (!this.in_mode(UIMode.Connect)) {
-                    // If the cursor leaves the focus point and we're *not*
-                    // connecting anything, then hide it.
-                    this.focus_point.class_list.remove("revealed");
+                    if (this.focus_point.class_list.contains("active")) {
+                        // If the focus point is `"active"`, we're going to create
+                        // a vertex and start connecting it.
+                        this.focus_point.class_list.remove("active");
+                        const vertex = create_vertex_at_focus_point(event);
+                        this.switch_mode(new UIMode.Connect(this, vertex, true));
+                        vertex.element.class_list.add("source");
+                    } else if (!this.in_mode(UIMode.Connect)) {
+                        // If the cursor leaves the focus point and we're *not*
+                        // connecting anything, then hide it.
+                        this.focus_point.class_list.remove("revealed");
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // Moving the focus point, panning, and rearranging cells.
         this.element.listen(pointer_event("move"), (event) => {
@@ -5333,182 +5362,184 @@ class Toolbar {
 
         // Add all of the toolbar buttons.
 
-        // "Saving" updates the URL to reflect the current diagram.
-        //add_action(
-            //"Save",
-            //[{ key: "S", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            //() => {
-                //// For now, we do not include macro information in the URL.
-                //const { data } = ui.quiver.export("base64", ui.settings, ui.definitions());
-                //// `data` is the new URL.
-                //history.pushState({}, "", data);
-            //},
-        //);
+        if (quiver_edit_mode) {
+            // "Saving" updates the URL to reflect the current diagram.
+            //add_action(
+                //"Save",
+                //[{ key: "S", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+                //() => {
+                    //// For now, we do not include macro information in the URL.
+                    //const { data } = ui.quiver.export("base64", ui.settings, ui.definitions());
+                    //// `data` is the new URL.
+                    //history.pushState({}, "", data);
+                //},
+            //);
 
-        add_action(
-            "Undo",
-            [{ key: "Z", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            () => {
-                ui.history.undo(ui);
-            },
-        );
+            add_action(
+                "Undo",
+                [{ key: "Z", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+                () => {
+                    ui.history.undo(ui);
+                },
+            );
 
-        add_action(
-            "Redo",
-            [{ key: "Z", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            () => {
-                ui.history.redo(ui);
-            },
-        );
+            add_action(
+                "Redo",
+                [{ key: "Z", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+                () => {
+                    ui.history.redo(ui);
+                },
+            );
 
-        add_action(
-            "Select all",
-            [{ key: "A", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            () => {
-                ui.select(...ui.quiver.all_cells());
-            },
-        );
+            add_action(
+                "Select all",
+                [{ key: "A", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+                () => {
+                    ui.select(...ui.quiver.all_cells());
+                },
+            );
 
-        //add_action(
-            //"Deselect all",
-            //[{ key: "A", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            //() => {
-                //ui.deselect();
-                //ui.panel.hide(ui);
-                //ui.panel.label_input.parent.class_list.add("hidden");
-                //ui.colour_picker.close();
-            //},
-        //);
+            //add_action(
+                //"Deselect all",
+                //[{ key: "A", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+                //() => {
+                    //ui.deselect();
+                    //ui.panel.hide(ui);
+                    //ui.panel.label_input.parent.class_list.add("hidden");
+                    //ui.colour_picker.close();
+                //},
+            //);
 
-        add_action(
-            "Delete",
-            [
-                { key: "Backspace" },
-                { key: "Delete" },
-            ],
-            () => {
-                ui.history.add(ui, [{
-                    kind: "delete",
-                    cells: ui.quiver.transitive_dependencies(ui.selection),
-                }], true);
-                ui.panel.update(ui);
-            },
-        );
+            add_action(
+                "Delete",
+                [
+                    { key: "Backspace" },
+                    { key: "Delete" },
+                ],
+                () => {
+                    ui.history.add(ui, [{
+                        kind: "delete",
+                        cells: ui.quiver.transitive_dependencies(ui.selection),
+                    }], true);
+                    ui.panel.update(ui);
+                },
+            );
 
-        add_action(
-            "Centre view",
-            [{ key: "G" }],
-            () => {
-                // If the focus point is focused, we centre on it; otherwise we centre on the
-                // selection, or the entire quiver if no cells are selected.
-                if (ui.element.query_selector(".focus-point.focused")) {
-                    ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
-                } else {
-                    ui.centre_view();
-                }
-            },
-        );
+            add_action(
+                "Centre view",
+                [{ key: "G" }],
+                () => {
+                    // If the focus point is focused, we centre on it; otherwise we centre on the
+                    // selection, or the entire quiver if no cells are selected.
+                    if (ui.element.query_selector(".focus-point.focused")) {
+                        ui.pan_to(ui.centre_offset_from_position(ui.focus_position));
+                    } else {
+                        ui.centre_view();
+                    }
+                },
+            );
 
-        add_action(
-            "Zoom out",
-            [{ key: "-", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                ui.pan_view(Offset.zero(), -0.25);
-            },
-        );
+            add_action(
+                "Zoom out",
+                [{ key: "-", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+                () => {
+                    ui.pan_view(Offset.zero(), -0.25);
+                },
+            );
 
-        add_action(
-            "Zoom in",
-            [{ key: "=", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
-            () => {
-                ui.pan_view(Offset.zero(), 0.25);
-            },
-        );
+            add_action(
+                "Zoom in",
+                [{ key: "=", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always }],
+                () => {
+                    ui.pan_view(Offset.zero(), 0.25);
+                },
+            );
 
-        add_action(
-            "Reset zoom",
-            // We'd like to display the current zoom level, so we use a slight hack: we set the
-            // "key" to be the zoom level: this will never be triggered by a shortcut, because there
-            // is no key called "100%" or similar. However, the text will then display underneath
-            // the button as desired.
-            [{ key: "100%" }],
-            () => {
-                ui.scale = 0;
-                ui.pan_view(Offset.zero());
-            },
-        );
+            add_action(
+                "Reset zoom",
+                // We'd like to display the current zoom level, so we use a slight hack: we set the
+                // "key" to be the zoom level: this will never be triggered by a shortcut, because there
+                // is no key called "100%" or similar. However, the text will then display underneath
+                // the button as desired.
+                [{ key: "100%" }],
+                () => {
+                    ui.scale = 0;
+                    ui.pan_view(Offset.zero());
+                },
+            );
 
-        add_action(
-            "Hide grid",
-            [{ key: "H", modifier: false, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
-            function () {
-                ui.grid.class_list.toggle("hidden");
-                const hidden = ui.grid.class_list.contains("hidden");
-                this.query_selector(".name").replace(
-                    (hidden ? "Show" : "Hide") + " grid"
-                );
-            },
-        );
+            add_action(
+                "Hide grid",
+                [{ key: "H", modifier: false, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
+                function () {
+                    ui.grid.class_list.toggle("hidden");
+                    const hidden = ui.grid.class_list.contains("hidden");
+                    this.query_selector(".name").replace(
+                        (hidden ? "Show" : "Hide") + " grid"
+                    );
+                },
+            );
 
-        //add_action(
-            //"Show hints",
-            //[{
-                //key: "H", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
-            //}],
-            //function () {
-                //ui.element.class_list.toggle("show-hints");
-                //const hidden = !ui.element.class_list.contains("show-hints");
-                //this.query_selector(".name").replace(
-                    //(hidden ? "Show" : "Hide") + " hints"
-                //);
-            //},
-        //);
+            //add_action(
+                //"Show hints",
+                //[{
+                    //key: "H", modifier: true, shift: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
+                //}],
+                //function () {
+                    //ui.element.class_list.toggle("show-hints");
+                    //const hidden = !ui.element.class_list.contains("show-hints");
+                    //this.query_selector(".name").replace(
+                        //(hidden ? "Show" : "Hide") + " hints"
+                    //);
+                //},
+            //);
 
-        //add_action(
-            //"Show queue",
-            //[],
-            //function () {
-                //ui.element.class_list.toggle("show-queue");
-                //const hidden = !ui.element.class_list.contains("show-queue");
-                //this.query_selector(".name").replace(
-                    //(hidden ? "Show" : "Hide") + " queue"
-                //);
-            //},
-        //);
+            //add_action(
+                //"Show queue",
+                //[],
+                //function () {
+                    //ui.element.class_list.toggle("show-queue");
+                    //const hidden = !ui.element.class_list.contains("show-queue");
+                    //this.query_selector(".name").replace(
+                        //(hidden ? "Show" : "Hide") + " queue"
+                    //);
+                //},
+            //);
 
-        //add_action(
-            //"Shortcuts",
-            //[{
-                //key: "/", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
-            //}],
-            //() => {
-                //const hidden = ui.element.query_selector("#keyboard-shortcuts-pane").class_list
-                    //.contains("hidden");
-                //ui.element.query_selector_all(".pane").forEach((pane) => {
-                    //pane.class_list.add("hidden");
-                //});
-                //ui.element.query_selector("#keyboard-shortcuts-pane").class_list
-                    //.toggle("hidden", !hidden);
-                //ui.element.query_selector(".version").class_list.add("hidden");
-            //},
-        //);
+            //add_action(
+                //"Shortcuts",
+                //[{
+                    //key: "/", modifier: true, context: Shortcuts.SHORTCUT_PRIORITY.Always
+                //}],
+                //() => {
+                    //const hidden = ui.element.query_selector("#keyboard-shortcuts-pane").class_list
+                        //.contains("hidden");
+                    //ui.element.query_selector_all(".pane").forEach((pane) => {
+                        //pane.class_list.add("hidden");
+                    //});
+                    //ui.element.query_selector("#keyboard-shortcuts-pane").class_list
+                        //.toggle("hidden", !hidden);
+                    //ui.element.query_selector(".version").class_list.add("hidden");
+                //},
+            //);
 
-        //add_action(
-            //"About",
-            //[],
-            //() => {
-                //const hidden = ui.element.query_selector("#about-pane").class_list
-                    //.contains("hidden");
-                //ui.element.query_selector_all(".pane").forEach((pane) => {
-                    //pane.class_list.add("hidden");
-                //});
-                //ui.element.query_selector("#about-pane").class_list.toggle("hidden", !hidden);
-                //ui.element.query_selector(".version").class_list.toggle("hidden", !hidden);
-            //},
-        //);
+            //add_action(
+                //"About",
+                //[],
+                //() => {
+                    //const hidden = ui.element.query_selector("#about-pane").class_list
+                        //.contains("hidden");
+                    //ui.element.query_selector_all(".pane").forEach((pane) => {
+                        //pane.class_list.add("hidden");
+                    //});
+                    //ui.element.query_selector("#about-pane").class_list.toggle("hidden", !hidden);
+                    //ui.element.query_selector(".version").class_list.toggle("hidden", !hidden);
+                //},
+            //);
 
-        // Disable those buttons that need to be disabled.
-        this.update(ui);
+            // Disable those buttons that need to be disabled.
+            this.update(ui);
+        }
     }
 
     /// Update the toolbar (e.g. enabling or disabling buttons based on UI mode).
@@ -6590,6 +6621,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // The global UI.
     const ui = new UI(new DOM.Element(document.body));
+    window.ui = ui;
     ui.initialise();
     my_ui = ui;
 
@@ -6611,12 +6643,13 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
+                
                 // Decode the diagram.
-                QuiverImportExport.base64.import(ui, query_data.get("q"));
+                // QuiverImportExport.base64.import(ui, query_data.get("q"));
                 // If there is a `macro_url`, load the macros from it.
-                if (query_data.has("macro_url")) {
-                    ui.load_macros_from_url(decodeURIComponent(query_data.get("macro_url")));
-                }
+                // if (query_data.has("macro_url")) {
+                //     ui.load_macros_from_url(decodeURIComponent(query_data.get("macro_url")));
+                // }
                 dismiss_loading_screen();
             } catch (error) {
                 if (ui.quiver.is_empty()) {

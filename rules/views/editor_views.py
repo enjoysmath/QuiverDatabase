@@ -45,7 +45,7 @@ def rule_editor(request, rule_id):
         return render(request, 'rule_editor.html', context)
         
     except Exception as e:
-        return redirect('error', f'{full_qualname}: {str(e)}')
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
 
 

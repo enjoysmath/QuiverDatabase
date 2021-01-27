@@ -3,7 +3,8 @@ from neomodel import *
 from django_neomodel import DjangoNode
 from QuiverDatabase.settings import MAX_TEXT_LENGTH
 from django.core.exceptions import ObjectDoesNotExist
-import database_service.quiver_data_format as fmt
+from neomodel import db
+from QuiverDatabase.python_tools import deep_get, deep_set
 
 # Create your models here.
 
@@ -14,11 +15,11 @@ class Model:
     
     def copy_relations_from(self, old):
         raise NotImplementedError
-    
+   
     
 class Morphism(StructuredRel):
     #uid = StringProperty(default=Morphism.get_unique_id())
-    name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
+    name = StringProperty(max_length=MAX_TEXT_LENGTH)
     
     # RE-DESIGN: TODO - these need to be independent of style and settable in an accompanying
     # panel to the editor.
@@ -31,11 +32,14 @@ class Morphism(StructuredRel):
     # Strictly style below this line:   
     NUM_LINES = { 1: 'one', 2: 'two', 3: 'three' }
     num_lines = IntegerProperty(choices=NUM_LINES, default=1)
+
+    LeftAlign, CenterAlign, RightAlign, OverAlign = range(4)
+    DefaultAlignment = LeftAlign    
      
-    ALIGNMENT = { 0:fmt.LeftAlign,  1:fmt.RightAlign, 2: fmt.CenterAlign, 3:fmt.OverAlign}
-    alignment = IntegerProperty(choices=ALIGNMENT, default=fmt.DefaultAlignment)
+    ALIGNMENT = { 0:LeftAlign,  1:RightAlign, 2:CenterAlign, 3:OverAlign}
+    alignment = IntegerProperty(choices=ALIGNMENT, default=DefaultAlignment)
     
-    position = IntegerProperty(default=50)
+    label_position = IntegerProperty(default=50)
     offset = IntegerProperty(default=0)
     curve = IntegerProperty(default=0)
     tail_shorten = IntegerProperty(default=0)
@@ -48,57 +52,112 @@ class Morphism(StructuredRel):
     hook_tail_side = IntegerProperty(choices=SIDE, default=0)    
     
     HEAD_STYLE = {0:'none', 1:'arrowhead', 2:'epi', 3:'harpoon'}
-    head_style = IntegerProperty(choices=HEAD_STYLE, default=0)
+    head_style = IntegerProperty(choices=HEAD_STYLE, default=1)
     harpoon_head_side = IntegerProperty(choices=SIDE, default=0)
     
     BODY_STYLE = {0:'solid', 1:'none', 2:'dashed', 3:'dotted', 4:'squiggly', 5:'barred'}
     body_style = IntegerProperty(choices=BODY_STYLE, default=0)
     
     color_hue = IntegerProperty(default=0)
-    color_sat = IntegerProperty(default=0)
+    color_sat = IntegerProperty(default=100)   # BUGFIX: default (black) is 0,100,0 in hsl, not 0,0,0
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0)
     
-    def load_from_editor(self, edge):
-        self.alignment = edge.alignment
+    def load_from_editor(self, format):  
+        if len(format) > 2:
+            self.name = format[2]
         
-        options = edge.options.dict
-        self.position = options['label_position']
-        self.offset = options['offset']
-        self.curve = options['curve']
-        self.tail_shorten = options['length_shorten']['source']
-        self.head_shorten = options['length_shorten']['target']
-        self.num_lines = options['level']
+        if len(format) > 3:
+            self.alignment = format[3]
         
-        self.body_style = next(x for x,y in self.BODY_STYLE.items() \
-                               if y == options['style']['body']['name'])                
-        
-        self.tail_style = next(x for x,y in self.TAIL_STYLE.items() \
-                               if y == options['style']['tail']['name'])
-        
-        if self.tail_style == 'hook':
-            self.hook_tail_side = next(x for x,y in self.SIDE.items() \
-                                       if y == options['style']['tail']['side'])
-        
-        self.head_style = next(x for x,y in self.TAIL_STYLE.items() \
-                               if y ==options['style']['head']['name'])
+        if len(format) > 4:                
+            options = format[4]            
+            self.label_position = options.get('label_position', 50)
+            self.offset = options.get('offset', 0)
+            self.curve = options.get('curve', 0)
+            shorten = options.get('shorten', {'source': 0, 'target': 0})
+            self.tail_shorten = shorten.get('source', 0)
+            self.head_shorten = shorten.get('target', 0)
+            self.num_lines = options.get('level', 1)
             
-        if self.head_style == 'harpoon':
-            self.harpoon_head_side = next(x for x,y in self.SIDE.items() \
-                                          if y == options['style']['head']['side'])
+            self.body_style = next(x for x,y in self.BODY_STYLE.items() \
+                                   if y == deep_get(options, ('style', 'body', 'name'), 'solid'))
             
-        self.color_hue = edge.label_color.h
-        self.color_sat = edge.label_color.s
-        self.color_lum = edge.label_color.l
-        self.color_alph = edge.label_color.a
+            self.tail_style = next(x for x,y in self.TAIL_STYLE.items() \
+                                   if y == deep_get(options, ('style', 'tail', 'name'), 'none' ))
+            
+            side = deep_get(options, ('style', 'tail', 'side'), 'none')
+            
+            if isinstance(side, int):
+                self.hook_tail_side = side
+            else:
+                self.hook_tail_side = next(x for x,y in self.SIDE.items() if y == side)
+            
+            self.head_style = next(x for x,y in self.HEAD_STYLE.items() \
+                                   if y == deep_get(options, ('style', 'head', 'name'), 'arrowhead'))
+            
+            side = deep_get(options, ('style', 'head', 'side'), 'none')
+            
+            if isinstance(side, int):
+                self.harpoon_head_side = side
+            else:
+                self.harpoon_head_side = next(x for x,y in self.SIDE.items() if y == side)
+                
+            if len(format) > 5:
+                color = format[5]
+            elif 'colour' in options:
+                color = options['colour']
+            else:
+                color = [0, 100, 0, 1.0]  # BUGFIX: black is hsl: 0,100,0 not 0,0,0
+                
+            self.color_hue = color[0]
+            self.color_sat = color[1]
+            self.color_lum = color[2]
+            
+            if len(color) > 3:
+                self.color_alph = color[3]            
         
         self.save()
         
+    def quiver_format(self):
+        format = [self.start_node().quiver_index, self.end_node().quiver_index]
+        format.append(self.name if self.name is not None else '')
+        format.append(self.alignment)
+        options = {
+            #'colour' : [self.color_hue, self.color_sat, self.color_lum, self.color_alph],
+            'label_position': self.label_position,
+            'offset' : self.offset,
+            'curve' : self.curve,
+            'shorten' : {
+                'source' : self.tail_shorten,
+                'target' : self.head_shorten,
+            },
+            'level' : self.num_lines,
+            'style' : {
+                'tail': {
+                    'name' : self.TAIL_STYLE[self.tail_style],
+                    'side' : self.SIDE[self.hook_tail_side],
+                },
+                'head': {
+                    'name' : self.HEAD_STYLE[self.head_style],
+                    'side' : self.SIDE[self.harpoon_head_side],
+                },
+                'body': {
+                    'name' : self.BODY_STYLE[self.body_style],
+                }                    
+            }
+        }
+        format.append(options)
+        format.append([self.color_hue, self.color_sat, self.color_lum, self.color_alph])
+        return format
+    
             
 class Object(StructuredNode, Model):
-    #uid = UniqueIdProperty()
-    name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
+    uid = UniqueIdProperty()
+    name = StringProperty(max_length=MAX_TEXT_LENGTH)
     morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)    
+    
+    quiver_index = IntegerProperty()
 
     # Position & Color:
     x = IntegerProperty(default=0)
@@ -107,52 +166,56 @@ class Object(StructuredNode, Model):
     color_hue = IntegerProperty(default=0)
     color_sat = IntegerProperty(default=0)
     color_lum = IntegerProperty(default=0)
-    color_alph = FloatProperty(default=1.0)       
+    color_alph = FloatProperty(default=1.0) 
+    
+    def all_morphisms(self):
+        results, meta = db.cypher_query(
+            f'MATCH (x:Object)-[f:MAPS_TO]->(y:Object) WHERE x.uid="{self.uid}" RETURN f')
+        for row in results:
+            yield Morphism.inflate(row[0])    
+            
+    def delete(self):
+        # Delete all the outgoing morphisms first:
+        db.cypher_query(f'MATCH (o:Object)-[f:MAPS_TO]-(p:Object) WHERE o.uid="{self.uid}" DELETE f')       
+        super().delete()
            
-    def copy_relations_from(self, old):
-        for f in old.morphisms:
-            self.morphisms.connect(f.end_node())   
-        self.save()
-        
     @staticmethod
-    def create_from_editor(vertex):
-        o = Object(name=vertex.label.string)
-        o.x = vertex.x
-        o.y = vertex.y
-        o.color_hue = vertex.label_color.h
-        o.color_sat = vertex.label_color.s
-        o.color_lum = vertex.label_color.l
-        o.color_alph = vertex.label_color.a
+    def create_from_editor(format, index:int):
+        o = Object()
+        o.quiver_index = index
+        o.x = format[0]
+        o.y = format[1]
+        
+        if len(format) > 2:
+            o.name = format[2]
+            
+        if len(format) > 3:
+            color = format[3]
+            o.color_hue = color[0]
+            o.color_sat = color[1]
+            o.color_lum = color[2]
+            o.color_alph = color[3]
+        
         o.save()   
         return o
     
-    
+    def quiver_format(self):
+        return [self.x, self.y, self.name, 
+                [self.color_hue, self.color_sat, self.color_lum, self.color_alph]]
+   
+        
+        
 class Category(StructuredNode):
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
     objects = RelationshipTo('Object', 'CONTAINS')
     of_categories = BooleanProperty(default=False)
-    
+
     @staticmethod
     def our_create(**kwargs):
         category = Category(**kwargs).save()
         return category
-                
-    def copy_relations_from(self, old):
-        for x in old.objects:
-            self.objects.connect(x.end_node())
-        self.save()
-        
-    def delete_objects(self):
-        for o in self.objects.all():
-            o.delete()
-        self.save()
-        
-    def add_objects(self, obs):
-        for o in obs:
-            self.objects.connect(o)
-        self.save()
-           
+    
         
 class Diagram(Category):
     category = RelationshipTo('Category', 'IN', cardinality=One)
@@ -168,13 +231,64 @@ class Diagram(Category):
         diagram.save()  
         return diagram
         
-    def copy_relations_from(self, old):
-        self.category.connect(old.category.single())
-        self.checked_out_by = old.checked_out_by
-        self.commutes = old.commutes
-        self.save()
-            
+    def quiver_format(self):
+        edges = []
+        vertices = []
+        
+        objects = list(self.all_objects())
+        objects.sort(key=lambda x: x.quiver_index)        
+        
+        for o in objects:
+            vertices.append(o.quiver_format())
+            for f in o.all_morphisms():
+                edges.append(f.quiver_format())
+                    
+        format = [0, len(vertices)]
+        format += vertices
+        format += edges
+        
+        return format
     
+    def load_from_editor(self, format):
+        obs = []
+        vertices = format[2:2 + format[1]]
+        
+        for k,v in enumerate(vertices):
+            o = Object.create_from_editor(v, k)
+            obs.append(o)
+        
+        edges = format[2 + format[1]:]
+            
+        for e in edges:
+            A = obs[e[0]]
+            B = obs[e[1]]
+            f = A.morphisms.connect(B)
+            if self.of_categories:
+                f.functor = True
+            f.load_from_editor(e)
+            f.save()
+            A.save()            
+            
+        self.add_objects(obs)               
+    
+    def all_objects(self):
+        results, meta = db.cypher_query(
+            f'MATCH (D:Diagram)-[:CONTAINS]->(x:Object) WHERE D.uid="{self.uid}" RETURN x')
+        for row in results:
+            yield Object.inflate(row[0])
+        
+    def delete_objects(self):
+        for o in self.all_objects():
+            o.delete()
+        self.save()
+        
+    def add_objects(self, obs):
+        for o in obs:
+            self.objects.connect(o)
+        self.save()
+
+            
+            
 class Rule(Object):
     uid = UniqueIdProperty()
     key_diagram = RelationshipTo('Diagram', 'KEY', cardinality=One)

@@ -836,26 +836,33 @@ QuiverImportExport.base64 = new class extends QuiverImportExport {
                 throw new Error(`${message}${postfix}`);
             }
         };
+        
         const assert_kind = (object, kind) => {
+            json_str = JSON.stringify(object);
+            
+            const assert_msg = (expected_str) => {
+                return "expected " + expected_str + ", but instead got: " + json_str;
+            }    
+            
             switch (kind) {
                 case "array":
-                    assert(Array.isArray(object), "expected array");
+                    assert(Array.isArray(object), assert_msg('array'));
                     break;
                 case "integer":
                 case "natural":
-                    assert(Number.isInteger(object), "expected integer");
+                    assert(Number.isInteger(object), assert_msg('integer'));
                     if (kind === "natural") {
-                        assert(object >= 0, "expected non-negative integer");
+                        assert(object >= 0, assert_msg('non-negative integer'));
                     }
                     break;
                 case "float":
-                    assert(typeof object === "number", "expected floating-point number");
+                    assert(typeof object === "number", assert_msg('floating-point number'));
                     break;
                 case "string":
-                    assert(typeof object === "string", "expected string");
+                    assert(typeof object === "string", assert_msg('string'));
                     break;
                 case "object":
-                    assert(typeof object === "object", "expected object");
+                    assert(typeof object === "object", assert_msg('object'));
                     break;
                 case "colour":
                     assert_kind(object, "array");
@@ -874,6 +881,7 @@ QuiverImportExport.base64 = new class extends QuiverImportExport {
                     throw new Error(`unknown parameter kind \`${kind}\``);
             }
         };
+        
         const assert_eq = (object, value) => {
             assert(object === value, `expected \`${value}\`, but found \`${object}\``);
         };
@@ -1219,14 +1227,14 @@ QuiverImportExport.database = new class extends QuiverImportExport {
 
         let input;
         try {
-            // We use this `decodeURIComponent`-`escape` trick to encode non-ASCII characters.
-            const decoded = decodeURIComponent(escape(atob(string)));
-            if (decoded === "") {
-                return quiver;
-            }
-            input = JSON.parse(decoded);
+            // // We use this `decodeURIComponent`-`escape` trick to encode non-ASCII characters.
+            // const decoded = decodeURIComponent(escape(atob(string)));
+            // if (decoded === "") {
+            //     return quiver;
+            // }
+            input = JSON.parse(string);
         } catch (_) {
-            throw new Error("invalid base64 or JSON");
+            throw new Error("invalid JSON from datatabase");
         }
 
         // Helper functions for dealing with bad input.
@@ -1304,7 +1312,7 @@ QuiverImportExport.database = new class extends QuiverImportExport {
                 if (indices.length < vertices) {
                     // This cell is a vertex.
 
-                    assert(cell.length >= 2 && cell.length <= 4, "invalid vertex format");
+                    assert(cell.length >= 2 && cell.length <= 4, "invalid vertex format: " + JSON.stringify(cell));
                     const [x, y, label = "", label_colour = Colour.black().hsla()] = cell;
                     assert_kind(x, "natural");
                     assert_kind(y, "natural");
@@ -1321,7 +1329,8 @@ QuiverImportExport.database = new class extends QuiverImportExport {
                 } else {
                     // This cell is an edge.
 
-                    assert(cell.length >= 2 && cell.length <= 6, "invalid edge format");
+                    assert(cell.length >= 2 && cell.length <= 6, "invalid edge format in edge: " + JSON.stringify(cell));
+                    
                     const [
                         source, target, label = "", alignment = 0, options = {},
                         label_colour = Colour.black().hsla()
@@ -1330,6 +1339,7 @@ QuiverImportExport.database = new class extends QuiverImportExport {
                         assert_kind(endpoint, "natural");
                         assert(endpoint < indices.length, `invalid ${name} index`);
                     }
+                    
                     assert_kind(label, "string");
                     assert_kind(alignment, "natural");
                     assert(alignment <= 3, "invalid label alignment");

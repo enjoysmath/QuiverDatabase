@@ -1,0 +1,9 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+{% if diagrams %}
+    {% with diagrams=diagrams %}
+        {% include 'diagram_list.html' %}
+    {% endwith %}
+{% endif %}
+{% endblock %}

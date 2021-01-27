@@ -42,7 +42,7 @@ def signup_view(request, next:str=None):
             return redirect(next)
         return render(request, 'signup.html', {'form': form})   
     except Exception as e:
-        return redirect('error', f'{full_qualname}: {str(e)}')
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
         
 def login_view(request, next:str=None):
@@ -68,7 +68,7 @@ def login_view(request, next:str=None):
                 
         return render(request, 'login.html', context)
     except Exception as e:
-        return redirect('error', f'{full_qualname}: {str(e)}')
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
         
 
 @login_required
@@ -84,7 +84,7 @@ def logout_view(request, next:str=None):
             
         return redirect(next)
     except Exception as e:
-        return redirect('error', f'{full_qualname}: {str(e)}')
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
     
 
@@ -96,7 +96,7 @@ def user_profile(request):
     if 'diagram ids' in session:
         for diagram_id in session['diagram ids']:
             try:
-                diagram = Diagram.get_or_none(uid=diagram_id)
+                diagram = Diagram.nodes.get(uid=diagram_id)
                 diagrams.append(diagram)
             except ObjectDoesNotExist:
                 messages.warning(f'Diagram with uid {diagram_id} does not exist but is listed in profile of {request.user.username}') 

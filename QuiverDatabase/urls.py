@@ -29,16 +29,16 @@ urlpatterns = [
          {'next': 'profile'}, name='create_user'),
     
     path('sign-in', login_view, 
-         {'next':'profile'}, name='login'),
+         {'next': 'profile'}, name='login'),
     
     path('sign-out', logout_view, 
-         {'next':'home'}, name='logout'),
+         {'next': 'home'}, name='logout'),
     
-    path('password-reset', include('password_reset.urls')),
+    path('password-reset/', include('password_reset.urls')),
     path('admin/', admin.site.urls),
-    path('db/', include('database_service.urls')),
+    path('database/', include('database_service.urls')),
     path('rules/', include('rules.urls')),
-    path('error/<str:msg>/<int:line>/<str:file>', error, name='error'),
+    path('error/<str:msg>', error, name='error'),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

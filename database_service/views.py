@@ -1,14 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from .models import Object, Category, Diagram, get_model_by_uid, get_model_class
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from QuiverDatabase.http_tools import get_posted_text
 from django.http import JsonResponse
 from QuiverDatabase.python_tools import full_qualname
-from .quiver_data_format import QuiverDataFormat
 import json
 from django.db import OperationalError
 from django.core.exceptions import ObjectDoesNotExist
+from QuiverDatabase.settings import DEBUG
 
 # Create your views here.
 
@@ -42,6 +42,35 @@ def set_model_name(request, Model:str):
         return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 
 
 
+@login_required
+def list_open_diagrams(request):
+    diagrams = []
+    diagram_ids = request.session.get('diagram ids', [])
+    
+    for diagram_id in diagram_ids:
+        diagram = get_model_by_uid(Diagram, uid=diagram_id)
+        diagrams.append(diagram)
+        
+    context = {
+        'diagrams' : diagrams
+    }
+        
+    return render(request, 'diagram_list_page.html', context)
+
+
+
+def load_diagram_from_database(request, diagram_id):
+    try:
+        if request.method == 'GET':
+            diagram = get_model_by_uid(Diagram, uid=diagram_id)
+            json_str = json.dumps(diagram.quiver_format())
+            
+            return HttpResponse(json_str, content_type='text/plain; charset=utf8')
+                
+    except Exception as e:
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
+
+
 
 @login_required   
 @user_passes_test(is_editor)
@@ -64,39 +93,23 @@ def save_diagram_to_database(request, diagram_id):
         
         if body:
             try:
-                recvd_json = json.loads(body)
-                data = QuiverDataFormat(recvd_json)
-                
+                data = json.loads(body)                
             except json.decoder.JSONDecodeError:
                 # For some reason, empty diagrams are resulting in the body as a URL str (not JSON)
-                data = QuiverDataFormat.Default                
+                data = [0, 0]               
         else:
-            data = QuiverDataFormat.Default            
+            data = [0, 0]
         
         diagram.delete_objects()
-        category = diagram.category.single()
-        
-        obs = []
-                
-        for v in data.vertices:
-            o = Object.create_from_editor(v)
-            obs.append(o)
-            
-        for e in data.edges:
-            A = obs[e.source_index]
-            B = obs[e.target_index]
-            f = A.morphisms.connect(B, {'name': e.label.string})
-            if category.of_categories:
-                f.functor = True
-            A.save()                  
-            f.load_from_editor(e)
-            
-        diagram.add_objects(obs)                
+        diagram.load_from_editor(data)        
                                             
-        return JsonResponse(str(data), safe=False)
+        return JsonResponse(
+            'Wrote the following data to the database:\n' + str(data), safe=False)
 
     except Exception as e:
-        raise e
+        if DEBUG:
+            raise e
+        return JsonResponse({'error_msg' : f'{full_qualname(e)}: {str(e)}'})
     
     #except Exception as e:
         #return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 
