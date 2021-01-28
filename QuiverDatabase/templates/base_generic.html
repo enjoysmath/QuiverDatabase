@@ -4,7 +4,7 @@
 
 <html lang="en">
 <head>
-    {% block head %}
+{% block head %}
     {% block meta %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -22,65 +22,65 @@
     {% endblock %}
     
     {% block resources %}
-    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
-    {% block add_resources %} {% endblock %}
+        <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+        {% block add_resources %} {% endblock %}
     
     {% block scripts %}    
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'js/bootstrap-editable.js' %}"></script>
-    <script src="{% static 'js/javascript_tools.js' %}"></script>
-    {% block add_scripts %} {% endblock %}
+        <script src="{% static 'js/jquery.min.js' %}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap-editable.js' %}"></script>
+        <script src="{% static 'js/javascript_tools.js' %}"></script>
+        {% block add_scripts %} {% endblock %}
     {% endblock %}
     
     {% block header %} 
-    <div class="container-fluid" style="position:relative; top:-69px;" >
-    <div class="row center-content">
-        {% block logo %}
-            <div class="col-md-2">
-                {% include 'logo.html' %}
-            </div>
-        {% endblock %}
-        {% block tagline %}
-        <div class="col-md-6">
-            <div class="page-header center-content" style="position:relative; top: 40px;">
-                <h1>
-                    <small>App for studying 
-                        <a href="https://en.wikipedia.org/wiki/Category_theory" target="_blank">
-                            Category Theory.
-                        </a>
-                    </small>
-                </h1>
-            </div>
-        </div>
-        {% endblock %}
-        {% block header_buttons %}
-            <div class="col-md-4" style="position:relative; right:5px; top:26px">
-                <div class="row pull-right">
-                {% block add_header_buttons %}
-                {% endblock %}
-                {% block login_out_buttons %}
-                    {% include 'login_out_buttons.html' %}
-                {% endblock %}
+        <div class="container-fluid" style="position:relative; top:-69px;" >
+        <div class="row center-content">
+            {% block logo %}
+                <div class="col-md-2">
+                    {% include 'logo.html' %}
+                </div>
+            {% endblock %}
+            {% block tagline %}
+            <div class="col-md-6">
+                <div class="page-header center-content" style="position:relative; top: 40px;">
+                    <h1>
+                        <small>App for studying 
+                            <a href="https://en.wikipedia.org/wiki/Category_theory" target="_blank">
+                                Category Theory.
+                            </a>
+                        </small>
+                    </h1>
                 </div>
             </div>
-        {% endblock %}
-    </div>
-    </div>
-
-    {% block add_header %} {% endblock %}
+            {% endblock %}
+            {% block header_buttons %}
+                <div class="col-md-4" style="position:relative; right:5px; top:26px">
+                    <div class="row pull-right">
+                    {% block add_header_buttons %}
+                    {% endblock %}
+                    {% block login_out_buttons %}
+                        {% include 'login_out_buttons.html' %}
+                    {% endblock %}
+                    </div>
+                </div>
+            {% endblock %}
+        </div>
+        </div>
+    
+        {% block add_header %} {% endblock %}
     {% endblock %} 
-    {% endblock %}   
+{% endblock %}   
 </head>
 
 {% block before_body %} {% endblock %}
 
 <body>
     {% block body %}
-    {% block body_scripts %} {% endblock %}
-    {% block latest_message %} {% endblock %}
-    {% block content %} {% endblock %}
+        {% block body_scripts %} {% endblock %}
+        {% block latest_message %} {% endblock %}
+        {% block content %} {% endblock %}
     {% endblock %}
 </body>
 
