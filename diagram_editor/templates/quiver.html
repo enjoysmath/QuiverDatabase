@@ -135,6 +135,9 @@
 {% block header %} 
 {% include 'logo.html' %}
 <div style="position:absolute; right:1%; top:1%; z-index:1">
+    {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="btn btn-primary btn-header" type="button">Profile</a>
+    {% endif %}
     {% include 'login_out_buttons.html' %}
 </div>
 {% endblock %}
