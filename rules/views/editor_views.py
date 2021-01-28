@@ -52,10 +52,12 @@ def rule_editor(request, rule_id):
 @login_required
 @user_passes_test(is_editor)
 def create_new_rule(request):
-    rule = DiagramRule.our_create(name='', checked_out_by=request.user.username)
+    rule = DiagramRule.our_create()
+    rule.name = ''
+    rule.checked_out_by = request.user.username
     
     context = {
-        'rule_id' : rule.uid 
+        'rule_id' : rule.uid
     }    
     
     return render(request, 'new_rule.html', context)

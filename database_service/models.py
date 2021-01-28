@@ -290,16 +290,18 @@ class Diagram(Category):
 
             
             
-class DiagramRule(Morphism):
-    uid = StringProperty()    # Need special Neo4j add-on to do real UID's as UniqueIdProperty()'s here.
+class DiagramRule(StructuredNode):
+    uid = UniqueIdProperty()   
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
     # Mathematics
-    functor = StringProperty()
-    # The link to an actual known functor, if this rule is factorial, or None otherwise
-    
+    functor_id = StringProperty()
+    # The link to an actual known functor, if this rule is factorial, or None otherwise.
     # We will have to be careful when deleting a Functor.  We can only delete it
     # if there exist no rules referring to it through this property.
+    
+    key_diagram_id = StringProperty()
+    result_diagram_id = StringProperty()
     
     @staticmethod
     def our_create(**kwargs):
