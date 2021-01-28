@@ -1247,7 +1247,7 @@ quiver-button.flash {
 }
 
 #lower-control-pane {
-	background: hsl(120, 60%, 50%, 60%);
+	background: hsl(265, 100%, 50%, 50%);
 	z-index: 0;
 	position: absolute;
 	bottom: 0;

@@ -1,41 +1,17 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+{% if user.is_authenticated %}
 <div class="container-fluid" style="margin-top:1%">
     <div class="row center-content">
-        <div class="col-md-12">
-            <div class="tabbable" id="profile-tabs">
-                <ul class="nav nav-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#profile-tab1" data-toggle="tab">Intro</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#profile-tab2" data-toggle="tab">Diagrams</a>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane active" id="profile-tab1">
-                     {% if user.is_authenticated %}
-                         <h1>Profile of {{ user.username }}</h1>
-                         <img src="{{ user.proifle_img_url }}" width = "200" height = "200"  />
-                         <h2>{{ user.email }}</h2>
-                     {% endif %}
-                    </div>
-                    <div class="tab-pane" id="profile-tab2">
-                    {{ diagrams }}
-                    
-                    {% if diagrams %}
-                        <a href="{% url 'list_open_diagrams' %}" class="btn btn-success" type="button">
-                            Opened Diagrams
-                        </a>
-                    {% endif %}
-                    <a href="{% url 'create_new_diagram' %}" class="btn btn-success" type="button">
-                        Create Diagram
-                    </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <h1>{{ user.username }}'s Profile</h1>
     </div>
+    <div class="row center-content">
+        <div class="col-md-12">
+            <a href="{% url 'open_diagrams' %}" class="btn btn-primary" type="button">Open Diagrams</a>              
+            <a href="{% url 'create_new_diagram' %}" class="btn btn-success" type="button">Create Diagram</a>
+        </div>
+    </div>                    
 </div>
+{% endif %}
 {% endblock %}

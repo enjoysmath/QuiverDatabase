@@ -1,6 +1,6 @@
-from django.db import models
 from neomodel import *
 from django_neomodel import DjangoNode
+from django.db import models
 from QuiverDatabase.settings import MAX_TEXT_LENGTH
 from django.core.exceptions import ObjectDoesNotExist
 from neomodel import db
@@ -290,10 +290,8 @@ class Diagram(Category):
 
             
             
-class Rule(Object):
-    uid = UniqueIdProperty()
-    key_diagram = RelationshipTo('Diagram', 'KEY', cardinality=One)
-    result_diagram = RelationshipTo('Diagram', 'RESULT', cardinality=One)
+class DiagramRule(Morphism):
+    uid = StringProperty()    # Need special Neo4j add-on to do real UID's as UniqueIdProperty()'s here.
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
     # Mathematics
@@ -305,24 +303,18 @@ class Rule(Object):
     
     @staticmethod
     def our_create(**kwargs):
-        rule = Rule(**kwargs).save()
-        rule.key_diagram.connect(Diagram(name='').save())
-        rule.result_diagram.connect(Diagram(name='').save())
+        source = Diagram(name='').save()
+        target = Diagram(name='').save()
+        rule = source.morphisms.connect(target)
         rule.save()
         return rule
     
-    def transfer_from(self, old):
-        self.key_diagram.connect(old.key_diagram.single())
-        self.result_diagram.connect(old.result_diagram.single())
-        self.checked_out_by = old.checked_out_by
-        self.save()
-        
 
 model_str_to_class = {
     'Category' : Category,
     'Object' : Object,
     'Diagram' : Diagram,
-    'Rule' : Rule,
+    'Rule' : DiagramRule,
 }
 
 MAX_MODEL_CLASS_NAME_LENGTH = max([len(x) for x in model_str_to_class.keys()])

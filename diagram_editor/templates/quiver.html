@@ -43,6 +43,8 @@
 
 {% block add_scripts %}
     <script type="text/javascript" src="{% static 'js/javascript_tools.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/html2canvas.min.js' %}"></script>
+    </script> 
     <script type="text/javascript">
     
     $.fn.editable.defaults.mode = 'inline';
@@ -93,6 +95,11 @@
                 console.error('Error: ' + error);
             });
         }
+        
+        function close_diagram()
+        {
+            window.location.href = "{% url 'close_diagram_editor' diagram_id %}";
+        }
     }
     
     $(document).ready(function()
@@ -108,9 +115,10 @@
             return response.text(); 
         })
         .then(text => {
-            alert(text);
+            // alert(text);
             window.ui.load_json_str_from_database(text);
         });
+    
     });
                      
     </script>
@@ -126,9 +134,9 @@
 
 {% block header %} 
 {% include 'logo.html' %}
-{% with style="position:absolute; right:1%; top:1%; z-index:1" %}
+<div style="position:absolute; right:1%; top:1%; z-index:1">
     {% include 'login_out_buttons.html' %}
-{% endwith %}
+</div>
 {% endblock %}
 
 

@@ -57,11 +57,13 @@
         {% endblock %}
         {% block header_buttons %}
             <div class="col-md-4" style="position:relative; right:5px; top:26px">
-                {% block login_out_buttons %}
-                    {% with style="" %}
-                        {% include 'login_out_buttons.html' %}
-                    {% endwith %}   
+                <div class="row pull-right">
+                {% block add_header_buttons %}
                 {% endblock %}
+                {% block login_out_buttons %}
+                    {% include 'login_out_buttons.html' %}
+                {% endblock %}
+                </div>
             </div>
         {% endblock %}
     </div>
@@ -77,6 +79,7 @@
 <body>
     {% block body %}
     {% block body_scripts %} {% endblock %}
+    {% block latest_message %} {% endblock %}
     {% block content %} {% endblock %}
     {% endblock %}
 </body>

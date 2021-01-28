@@ -60,7 +60,19 @@ def list_open_diagrams(request):
         return render(request, 'diagram_list_page.html', context)
     except Exception as e:
         return redirect('error', full_qualname(e) + ': ' + str(e))
-
+    
+    
+def list_all_diagrams(request):
+    try:
+        context = {
+            'diagrams' : Diagram.nodes.order_by('name')
+        }        
+         
+        return render(request, 'diagram_list_page.html', context) 
+            
+    except Exception as e:
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
+        
 
 
 def load_diagram_from_database(request, diagram_id):

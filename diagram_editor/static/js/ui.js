@@ -604,7 +604,7 @@ class UI {
     load_json_str_from_database(json_str) {
         QuiverImportExport.database.import(this, json_str);
     }
-
+    
     /// Reset most of the UI. We don't bother resetting current zoom, etc.: just enough to make
     /// changing the URL history work properly.
     reset() {
@@ -930,45 +930,48 @@ class UI {
             this.database_control_pane = new DOM.Div({
                 id: "lower-control-pane",
                 class: "container-fluid pane",
-            })
-            .add(new DOM.Div({class: "row"})
+            }).add(new DOM.Div({class:"row"})
                 .add(new DOM.Div({class:"col-md-12"})
-                .add(new DOM.Element("h4")
-                .add(new DOM.Element("strong", {class:"text-muted"})
-                .add("Diagram Name:"))
-                .add(new DOM.Element("a", {
-                    "id":"diagram-name-edit",
-                    "data-type": "text",
-                    "href": "#",
-                    "style": "border:none; margin-left:10px",
-                })))))
-            .add(new DOM.Div({class: "row"})
-                .add(new DOM.Div({class:"col-md-12"})
-                .add(new DOM.Element("h4")
-                .add(new DOM.Element("strong", {class:"text-muted"})
-                .add("Category:"))
-                .add(new DOM.Element("a", {
-                    "id":"category-name-edit",
-                    "data-type": "text",
-                    "href": "#",
-                    "style": "border:none; margin-left:10px",
-                })))))
-            .add(new DOM.Div({class: "row"})
-                .add(new DOM.Div({class: "col-md-2"})
-                    .add(new DOM.Element("a", {
-                        "id" : "save-to-database-button",
-                        "class" : "btn btn-primary",
-                        // "style" : "border-radius: 8px",
-                        // "url" : TODO set in html script with diagram_id
-                        // "onclick": ui.
-                    }).add("Save Diagram")
-                    .listen("click", function() {
-                        const {data} = this.quiver.export("database", this.settings, this.definitions());
-                        save_diagram_to_database(data);
-                        // history.pushState({}, "", data);  TODO do we want this?
-                    }.bind(this)))));
-                
-            
+                    .add(new DOM.Div({class: "row"})
+                        .add(new DOM.Div({class:"col-md-12"})
+                        .add(new DOM.Element("h4")
+                        .add(new DOM.Element("strong", {class:"text-muted"})
+                        .add("Diagram Name:"))
+                        .add(new DOM.Element("a", {
+                            "id":"diagram-name-edit",
+                            "data-type": "text",
+                            "href": "#",
+                            "style": "border:none; margin-left:10px",
+                        })))))
+                    .add(new DOM.Div({class: "row"})
+                        .add(new DOM.Div({class:"col-md-12"})
+                        .add(new DOM.Element("h4")
+                        .add(new DOM.Element("strong", {class:"text-muted"})
+                        .add("Category:"))
+                        .add(new DOM.Element("a", {
+                            "id":"category-name-edit",
+                            "data-type": "text",
+                            "href": "#",
+                            "style": "border:none; margin-left:10px",
+                        })))))
+                    .add(new DOM.Div({class: "row"})
+                        .add(new DOM.Element("a", {
+                                "id" : "save-to-database-button",
+                                "class" : "btn btn-success",
+                                "style" : "border-radius: 8px;",
+                            }).add("Save Diagram")
+                            .listen("click", function() {
+                                const {data} = this.quiver.export("database", this.settings, this.definitions());
+                                save_diagram_to_database(data);
+                                // history.pushState({}, "", data);  TODO do we want this?
+                        }.bind(this)))
+                        .add(new DOM.Element("a", {
+                                "id" : "close-diagram-button",
+                                "class" : "btn btn-primary",
+                                "style" : "border-radius: 8px; margin-left:5px",
+                            }).add("Close Diagram")
+                            .listen("click", close_diagram)))));
+                                    
             panes.push(this.database_control_pane);
 
             for (const pane of panes) {

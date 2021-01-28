@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from database_service.models import Rule, Diagram, get_unique
+from database_service.models import DiagramRule, Diagram, get_unique
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from QuiverDatabase.python_tools import full_qualname
@@ -22,7 +22,7 @@ def rule_editor(request, rule_id):
         if 'rule ids' not in session:
             session['rule ids'] = []
             
-        rule = Rule.nodes.get(uid=rule_id)
+        rule = DiagramRule.nodes.get(uid=rule_id)
         
         if rule:
             if not rule.checked_out_by:
@@ -52,7 +52,7 @@ def rule_editor(request, rule_id):
 @login_required
 @user_passes_test(is_editor)
 def create_new_rule(request):
-    rule = Rule.our_create(name='', checked_out_by=request.user.username)
+    rule = DiagramRule.our_create(name='', checked_out_by=request.user.username)
     
     context = {
         'rule_id' : rule.uid 

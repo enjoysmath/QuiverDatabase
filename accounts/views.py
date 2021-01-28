@@ -19,7 +19,6 @@ from QuiverDatabase.python_tools import full_qualname
 from inspect import getframeinfo, currentframe
 from django.core.exceptions import ObjectDoesNotExist
 from database_service.models import Diagram
-import traceback
 
 # Create your views here.
 
@@ -75,14 +74,20 @@ def login_view(request, next:str=None):
 def logout_view(request, next:str=None):
     try:            
         user = request.user
+        session = request.session
         
         if user and user.is_authenticated:
-            logout(request)
+            if 'diagram ids' not in session or len(session['diagram ids']) == 0:
+                logout(request)
+            else:
+                session['message'] = "You can't logout when you have open diagrams, please close them.";
+                return redirect('open_diagrams')
             
         if next is None:
             next = request.GET.get('next', 'home')
             
         return redirect(next)
+    
     except Exception as e:
         return redirect('error', f'{full_qualname(e)}: {str(e)}')
     

@@ -1,10 +1,5 @@
 {% extends "base_generic.html" %}
 
-{% block title %}Error Encountered{% endblock %}
-<!-- TODO enable the title as a page-header -->
-
-{% block header %} {% endblock %}
-
 {% block content %}
     <div class="container-fluid">
     <!-- TODO create a row-centered CSS class in styles.css.  Replace all occurences (3-4 so far)-->
@@ -22,7 +17,7 @@
         <div class="col-md-9">
             <ul class="messages">
                 {% for message in messages %}
-                <li  {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </li>
+                <li class="{{ message.tags }}">{{ message }}</li>
                 {% endfor %}
             </ul>
         </div>

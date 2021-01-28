@@ -1,5 +1,15 @@
 {% extends "base_generic.html" %}
 
+{% load static %}
+
+{% block add_header_buttons %}
+    {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="btn btn-primary btn-header" type="button">
+            Profile
+        </a>
+    {% endif %}
+{% endblock %}
+
 {% block content %}   
     <div class="container-fluid">
     <div class="row" style="align-items:center; justify-content:space-around; display:flex">
@@ -18,5 +28,9 @@
         </div>
     </div>
     </div>
+    
+    {% with diagrams=diagrams %}
+        {% include 'diagram_list.html' %}    
+    {% endwith %}  
     
 {% endblock %}
