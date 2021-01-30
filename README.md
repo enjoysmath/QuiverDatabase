@@ -45,13 +45,13 @@
     - ![WingWare Debug I/O Start Up Screenshot](./documentation/WingWare_ProjectFile_EnvironmentVariables_Edit.png)
     - Click "Edit".
     - The important environment variables should read:
-        ```
+        ``''
         NEO4J_HOST=localhost
         NEO4J_PASSWORD=fusion123
         NEO4J_PORT=7687
         NEO4J_USER_NAME=neo4j
         DISABLE_COLLECTSTATIC=1
-        ON_HEROKU=0```
+        ON_HEROKU=0``
     - Leave the "secret key" alone, of course when we deploy to production we'll have to change these settings.
     - Let's all agree to use the same project file and thus the same password `fusion123`.
     - Let's also all agree on a port number to use, so if some of you have occupied port 7687 already,
