@@ -107,7 +107,8 @@
     
     
 ## Videos of The Code Working
-    1. Saving/loading of a CD to/from a Neo4j database:
-        https://youtu.be/hyZbr8_K4h4
+
+1. Saving/loading of a CD to/from a Neo4j database:
+    - https://youtu.be/hyZbr8_K4h4
     
 
