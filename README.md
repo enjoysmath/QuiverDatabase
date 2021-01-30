@@ -1,8 +1,8 @@
 # QuiverDatabase
 - An application for studying Category Theory & Homological Algebra.
 - Will support human-checked diagram chases (community-driven).
-- Makes use of the commutative diagram (CD) editor called "Quiver":
-    https://github.com/varkor/quiver
+- Makes use of the commutative diagram (CD) editor called "Quiver":  
+    - https://github.com/varkor/quiver
 - Will eventually support Mobile devices (since Quiver editor does).
 - The logical mechanism that makes diagram chases possible will simply be in the form of (hopefully) 
   logical "Diagram Rules" which take an input diagram and specify a consequent output diagram.
