@@ -97,6 +97,14 @@
 16. The project's folder structure along with procfiles already supports deployment to Heroku, and it works fine, except
     I currently do not have a reliable Neo4j host.
     
+17. To test out the current features:
+    - Run the site with `python manage.py runserver 8000` or hit "Play" in WingWare.
+    - Sign in with credentials: `TestEditor` and `fusion123`.
+    - Click "Create Diagram".  Give it a name.  Click "Create".
+    - Edit the diagram.  Click "Save".
+    - Hit the refresh button on the browser.  This will load whatever diagram id is in the URL, from the Neo4j database!
+    - You can also verify writes using Neo4j Browser.
+    
     
 ## Videos of The Code Working
 
