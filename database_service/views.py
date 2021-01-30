@@ -36,10 +36,47 @@ def set_model_name(request, Model:str):
             model.name = name
             model.save()
             
-        return JsonResponse({'success': True, 'standardized': name})
+        return JsonResponse({'success': True})
         
     except Exception as e:
         return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 
+    
+    
+@login_required   
+@user_passes_test(is_editor)
+def set_rel_name(request, Type:str):
+    raise NotImplementedError
+
+    #try:        
+        #name = get_posted_text(request)        
+        #name = name.strip()
+        
+        #if name == '':
+            #raise Exception(f'Relationship name cannot be empty.')
+                
+        #rel = request.session.get(f'new {Type}', None)
+        
+        #if rel is None:
+            #raise OperationalError(f"We're not in the process of creating a new {Type}.")
+        
+        #ModelClass = get_model_class(Type)         
+        
+        #if not isinstance(rel, ModelClass):
+            #raise OperationalError(f"Trying to rename a {ModelClass.__name__} in {Type} mode.")
+                
+        #if rel.name != name:
+            #rel_exists = ModelClass.get_all(name=name)
+            
+            #if rel_exists:
+                #raise ValueError(f'A {Type} already exists with name "{name}".')
+            
+            #rel.name = name
+            #rel.save()
+            
+        #return JsonResponse({'success': True})
+        
+    #except Exception as e:
+        #return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'})     
 
 
 @login_required

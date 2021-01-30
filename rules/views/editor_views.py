@@ -53,12 +53,13 @@ def rule_editor(request, rule_id):
 @user_passes_test(is_editor)
 def create_new_rule(request):
     rule = DiagramRule.our_create()
-    rule.name = ''
     rule.checked_out_by = request.user.username
     
+    request.sesstion['new rule'] = rule
+    
     context = {
-        'rule_id' : rule.uid
-    }    
+        'rule_name' : rule.name,
+    }
     
     return render(request, 'new_rule.html', context)
     

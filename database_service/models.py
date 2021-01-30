@@ -172,9 +172,8 @@ class Object(StructuredNode, Model):
     def all_morphisms(self):
         results, meta = db.cypher_query(
             f'MATCH (x:Object)-[f:MAPS_TO]->(y:Object) WHERE x.uid="{self.uid}" RETURN f')
-        for row in results:
-            yield Morphism.inflate(row[0])    
-            
+        return [Morphism.inflate(row[0]) for row in results]
+                    
     def delete(self):
         # Delete all the outgoing morphisms first:
         db.cypher_query(f'MATCH (o:Object)-[f:MAPS_TO]-(p:Object) WHERE o.uid="{self.uid}" DELETE f')       
@@ -206,7 +205,7 @@ class Object(StructuredNode, Model):
    
         
         
-class Category(StructuredNode):
+class Category(Object):
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
     objects = RelationshipTo('Object', 'CONTAINS')
@@ -220,8 +219,8 @@ class Category(StructuredNode):
         
 class Diagram(Category):
     category = RelationshipTo('Category', 'IN', cardinality=One)
-    COMMUTES = { 'C' : 'Commutes', 'NC' : "Non-Commutative" }
-    commutes = StringProperty(choices=COMMUTES)
+    COMMUTES = { 'C' : 'Commutes', 'NC' : 'Non-Commutative' }
+    commutes = StringProperty(choices=COMMUTES, default='C')
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
     @staticmethod
@@ -275,8 +274,7 @@ class Diagram(Category):
     def all_objects(self):
         results, meta = db.cypher_query(
             f'MATCH (D:Diagram)-[:CONTAINS]->(x:Object) WHERE D.uid="{self.uid}" RETURN x')
-        for row in results:
-            yield Object.inflate(row[0])
+        return [Object.inflate(row[0]) for row in results]
         
     def delete_objects(self):
         for o in self.all_objects():
@@ -290,18 +288,14 @@ class Diagram(Category):
 
             
             
-class DiagramRule(StructuredNode):
-    uid = UniqueIdProperty()   
+class DiagramRule(Morphism):
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
     # Mathematics
-    functor_id = StringProperty()
-    # The link to an actual known functor, if this rule is factorial, or None otherwise.
+    #functor_id = StringProperty()
+    # The link to an actual known functor, if this rule is factorial, or None otherwise
     # We will have to be careful when deleting a Functor.  We can only delete it
     # if there exist no rules referring to it through this property.
-    
-    key_diagram_id = StringProperty()
-    result_diagram_id = StringProperty()
     
     @staticmethod
     def our_create(**kwargs):
@@ -316,7 +310,7 @@ model_str_to_class = {
     'Category' : Category,
     'Object' : Object,
     'Diagram' : Diagram,
-    'Rule' : DiagramRule,
+    'DiagramRule' : DiagramRule,
 }
 
 MAX_MODEL_CLASS_NAME_LENGTH = max([len(x) for x in model_str_to_class.keys()])
