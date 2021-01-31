@@ -18,6 +18,10 @@ def home(request):
     return render(request, 'home.html', context)
 
 
+def examples(request):
+    pass
+
+
 def error(request, msg:str):
     context = {
         'error_msg': msg,

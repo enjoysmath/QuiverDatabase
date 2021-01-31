@@ -35,7 +35,7 @@
     {% endblock %}
     
     {% block header %} 
-        <div class="container-fluid" style="position:relative; top:-69px;" >
+        <div class="container-fluid">
         <div class="row center-content">
             {% block logo %}
                 <div class="col-md-2">
@@ -43,21 +43,19 @@
                 </div>
             {% endblock %}
             {% block tagline %}
-            <div class="col-md-6">
-                <div class="page-header center-content" style="position:relative; top: 40px;">
-                    <h1>
-                        <small>App for studying 
-                            <a href="https://en.wikipedia.org/wiki/Category_theory" target="_blank">
-                                Category Theory.
-                            </a>
+                <div class="col-md-6">
+                    <div class="page-header center-content">
+                        <h1>
+                        <small>
+                            An app for studying <a href="https://en.wikipedia.org/wiki/Category_theory" target="_blank">Category Theory</a>.
                         </small>
-                    </h1>
+                        </h1>
+                    </div>
                 </div>
-            </div>
             {% endblock %}
             {% block header_buttons %}
-                <div class="col-md-4" style="position:relative; right:5px; top:26px">
-                    <div class="row pull-right">
+                <div class="col-md-4"> 
+                    <div class="row">
                     {% block add_header_buttons %}
                     {% endblock %}
                     {% block login_out_buttons %}

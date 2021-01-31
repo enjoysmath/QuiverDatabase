@@ -604,6 +604,28 @@ class UI {
     load_json_str_from_database(json_str) {
         QuiverImportExport.database.import(this, json_str);
     }
+
+    toggle_database_search_pane(pane_id) {
+        const search_pane_ids = ['rule-search-pane', 'diagram-search-pane'];
+        
+        for (const id of search_pane_ids) {
+            var search_pane = this.element.query_selector("#" + id);
+
+            if (search_pane !== null) {
+                if (id == pane_id)
+                {
+                    if (search_pane.class_list.contains("hidden"))
+                        search_pane.class_list.remove("hidden");
+                    else
+                        search_pane.class_list.add("hidden");
+                }
+                else {
+                    if (! search_pane.class_list.contains("hidden"))
+                        search_pane.class_list.add("hidden");
+                }
+            }
+        }
+    }
     
     /// Reset most of the UI. We don't bother resetting current zoom, etc.: just enough to make
     /// changing the URL history work properly.
@@ -958,7 +980,7 @@ class UI {
                         .add(new DOM.Element("a", {
                                 "id" : "save-to-database-button",
                                 "class" : "btn btn-success",
-                                "style" : "border-radius: 8px;",
+                                "style" : "border-radius:8px;",
                             }).add("Save Diagram")
                             .listen("click", function() {
                                 const {data} = this.quiver.export("database", this.settings, this.definitions());
@@ -968,11 +990,30 @@ class UI {
                         .add(new DOM.Element("a", {
                                 "id" : "close-diagram-button",
                                 "class" : "btn btn-primary",
-                                "style" : "border-radius: 8px; margin-left:5px",
+                                "style" : "border-radius:8px; margin-left:5px",
                             }).add("Close Diagram")
-                            .listen("click", close_diagram)))));
+                            .listen("click", close_diagram))
+                        .add(new DOM.Element("a", {
+                            "id" : "rule-search-button",
+                            "class" : "btn btn-success",
+                            "style" : "border-radius: 8px; margin-left:5px",
+                        }).add("Rule Search")
+                            .listen("click", function() {
+                                this.toggle_database_search_pane("rule-search-pane");      
+                            }.bind(this))))));
                                     
             panes.push(this.database_control_pane);
+
+            this.rule_search_pane = new DOM.Div({
+                id: "rule-search-pane",
+                class: "container-fluid pane",
+            }).add(new DOM.Element("iframe", {
+                "sandbox": "allow-same-origin allow-scripts allow-popups allow-forms",
+                "src": window.rule_search_url,
+                "style" : "border:0; width:100%; height:95%",
+            }));
+
+            panes.push(this.rule_search_pane);
 
             for (const pane of panes) {
                 this.element.add(pane);

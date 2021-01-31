@@ -37,7 +37,7 @@ urlpatterns = [
     path('password-reset/', include('password_reset.urls')),
     path('admin/', admin.site.urls),
     path('database/', include('database_service.urls')),
-    path('rules/', include('rules.urls')),
+    path('rule/', include('rules.urls')),
     path('error/<str:msg>', error, name='error'),
 ]
 

@@ -218,7 +218,7 @@ class Category(Object):
     
         
 class Diagram(Category):
-    category = RelationshipTo('Category', 'IN', cardinality=One)
+    category = RelationshipTo('Category', 'IN_CATEGORY', cardinality=One)
     COMMUTES = { 'C' : 'Commutes', 'NC' : 'Non-Commutative' }
     commutes = StringProperty(choices=COMMUTES, default='C')
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)

@@ -1259,6 +1259,20 @@ quiver-button.flash {
 	margin-bottom: 0;
 }
 
+#rule-search-pane {
+	background: hsl(265, 100%, 50%, 50%);
+	z-index: 0;
+	position: absolute;
+	bottom: 180px;
+	left: 20.5%;
+	top: auto;  /* in order to override .pane */
+	width: 40%; 
+	height: 60%;
+	margin: 10px;
+	margin-bottom: 0;
+}
+
+
 .pane.hidden {
     pointer-events: none;
 
