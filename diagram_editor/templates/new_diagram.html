@@ -9,7 +9,7 @@
         setup_edit_tag_setter_urls(
             [{
                 'tag_id' : '#new-diagram-name-edit',
-                'setter' : "{% url 'set_model_name' Model='Diagram' %}",
+                'setter' : "{% url 'set_model_string' Model='Diagram' field='name' %}",
                 'initial' : '', 
                 'enable_ids' : ['#create-diagram-button'],
             }]);
@@ -30,7 +30,7 @@
                     </h3>
                     <h3>
                         <a id="new-diagram-name-edit" data-type="text" 
-                            data-pk="{{ diagram_id }}" href="#" data-url="{% url 'set_model_name' Model='Diagram' %}", 
+                            data-pk="{{ diagram_id }}" href="#" data-url="{% url 'set_model_string' Model='Diagram' field='name'%}", 
                             data-title="New Diagram Name" style="border:none">
                         </a>     
                     </h3>

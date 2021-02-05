@@ -985,10 +985,44 @@ class UI {
                             "style": "border:none; margin-left:10px",
                         })))))
                     .add(new DOM.Div({class: "row"})
+                        .add(new DOM.Div({
+                            class: 'btn-group btn-default dropup',
+                            style: 'display:inline-block; border-radius:8px; margin-left:15px; margin-right:40px',
+                        })
+                            .add(new DOM.Element("button", {
+                                "class":'btn btn-default dropdown-toggle',
+                                "data-toggle":'dropdown',
+                                "id" : 'commutes-button',
+                            })
+                                .add(new DOM.Element("span", {
+                                    id: "commutes-text"
+                                }).add(window.commutes_text))
+                                .add(new DOM.Element("span", {
+                                    class : "caret",
+                                    style: "margin-left:10px",
+                                })))
+                            .add(new DOM.Element("ul", {
+                                class: "dropdown-menu",
+                                role: "menu"
+                            })
+                                .add(new DOM.Element("li")
+                                    .add(new DOM.Element("a")
+                                        .add("Commutes")
+                                        .listen("click", function() {
+                                            $("#commutes-text").text("Commutes");
+                                            toggle_diagram_commutes("C");
+                                        })))
+                                .add(new DOM.Element("li")
+                                    .add(new DOM.Element("a")
+                                        .add("Noncommutative")
+                                        .listen("click", function() {
+                                            $("#commutes-text").text("Noncommutative");
+                                            toggle_diagram_commutes("NC");
+                                        })))))
                         .add(new DOM.Element("a", {
                                 "id" : "save-to-database-button",
                                 "class" : "btn btn-success",
-                                "style" : "border-radius:8px;",
+                                "style" : "border-radius:8px; margin-left:5px",
                             }).add("Save Diagram")
                             .listen("click", function() {
                                 const {data} = this.quiver.export("database", this.settings, this.definitions());
@@ -1030,14 +1064,8 @@ class UI {
                                         metadata: output.metadata,
                                     };
                                 });
-                            }))
-                        .add(new DOM.Element("a", {
-                            "id": "commutes-button",
-                            "class" : "btn btn-primary",
-                            "style" : "border-radius:8px; margin-left:5px",
-                            "href" : window.commutes_url,
-                        }).add(window.commutes_text)
-                    ))));
+                            }))                            
+                        )));
                                     
             panes.push(this.database_control_pane);
 

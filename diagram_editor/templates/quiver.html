@@ -56,26 +56,30 @@
     {% endif %}
        
     window.rule_search_url = "{% url 'rule_search' diagram_id %}";
+    window.commutes_text = "{{ commutes_text }}";
+    window.csrf_token = "{{ csrf_token }}"
     
     if (window.quiver_edit_mode){
         setup_edit_tag_setter_urls(
             [{ 
                 'tag_id' : '#category-name-edit',
-                'setter' : "{% url 'set_model_name' Model='Category' %}",
-                'pk' : "{{ category_id }}",
+                'setter' : "{% url 'set_diagram_category' %}",
+                'pk' : "{{ diagram_id }}",
                 'initial' : "{{ category_name }}",
                 'enable_ids' : [],
             },
             {
                 'tag_id' : '#diagram-name-edit',
-                'setter' : "{% url 'set_model_name' Model='Diagram' %}",
+                'setter' : "{% url 'set_model_string' Model='Diagram' field='name' %}",
                 'pk' : "{{ diagram_id }}",
                 'initial' : "{{ diagram_name }}",
                 'enable_ids' : [],
             }]); 
             
         function save_diagram_to_database(json_str) 
-        {               
+        {      
+            // I couldn't get post_string_to_url to run without CSRF failure here.
+            
             fetch("{% url 'save_diagram' diagram_id %}", 
             {
                 headers: {
@@ -89,7 +93,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert("Success: " + JSON.stringify(data));
+                //alert("Success: " + JSON.stringify(data));
             })
             .catch(error => {
                 alert(error);
@@ -101,6 +105,14 @@
         {
             window.location.href = "{% url 'close_diagram_editor' diagram_id %}";
         }
+        
+        function toggle_diagram_commutes(commutes_text) 
+        {
+            post_string_to_url(
+                {'pk': "{{ diagram_id }}", "value" : commutes_text},
+                "{% url 'set_model_string' Model='Diagram' field='commutes' %}");
+        }
+
     }
     
     $(document).ready(function()
@@ -119,7 +131,7 @@
             // alert(text);
             window.ui.load_json_str_from_database(text);
         });
-    
+        
     });
                      
     </script>

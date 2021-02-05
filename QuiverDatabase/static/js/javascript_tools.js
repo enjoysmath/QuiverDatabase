@@ -1,7 +1,24 @@
 
+function post_string_to_url(data, url, mode='same-origin')
+{
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: data,
+        success:function(json) {
+            //alert("Success!");
+        },
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });
+}
+
 function setup_ajax_csrf_token(csrf_token) { 
     // BUGFIX.  This took hours to get to work!  
     // And remember the csrf_token line at the top of template
+    window.csrf_token = csrf_token
+    
     $.ajaxSetup({          
         data: {csrfmiddlewaretoken: csrf_token },
     });				

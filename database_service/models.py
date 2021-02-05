@@ -212,6 +212,7 @@ class Object(StructuredNode, Model):
         
         
 class Category(Object):
+    unique_fields = ['name']
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
     objects = RelationshipTo('Object', 'CONTAINS')
@@ -225,9 +226,26 @@ class Category(Object):
         
 class Diagram(Category):
     category = RelationshipTo('Category', 'IN_CATEGORY', cardinality=One)
-    COMMUTES = { 'C' : 'Commutes', 'NC' : 'Non-Commutative' }
+    COMMUTES = { 'C' : 'Commutes', 'NC' : 'Noncommutative' }
     commutes = StringProperty(choices=COMMUTES, default='C')
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
+    
+    @property
+    def commutes_text(self):
+        return self.COMMUTES[self.commutes]
+    
+    #@property
+    #def commutes(self):
+        #return self.COMMUTES[self.commutative]
+    
+    #@commutes.setter
+    #def commutes(self, text):
+        #for key, val in self.COMMUTES.items():
+            #if text == val:
+                #self.commutative = key
+                #break
+        #else:
+            #raise ValueError(f'There are only {len(self.COMMUTES)} possible options for Diagram.commutes')
     
     @staticmethod
     def our_create(**kwargs):
@@ -416,7 +434,7 @@ def get_unique(Model, **kwargs):
     model = Model.nodes.get_or_none(**kwargs)
     
     if model is None:
-        model = Model(**kwargs)
+        model = Model.our_create(**kwargs)
         model.save()
         
     return model

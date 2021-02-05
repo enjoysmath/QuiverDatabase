@@ -69,6 +69,7 @@ def quiver_editor(request, diagram_id:str):
             'quiver_str' : json.dumps(diagram.quiver_format()),
             'logo' : logo,
             'view_only' : view_only,
+            'commutes_text' : diagram.commutes_text,
         }
                       
         return render(request, 'quiver.html', context)  

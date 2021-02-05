@@ -12,7 +12,7 @@
             [{
                 'tag_id' : '#new-rule-name-edit',
                 'pk' : "{{ rule.uid }}",
-                'setter' : "{% url 'set_model_name' Model='DiagramRule' %}",
+                'setter' : "{% url 'set_model_string' Model='DiagramRule' field='name' %}",
                 'enable_ids' : ['#create-rule-button'],
             }]);
     </script>		

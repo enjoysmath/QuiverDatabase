@@ -19,7 +19,7 @@
             [{
                 'tag_id' : '#functor-notation-edit',
                 'pk' : "{{ functor.uid }}",
-                'setter' : "{% url 'set_model_name' Model='Functor' %}",
+                'setter' : "{% url 'set_model_string' Model='Functor' field='name' %}",
                 'enable_ids' : ['#create-rule-button'],
             }]);
     </script>		

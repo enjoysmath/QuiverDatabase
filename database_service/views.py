@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, HttpResponse
-from .models import Object, Category, Diagram, get_model_by_uid, get_model_class
+from .models import Object, Category, Diagram, get_model_by_uid, get_model_class, get_unique
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from QuiverDatabase.http_tools import get_posted_text
@@ -9,37 +9,70 @@ import json
 from django.db import OperationalError
 from django.core.exceptions import ObjectDoesNotExist
 from QuiverDatabase.settings import DEBUG
+from neomodel.properties import StringProperty
 
 # Create your views here.
 
 @login_required   
 @user_passes_test(is_editor)
-def set_model_name(request, Model:str):
-    try:        
-        name = get_posted_text(request)        
-        name = name.strip()
-        
-        if name == '':
-            raise Exception(f'Name cannot be empty.')
-                
+def set_model_string(request, Model:str, field:str):
+    try:                        
         old_id = request.POST['pk']
         
         ModelClass = get_model_class(Model)         
         model = get_model_by_uid(ModelClass, uid=old_id)
-                
-        if model.name != name:
-            model_exists = ModelClass.nodes.get_or_none(name=name)
-            
-            if model_exists:
-                raise ValueError(f'A {Model} already exists with name "{name}".')
-            
-            model.name = name
+        
+        if model.checked_out_by != request.user.username:
+            raise OperationalError(f'The {Model} is not checked out by you.')
+        
+        if not hasattr(model, field):
+            raise ValueError(f'A {Model} has no field "{field}" implemented.')
+        
+        string = get_posted_text(request)        
+        string = string.strip()
+        
+        if string == '':
+            raise Exception(f'Name cannot be empty.')       
+    
+        current_val = getattr(model, field)
+        
+        if current_val != string:
+            setattr(model, field, string)
             model.save()
             
         return JsonResponse({'success': True})
         
     except Exception as e:
         return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'}) 
+
+
+
+@login_required   
+@user_passes_test(is_editor)
+def set_diagram_category(request):
+    try:                        
+        diagram = get_model_by_uid(Diagram, uid=request.POST['pk'])
+        
+        if diagram.checked_out_by != request.user.username:
+            raise OperationalError(f'The {Model} is not checked out by you.')
+               
+        category_name = get_posted_text(request).strip()
+        
+        if category_name == '':
+            raise Exception(f'Category name cannot be empty.')       
+    
+        category = diagram.category.single()
+    
+        if category_name != category.name:
+            new_category = get_unique(Category, name=category_name)
+            diagram.category.reconnect(category, new_category)
+            diagram.save()
+            
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error_msg': f'{full_qualname(e)}: {e}'})
+    
     
     
 @login_required
@@ -92,7 +125,7 @@ def load_diagram_from_database(request, diagram_id):
 @user_passes_test(is_editor)
 def save_diagram_to_database(request, diagram_id):
     try:
-        if request.method != 'POST' or not request.headers.get("contentType", "application/json; charset=utf-8"):
+        if request.method != 'POST': #or not request.headers.get("contentType", "application/json; charset=utf-8"):
             raise OperationalError('You can only use the POST method to save to the database.')            
         user = request.user.username
         
