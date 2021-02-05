@@ -54,6 +54,18 @@ UIMode.Default = class extends UIMode {
 };
 UIMode.default = new UIMode.Default();
 
+// We are viewing a diagram embedded in another page.
+UIMode.Embed = class extends UIMode {
+    constructor(ui) {
+        super();
+
+        this.name = "embed";
+
+        ui.grid.class_list.toggle("hidden");
+        ui.pan_view(Offset.zero(), -1.0);
+    }
+}    
+
 if (window.quiver_edit_mode) {
     UIMode.Modal = class extends UIMode {
         constructor() {
@@ -613,12 +625,7 @@ class UI {
 
             if (search_pane !== null) {
                 if (id == pane_id)
-                {
-                    if (search_pane.class_list.contains("hidden"))
-                        search_pane.class_list.remove("hidden");
-                    else
-                        search_pane.class_list.add("hidden");
-                }
+                    search_pane.class_list.toggle("hidden");
                 else {
                     if (! search_pane.class_list.contains("hidden"))
                         search_pane.class_list.add("hidden");
@@ -952,7 +959,8 @@ class UI {
             this.database_control_pane = new DOM.Div({
                 id: "lower-control-pane",
                 class: "container-fluid pane",
-            }).add(new DOM.Div({class:"row"})
+            })
+            .add(new DOM.Div({class:"row"})
                 .add(new DOM.Div({class:"col-md-12"})
                     .add(new DOM.Div({class: "row"})
                         .add(new DOM.Div({class:"col-md-12"})
@@ -996,21 +1004,51 @@ class UI {
                         .add(new DOM.Element("a", {
                             "id" : "rule-search-button",
                             "class" : "btn btn-success",
-                            "style" : "border-radius: 8px; margin-left:5px",
+                            "style" : "border-radius:8px; margin-left:5px",
                         }).add("Rule Search")
                             .listen("click", function() {
                                 this.toggle_database_search_pane("rule-search-pane");      
-                            }.bind(this))))));
+                            }.bind(this)))
+                        .add(new DOM.Element("a", {
+                            "id" : "emded-code-button",
+                            "class" : "btn btn-primary",
+                            "style" : "border-radius:8px; margin-left:5px",
+                        }).add("Embed Viewer")
+                            .listen("click", function() {
+                                display_export_pane("base64", (output) => 
+                                {
+                                    const URL_prefix = window.location.origin;
+            
+                                    return {
+                                        data: `<!-- ${URL_prefix} -->
+                                            <div class="quiver-embed">
+                                                <iframe src="${output.data}&macro_url=${
+                                                    encodeURIComponent(ui.macro_url)
+                                                }&e=" width="400" height="400"></iframe>
+                                            </div>
+                                            <script type="text/javascript" src="${URL_prefix}/static/js/embed.js"></script>`,
+                                        metadata: output.metadata,
+                                    };
+                                });
+                            }))
+                        .add(new DOM.Element("a", {
+                            "id": "commutes-button",
+                            "class" : "btn btn-primary",
+                            "style" : "border-radius:8px; margin-left:5px",
+                            "href" : window.commutes_url,
+                        }).add(window.commutes_text)
+                    ))));
                                     
             panes.push(this.database_control_pane);
 
             this.rule_search_pane = new DOM.Div({
                 id: "rule-search-pane",
-                class: "container-fluid pane",
+                class: "container-fluid pane hidden",
             }).add(new DOM.Element("iframe", {
                 "sandbox": "allow-same-origin allow-scripts allow-popups allow-forms",
                 "src": window.rule_search_url,
-                "style" : "border:0; width:100%; height:95%",
+                "style" : "border:0; width:100%; height:95%; background:transparent",
+                "allowtransparency": "true",
             }));
 
             panes.push(this.rule_search_pane);
@@ -1855,7 +1893,11 @@ class UI {
                     return;
                 }
 
+                const db_plane = this.element.query_selector("#lower-control-pane");
+                db_plane.class_list.toggle("hidden");
+
                 const unhidden_pane = this.element.query_selector(".pane:not(.hidden)");
+
                 if (unhidden_pane !== null && unhidden_pane.id != "lower-control-pane")
                 {
                     unhidden_pane.class_list.add("hidden");
@@ -2833,6 +2875,7 @@ class UI {
     initialise_grid(element) {
         const [width, height] = [document.body.offsetWidth, document.body.offsetHeight];
         this.grid = new DOM.Canvas(null, width, height, { class: "grid" });
+        this.grid.class_list.add("hidden");
         element.add(this.grid);
         this.update_grid();
     }
@@ -4475,7 +4518,8 @@ class Panel {
                         return output;
                     });
                 })
-        ).add(export_to_latex)
+        )
+        .add(export_to_latex)
         .add(
             new DOM.Div({ class: "indicator-container" }).add(
                 new DOM.Element("label").add("Macros: ")
@@ -5517,7 +5561,7 @@ class Toolbar {
             );
 
             add_action(
-                "Hide grid",
+                "Show grid",
                 [{ key: "H", modifier: false, context: Shortcuts.SHORTCUT_PRIORITY.Defer }],
                 function () {
                     ui.grid.class_list.toggle("hidden");
@@ -6674,8 +6718,14 @@ document.addEventListener("DOMContentLoaded", () => {
     my_ui = ui;
 
     const load_quiver_from_query_string = () => {
-        // If there is `q` parameter in the query string, try to decode it as a diagram.
         const query_data = query_parameters();
+
+        // If there is `e` in the query string, we want to treat the UI as running in embedded mode.
+        if (query_data.has("e")) {
+            ui.switch_mode(new UIMode.Embed(ui));
+        }
+        
+        // If there is `q` parameter in the query string, try to decode it as a diagram.
         if (query_data.has("q")) {
             const dismiss_loading_screen = () => {
                 // Dismiss the loading screen. We do this after a `delay` so that the loading

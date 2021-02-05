@@ -198,7 +198,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 def neo4j_url():
     url = os.environ.get('NEO4J_SCHEMA', 'bolt') + "://"
     url += os.environ.get('NEO4J_USERNAME', 'neo4j') + ":"
-    url += os.environ.get('NEO4J_PASSWORD', 'neo4j') + "@"
+    url += os.environ.get('NEO4J_PASSWORD', 'fusion123') + "@"
     url += os.environ.get('NEO4J_HOST', 'localhost') + ":"
     url += os.environ.get('NEO4J_PORT', '7687')
     return url

@@ -11,7 +11,8 @@
         setup_edit_tag_setter_urls(
             [{
                 'tag_id' : '#new-rule-name-edit',
-                'setter' : "{% url 'set_rel_name' Type='DiagramRule' %}",
+                'pk' : "{{ rule.uid }}",
+                'setter' : "{% url 'set_model_name' Model='DiagramRule' %}",
                 'enable_ids' : ['#create-rule-button'],
             }]);
     </script>		
@@ -32,10 +33,11 @@
                     <h3>
                         <a id="new-rule-name-edit" data-type="text" href="#"  
                             data-title="New Rule Name" style="border:none">
+                            {{ rule.name }}
                         </a>     
                     </h3>
                     <a id="create-rule-button" class="btn btn-success invisible" 
-                        href="{% url 'rule_editor' %}">
+                        href="{% url 'rule_editor' rule.uid %}">
                         Create
                     </a>
                 </div>

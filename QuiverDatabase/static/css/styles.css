@@ -141,6 +141,6 @@ a[href*="//"]:after {
 }
 
 .btn-header {
-    border-radius: 5px;
-    margin-right: 5%;
+    border-radius: 5px !important;
+    /*margin-right: 5%;*/
 }

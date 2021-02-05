@@ -2,7 +2,13 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "name": "JS QuiverDatabase",
+            "port": 8000,
+            "request": "attach",
+            "type": "pwa-chrome",
+            "webRoot": "${workspaceFolder}"
+        },
         {
             "name": "Python: Current File (Integrated Terminal)",
             "type": "python",
@@ -28,6 +34,15 @@
                 "8000",
                 "--noreload",
                 "--nothreading"
+            ],
+            "environment": [
+                {"name": "NEO4J_HOST", "value": "localhost"},
+                {"name": "NEO4J_PASSWORD", "value": "fusion123"},
+                {"name": "NEO4J_USER_NAME", "value": "neo4j"},
+                {"name": "NEO4J_PORT", "value":"7687"},
+                {"name": "DISABLE_COLLECTSTATIC", "value": "1"},
+                {"name": "ON_HEROKU", "value": "0"},
+                {"name": "SECRET_KEY", "value":"sby(ksu3xw02x^ork+4&oqh*(s306fb^^nr%z&bqtp2r1m-o&="},
             ],
             "django": true,
         },

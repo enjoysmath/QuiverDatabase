@@ -19,6 +19,7 @@ from QuiverDatabase.python_tools import full_qualname
 from inspect import getframeinfo, currentframe
 from django.core.exceptions import ObjectDoesNotExist
 from database_service.models import Diagram
+from database_service.models import get_model_by_uid
 
 # Create your views here.
 
@@ -77,11 +78,17 @@ def logout_view(request, next:str=None):
         session = request.session
         
         if user and user.is_authenticated:
-            if 'diagram ids' not in session or len(session['diagram ids']) == 0:
-                logout(request)
-            else:
-                session['message'] = "You can't logout when you have open diagrams, please close them.";
-                return redirect('open_diagrams')
+            if 'diagram ids' in session:
+                for diagram_id in session['diagram ids']:
+                    diagram = get_model_by_uid(Diagram, uid=diagram_id)
+                    
+                    diagram.checked_out_by = None
+                    diagram.save()
+                    
+                session['diagram ids'].clear()
+                session.save()
+           
+            logout(request)
             
         if next is None:
             next = request.GET.get('next', 'home')

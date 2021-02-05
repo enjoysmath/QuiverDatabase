@@ -1,0 +1,12 @@
+{% extends 'base_generic.html' %}
+
+{% block latest_message %} 
+{% endblock %}
+
+{% block content %}
+{% if rules %}
+    {% with rules=rules %}
+        {% include 'rule_list.html' %}
+    {% endwith %}
+{% endif %}
+{% endblock %}

@@ -11,3 +11,4 @@ djangorestframework
 django-crispy-forms
 django-password-reset
 cloudinary
+bidict

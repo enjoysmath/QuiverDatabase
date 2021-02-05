@@ -19,7 +19,7 @@ from QuiverDatabase.settings import MAX_USER_EDIT_DIAGRAMS
 
 @login_required
 @user_passes_test(is_editor)
-def quiver_editor(request, diagram_id):
+def quiver_editor(request, diagram_id:str):
     try:
         session = request.session
         user = request.user.username
@@ -50,12 +50,25 @@ def quiver_editor(request, diagram_id):
         
         category = diagram.category.single()
         
+        logo = request.GET.get('logo', 'yes')
+        
+        if logo == 'yes':
+            logo = True
+        else:
+            logo = False
+            
+        view_only = request.GET.get('viewonly', 'no')
+        if view_only != 'no':
+            view_only = 'yes'
+                
         context = {
             'diagram_name' : diagram.name,
             'category_name' : category.name,
             'category_id' : category.uid,
             'diagram_id' : diagram.uid,
             'quiver_str' : json.dumps(diagram.quiver_format()),
+            'logo' : logo,
+            'view_only' : view_only,
         }
                       
         return render(request, 'quiver.html', context)  

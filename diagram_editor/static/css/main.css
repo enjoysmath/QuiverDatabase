@@ -1272,7 +1272,6 @@ quiver-button.flash {
 	margin-bottom: 0;
 }
 
-
 .pane.hidden {
     pointer-events: none;
 
@@ -1563,3 +1562,34 @@ label input[type="checkbox"]:checked::before {
 }
 
 
+
+/* Embed */
+
+.ui.embed {
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.ui.embed .panel {
+    visibility: hidden;
+}
+
+.ui.embed .toolbar {
+    visibility: hidden;
+}
+
+.ui.embed .focus-point {
+    visibility: hidden;
+}
+
+.ui.embed .arrow:not(.target):not(.selected) > svg:first-child:hover {
+    visibility: hidden;
+}
+
+.ui.embed a > .logo {
+    transform: scale(0.75);
+    left: auto;
+    top: auto;
+    left: 12px;
+    bottom: 12px;
+}

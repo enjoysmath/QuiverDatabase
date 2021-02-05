@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+{% load static %}
+
+<html lang="en">
+<head>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/bootstrap-editable.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.7/js/tether.min.js" integrity="sha512-X7kCKQJMwapt5FCOl2+ilyuHJp+6ISxFTVrx+nkrhgplZozodT9taV2GuGHxBgKKpOJZ4je77OuPooJg9FJLvw==" crossorigin="anonymous"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap-editable.js' %}"></script>
+    <script src="{% static 'js/javascript_tools.js' %}"></script>
+    <script type="text/javascript">
+        $.fn.editable.defaults.mode = 'inline';
+        setup_ajax_csrf_token('{{ csrf_token }}'); 
+        setup_edit_tag_setter_urls(
+            [{
+                'tag_id' : '#functor-notation-edit',
+                'pk' : "{{ functor.uid }}",
+                'setter' : "{% url 'set_model_name' Model='Functor' %}",
+                'enable_ids' : ['#create-rule-button'],
+            }]);
+    </script>		
+</head>
+
+<body style="background:transparent">
+<div class="container-fluid">
+    <div class="row">
+        <h2 style="display:inline-block; margin-right:30px">
+            Rule Search
+        </h2>
+        <h4 style="display:inline-block; margin-right:10px">
+            Order By:
+        </h4>        
+        <div class="btn-group" style="display:inline-block">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                {{ order_text }}<span class="caret" style="margin-left:10px"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                {% for order in orders %}
+                    {% if order.0 != order_param %}
+                        <li><a href="?ord={{ order.0 }}&asc={{ ascending }}">{{ order.1 }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% if ascending == "true" %}
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=false"
+                id="sort-direction-button" style="margin-left:20px">
+                Descending
+            </a>  
+        {% else %}
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=true"
+                id="sort-direction-button" style="margin-left:20px">
+                Ascending
+            </a>  
+        {% endif %}
+        <a class="btn btn-success" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}"
+            id="search-button" style="margin-left:20px">
+            Search
+        </a>  
+    </div>
+    <hr style="border:0; height:0; border-top: 1px solid rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.3)">
+    <div class="row">
+        <div class="col-md-12">
+            {% for rule in rules %}
+                <div class="row">
+                    <h3>{{ rule.name }}</h3>
+                
+                    <ul class="nav nav-pills" style="display:inline-block; top:10px">
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-primary" href="#">
+                                Usages <span class="badge badge-light">{{ rule.usages }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Views <span class="badge badge-secondary">{{ rule.num_views }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" style="display:inline-block">
+                            <a class="nav-link" href="#">
+                                Votes <span class="badge badge-success">{{ rule.vote_sum }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="pull-right" style="display:inline-block">
+                        <a class="btn btn-primary" href="{% url 'rule_viewer' rule.uid %}" target="_blank">
+                            View
+                        </a>  
+                        <a class="btn btn-success" href="{% url 'apply_rule' rule.uid diagram_id %}">
+                            Apply
+                        </a>  
+                    </div>
+                </div>
+                <hr style="border:0; height:0; border-top: 1px solid rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.3)">
+            {% endfor %}
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item">
+                        <a class="page-link" href="#">Previous</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">4</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">5</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+

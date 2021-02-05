@@ -5,6 +5,7 @@ from QuiverDatabase.settings import MAX_TEXT_LENGTH
 from django.core.exceptions import ObjectDoesNotExist
 from neomodel import db
 from QuiverDatabase.python_tools import deep_get, deep_set
+from QuiverDatabase.variable import Variable
 
 # Create your models here.
 
@@ -27,7 +28,6 @@ class Morphism(StructuredRel):
     #epic = BooleanProperty(default=False)
     #monic = BooleanProperty(default=False)
     #inclusion = BooleanProperty(default=False)
-    functor = BooleanProperty(default=False)
     
     # Strictly style below this line:   
     NUM_LINES = { 1: 'one', 2: 'two', 3: 'three' }
@@ -182,6 +182,12 @@ class Object(StructuredNode, Model):
     @staticmethod
     def create_from_editor(format, index:int):
         o = Object()
+        o.init_from_editor(format, index)
+        return o
+        
+    def init_from_editor(self, format, index):
+        o = self
+        
         o.quiver_index = index
         o.x = format[0]
         o.y = format[1]
@@ -263,8 +269,6 @@ class Diagram(Category):
             A = obs[e[0]]
             B = obs[e[1]]
             f = A.morphisms.connect(B)
-            if self.of_categories:
-                f.functor = True
             f.load_from_editor(e)
             f.save()
             A.save()            
@@ -286,10 +290,35 @@ class Diagram(Category):
             self.objects.connect(o)
         self.save()
 
-            
-            
-class DiagramRule(Morphism):
-    checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
+
+class NaturalMap(Morphism):
+    pass
+
+
+class FunctorOb(Object):
+    def all_morphisms(self):
+        results, meta = db.cypher_query(
+            f'MATCH (x:NaturalMap)-[f:MAPS_TO]->(y:NaturalMap) WHERE x.uid="{self.uid}" RETURN f')
+        return [NaturalMap.inflate(row[0]) for row in results]
+                    
+    def delete(self):
+        # Delete all the outgoing morphisms first:
+        db.cypher_query(f'MATCH (o:FunctorOb)-[f:MAPS_TO]-(p:FunctorOb) WHERE o.uid="{self.uid}" DELETE f')       
+        super().delete()
+           
+    @staticmethod
+    def create_from_editor(format, index:int):
+        o = FunctorOb()
+        Object.init_from_editor(self, format, index)
+        
+        
+
+class DiagramRule(StructuredNode):
+    uid = UniqueIdProperty()
+    name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
+    checkedOutBy = StringProperty(max_length=MAX_TEXT_LENGTH)
+    key_diagram = RelationshipTo('Diagram', 'KEY_DIAGRAM', cardinality=One)
+    result_diagram = RelationshipTo('Diagram', 'RESULT_DIAGRAM', cardinality=One)
     
     # Mathematics
     #functor_id = StringProperty()
@@ -297,14 +326,56 @@ class DiagramRule(Morphism):
     # We will have to be careful when deleting a Functor.  We can only delete it
     # if there exist no rules referring to it through this property.
     
+    @property
+    def checked_out_by(self):
+        return self.checkedOutBy
+    
+    @checked_out_by.setter
+    def checked_out_by(self, username):
+        if self.checked_out_by != username:
+            diagram = self.key_diagram.single()
+            diagram.checked_out_by = username
+            diagram.save()
+            diagram = self.result_diagram.single()
+            diagram.checked_out_by = username
+            diagram.save()
+            self.checkedOutBy = username
+            self.save()
+            
+    def can_be_checked_out(self):
+        return self.key_diagram.single().checked_out_by is None and \
+            self.result_diagram.single().checked_out_by is None and \
+            self.checked_out_by is None
+    
     @staticmethod
-    def our_create(**kwargs):
-        source = Diagram(name='').save()
-        target = Diagram(name='').save()
-        rule = source.morphisms.connect(target)
+    def our_create(key=None, res=None, **kwargs):
+        if key is None:
+            key = 'Key'
+        if res is None:
+            res = 'Result'
+            
+        cat = get_unique(Category, name='Any')    
+        source = Diagram(name=key).save()
+        source.category.connect(cat)
+        source.save()
+        target = Diagram(name=res).save()
+        target.category.connect(cat)
+        target.save()
+        rule = DiagramRule(**kwargs)
+        rule.save()
+        rule.key_diagram.connect(source)
+        rule.result_diagram.connect(target)
         rule.save()
         return rule
-    
+        
+    #@staticmethod
+    #def get_variable_mapping(source:Diagram, target:Diagram) -> dict:
+        #map = {}
+        
+        #for x in source.all_objects():
+            #template, vars = Variable.parse_template(text)
+                
+    #def get_variable_template_regex(self, text:str) -> bidict:       
 
 model_str_to_class = {
     'Category' : Category,

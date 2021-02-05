@@ -3,11 +3,4 @@
 1. When on the Create Diagram page, if the given diagram name already exists, 
     show the diagram with a link below the text edit.
 
-2.
-    # TODO delta the node / edge options
-    # ie. store the last edit save as a blob
-    # grab the blob and do a dictionary difference (deep)
-    # and only write what needs to be rewritten / delete what needs to be
-    
-I think this would be too error prone to get right.  And simpler methods usually are preferred.
-So let's just delete all and resave.
+2. Button "Start out with copy of key diagram" right after Result Diagram: on rule_editor.html

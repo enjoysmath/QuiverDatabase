@@ -1,0 +1,28 @@
+{% load static %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <ol>
+                {% for rule in rules %}
+                <li class="list-item">
+                    <h5 class="mt-0">
+                        {{ rule.name }}
+                    </h5>                     
+                        <a href="{% url 'rule_viewer' rule.uid %}" class="btn btn-success" type="button">
+                            View
+                        </a>
+                        {% if rule.checked_out_by == user.username %}
+                            <a href="{% url 'close_rule_editor' rule.uid %}" class="btn btn-primary" type="button">
+                                Close
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <p>Diagram is locked for editing by {{ user.username }}.</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+</div>

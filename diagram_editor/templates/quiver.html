@@ -26,7 +26,7 @@
     <link rel="preload" href="{% static 'icons/centre-view.svg' %}" as="image">
     <link rel="preload" href="{% static 'icons/delete.svg' %}" as="image">
     <link rel="preload" href="{% static 'icons/deselect-all.svg' %}" as="image">
-    <link rel="preload" href="{% static 'icons/hide-grid.svg' %}" as="image">
+    <link rel="preload" href="{% static 'icons/show-grid.svg' %}" as="image">
     <link rel="preload" href="{% static 'icons/redo.svg' %}" as="image">
     <link rel="preload" href="{% static 'icons/reset-zoom.svg' %}" as="image">
     <link rel="preload" href="{% static 'icons/save.svg' %}" as="image">
@@ -49,12 +49,12 @@
     $.fn.editable.defaults.mode = 'inline';
     setup_ajax_csrf_token('{{ csrf_token }}'); 
     
-    {% if 'view_only' is None %}        // If defined
+    {% if view_only == 'yes' %}
         window.quiver_edit_mode = false;
     {% else %}
         window.quiver_edit_mode = true;
     {% endif %}
-    
+       
     window.rule_search_url = "{% url 'rule_search' diagram_id %}";
     
     if (window.quiver_edit_mode){
@@ -134,9 +134,11 @@
 {% block tagline %} {% endblock %}
 
 {% block header %} 
-<div style="position:absolute; left:1%; top:1%; z-index:1">
-    {% include 'logo.html' %}
-</div>
+    {% if logo %}
+        <div style="position:absolute; left:1%; top:1%; z-index:1">
+            {% include 'logo.html' %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 
