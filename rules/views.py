@@ -88,6 +88,8 @@ rule_search_orders = [
     ('name', 'Rule Name'),
 ]
 
+rule_search_order_map = { param: text for param,text in rule_search_orders }
+
 @login_required
 def rule_search(request, diagram_id:str):
     try:
@@ -96,9 +98,17 @@ def rule_search(request, diagram_id:str):
         
         diagram = get_model_by_uid(Diagram, uid=diagram_id)
         objects = diagram.all_objects()
-            
+
+        test_obj = objects[0]
+        from QuiverDatabase.variable import Variable
+        template, variables = Variable.parse_into_template(test_obj.name)
+        
+        print(template)
+        print(variables)
+        
         #results, meta = db.cypher_query(
-            #f'MATCH (O:Object)-[:MAPS_TO*]->(x:Object) WHERE D.uid="{self.uid}" RETURN x')
+            #f'MATCH (X:Object)-[:MAPS_TO*]->(Y:Object) ' + \
+            #f'WHERE X.name ~= ')
         #results = [Object.inflate(row[0]) for row in results]
         
         #context = {
@@ -110,13 +120,10 @@ def rule_search(request, diagram_id:str):
         ascending = request.GET.get('asc', 'true')
         order_param = request.GET.get('ord', 'name')
         
-        for (param, text) in rule_search_orders:
-            if order_param == param:
-                order_text = text
-                break
-        else:
+        if order_param not in rule_search_order_map:
             raise ValueError(order_param + " is not a valid value to order by.")
         
+        order_text = rule_search_order_map[order_param]
         test_rule = DiagramRule.our_create(name="Rule Test Name")
         
         context = {
@@ -131,8 +138,8 @@ def rule_search(request, diagram_id:str):
         return render(request, 'rule_search.html', context)
         
     except Exception as e:
-        #if DEBUG:
-            #raise e
+        if DEBUG:
+            raise e
         return redirect('error', f'{full_qualname(e)}: {str(e)}')    
     
     
