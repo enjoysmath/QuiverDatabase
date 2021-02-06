@@ -156,8 +156,8 @@ def save_diagram_to_database(request, diagram_id):
             'Wrote the following data to the database:\n' + str(data), safe=False)
 
     except Exception as e:
-        if DEBUG:
-            raise e
+        #if DEBUG:
+            #raise e
         return JsonResponse({'error_msg' : f'{full_qualname(e)}: {str(e)}'})
     
     #except Exception as e:

@@ -14,9 +14,6 @@ class Model:
     def our_create(**kwargs):
         raise NotImplementedError
     
-    def copy_relations_from(self, old):
-        raise NotImplementedError
-   
     
 class Morphism(StructuredRel):
     #uid = StringProperty(default=Morphism.get_unique_id())
@@ -169,6 +166,9 @@ class Object(StructuredNode, Model):
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0) 
     
+    def __repr__(self):
+        return f'Object("{self.name}")'
+    
     def all_morphisms(self):
         results, meta = db.cypher_query(
             f'MATCH (x:Object)-[f:MAPS_TO]->(y:Object) WHERE x.uid="{self.uid}" RETURN f')
@@ -211,7 +211,7 @@ class Object(StructuredNode, Model):
    
         
         
-class Category(Object):
+class Category(StructuredNode, Model):
     unique_fields = ['name']
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
@@ -224,7 +224,14 @@ class Category(Object):
         return category
     
         
-class Diagram(Category):
+class Diagram(StructuredNode, Model):  
+    """
+    Models should be decouple (inheritance rarely used)
+    Otherwise basic seeming queries return all types in the hierarchy.
+    Hence just StructuredNode here.
+    """
+    name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
+    objects = RelationshipTo('Object', 'CONTAINS')    
     category = RelationshipTo('Category', 'IN_CATEGORY', cardinality=One)
     COMMUTES = { 'C' : 'Commutes', 'NC' : 'Noncommutative' }
     commutes = StringProperty(choices=COMMUTES, default='C')
@@ -331,7 +338,7 @@ class FunctorOb(Object):
         
         
 
-class DiagramRule(StructuredNode):
+class DiagramRule(StructuredNode, Model):
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
     checkedOutBy = StringProperty(max_length=MAX_TEXT_LENGTH)

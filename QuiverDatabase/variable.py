@@ -71,7 +71,6 @@ class Variable:
                 
                 while start < len(piece):
                     V, end = Variable.longest_match(piece, pos=start)
-                    #start = end
                     
                     if V is None:
                         # In the case a variable is not parsed, we just pass the text through as a literal.
@@ -92,14 +91,14 @@ class Variable:
                         
                     start = end
                 
-                # Append the remaining str or concat it to previous str entry
-                if start < len(piece):
+                # Append the remaining str or concat it to previous str entry                    
+                if prefix:
                     if k > 0 and isinstance(template[k-1], str):
-                        template[k-1] += piece[start:]
+                        template[k-1] += prefix
                     else:
-                        template.insert(k, piece[start:])
+                        template.insert(k, prefix)
                         k += 1
-                        
+                                            
             elif isinstance(piece, Keyword):
                 k += 1
                 

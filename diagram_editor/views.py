@@ -116,9 +116,9 @@ def create_new_diagram(request):
 
     diagrams = []
     
-    for diagram_id in session['diagram ids']:
-        diagram = get_model_by_uid(Diagram, uid=diagram_id)
-        diagrams.append(diagram)
+    #for diagram_id in session['diagram ids']:
+        #diagram = get_model_by_uid(Diagram, uid=diagram_id)
+        #diagrams.append(diagram)
         
     context={
         'diagram_id': diagram.uid,

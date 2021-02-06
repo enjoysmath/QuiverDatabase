@@ -11,7 +11,9 @@ from django.db import OperationalError
 from django.core.exceptions import ObjectDoesNotExist
 from QuiverDatabase.settings import DEBUG
 from neomodel import db
-
+from QuiverDatabase.variable import Variable
+from QuiverDatabase.keyword import Keyword
+from QuiverDatabase.neo4j_tools import escape_regex_str
 
 # Create your views here.
 
@@ -73,8 +75,8 @@ def create_new_rule(request):
         return render(request, 'new_rule.html', context)
     
     except Exception as e:
-        if DEBUG:
-            raise e
+        #if DEBUG:
+            #raise e
         return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
 
@@ -106,10 +108,26 @@ def rule_search(request, diagram_id:str):
         print(template)
         print(variables)
         
-        #results, meta = db.cypher_query(
-            #f'MATCH (X:Object)-[:MAPS_TO*]->(Y:Object) ' + \
-            #f'WHERE X.name ~= ')
-        #results = [Object.inflate(row[0]) for row in results]
+        template_regex = ""
+        
+        for piece in template:
+            if isinstance(piece, Variable):
+                template_regex += ".+"
+            elif isinstance(piece, Keyword):
+                template_regex += escape_regex_str(str(piece))
+            else:  # str
+                template_regex += escape_regex_str(piece)
+        
+        query = f"MATCH (X:Object) " + \
+            f"WHERE X.name =~ '{template_regex}' " + \
+            f"AND D.uid = '{diagram_id}' " + \
+            f"RETURN X"        
+            
+        results, meta = db.cypher_query(query)  
+        # TODO: test code with doublequote in template_regex ^^^
+                
+        results = [Object.inflate(row[0]) for row in results]
+        print(results)
         
         #context = {
             #'rule_title' : rule.name,
@@ -138,8 +156,8 @@ def rule_search(request, diagram_id:str):
         return render(request, 'rule_search.html', context)
         
     except Exception as e:
-        if DEBUG:
-            raise e
+        #if DEBUG:
+            #raise e
         return redirect('error', f'{full_qualname(e)}: {str(e)}')    
     
     
@@ -155,8 +173,8 @@ def apply_rule(request, rule_id:str, diagram_id:str):
         # Create a new diagram with rule applied and variables appropriately substituted.
        
     except Exception as e:
-        if DEBUG:
-            raise e
+        #if DEBUG:
+            #raise e
         redirect('error', f'{full_qualname(e)}: {str(e)}')
     
     

@@ -16,4 +16,7 @@ class Keyword:
         self.string = keyword
         
     def __repr__(self):
-        return 'Keyword("' + self.string + '")'
+        return 'Keyword("' + str(self) + '")'
+    
+    def __str__(self):
+        return self.string

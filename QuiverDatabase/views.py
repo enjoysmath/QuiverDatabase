@@ -7,9 +7,10 @@ def home(request):
     
     diagram_ids = request.session.get('diagram ids', [])
     
-    for id in diagram_ids:
-        diagram = get_model_by_uid(Diagram, uid=id)
-        diagrams.append(diagram)
+    #for id in diagram_ids:
+        #diagram = get_model_by_uid(Diagram, uid=id)
+        #diagrams.append(diagram)
+    diagrams = []
     
     context = {
         'diagrams' : diagrams
