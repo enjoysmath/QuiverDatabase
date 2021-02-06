@@ -29,7 +29,7 @@ def quiver_editor(request, diagram_id:str):
         else:
             if diagram_id not in session['diagram ids'] and \
                len(session['diagram ids']) == MAX_USER_EDIT_DIAGRAMS:
-                raise OperationalError(f"You can't have more than {MAX_EDIT_DIAGRAMS_PER_USER} diagrams checked out.")
+                raise OperationalError(f"You can't have more than {MAX_USER_EDIT_DIAGRAMS} diagrams checked out.")
     
         diagram = get_model_by_uid(Diagram, uid=diagram_id)
         

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, HttpResponse
 from database_service.models import (Object, Category, Diagram, get_model_by_uid, get_model_class,
-                                     DiagramRule)
+                                     DiagramRule, Morphism)
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.permissions import is_editor
 from QuiverDatabase.http_tools import get_posted_text
@@ -94,30 +94,7 @@ rule_search_order_map = { param: text for param,text in rule_search_orders }
 
 @login_required
 def rule_search(request, diagram_id:str):
-    try:
-        session = request.session
-        user = request.user.username
-        
-        diagram = get_model_by_uid(Diagram, uid=diagram_id)
-        objects = diagram.all_objects()
-
-        test_obj = objects[0]
-        from QuiverDatabase.variable import Variable
-        template, variables = Variable.parse_into_template(test_obj.name)
-        
-        print(template)
-        print(variables)
-        
-        template_regex = ""
-        
-        for piece in template:
-            if isinstance(piece, Variable):
-                template_regex += ".+"
-            elif isinstance(piece, Keyword):
-                template_regex += escape_regex_str(str(piece))
-            else:  # str
-                template_regex += escape_regex_str(piece)
-        
+    try:        
         # Starting from longest paths first should shorten the final search query (not this one)
         paths_by_length = \
             f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object), " + \
@@ -132,57 +109,120 @@ def rule_search(request, diagram_id:str):
             #f"MATCH (X:Object) " +
             #f"WHERE X.name =~ '{template_regex}' " +
             #f"RETURN X")  
+            
         ## TODO: test code with doublequote in template_regex ^^^
                 
-        #results = [Object.inflate(row[0]) for row in results]
         nodes = {
-            # keyed by Object.uid, value is (Object model, node_index)
+            # Keyed by Object.diagram_index, value is Object
         }
-        search_query = "MATCH "
-        node_var = "n"
-        rel_var = "r"
-        rel_index = 0
-        node_index = None
-        
+        rels = {
+            # Keyed by Morphism.diagram_index, value is Morphism
+        }
+
+        node_var = 'n'
+        rel_var = 'r'
+        search_query = ''
+               
         for path in paths_by_length:
-            path = path[0]
-            node = path.start
+            path = path[0]   # [0] is definitely needed here
+            node = Object.inflate(path.start_node)
             
-            if node.uid in nodes:
-                node_index = nodes[node.uid][1]
-            else:
-                node_index = len(nodes)
-                nodes[node.uid] = (node, node_index)
-                                        
-            search_query += f"({node_var}{node_index}:Object)"
-                        
-            for rel in path[0].relationships:
-                search_query += f"-[{rel_var}{rel_index}:MAPS_TO]->"
-                next_node = rel.end_node()
-                if next_node.uid in nodes:
-                    node_index = nodes[next_node.uid][1]
-                search_query += f"({node_var}{node_index}:Object)"
+            search_query += f"({node_var}{node.diagram_index}:Object)"
+            
+            if node.diagram_index not in nodes:
+                nodes[node.diagram_index] = node
+            
+            add_query = ''
+            
+            for rel in path.relationships:
+                rel = Morphism.inflate(rel)
+                
+                if rel.diagram_index not in rels:
+                    rels[rel.diagram_index] = rel
+                    
+                    add_query += f"-[{rel_var}{rel.diagram_index}:MAPS_TO]->"
+                    next_node = rel.end_node()  # BUGFIX: no need to inflate here
+                    add_query += f"({node_var}{next_node.diagram_index}:Object)"
+            
+            if add_query:      
+                search_query += add_query
                 
             search_query += ', '
+                        
+        rules = []
+        
+        if search_query:
+            search_query = search_query[:-2]   # Remove last ', '
+            search_query = "MATCH " + search_query            
             
+            regexes = {
+                # Keyed by node or relationship .name property, values are neo4j regexes
+            }
+            
+            variables = {
+                # Keyed by the actual variable object, values are tuples (Variable, occurences)
+                # where occurences is a list of (node or rel, template_index)
+            }
+            
+            def regex_from_template(template):
+                regex = ""
+                for piece in template:
+                    if isinstance(piece, Variable):
+                        regex += ".+"
+                    elif isinstance(piece, Keyword):
+                        regex += escape_regex_str(str(piece))
+                    else:  # str
+                        regex += escape_regex_str(piece)                
+                return regex           
+            
+            for node in nodes.values():
+                name = node.name
+                if name not in regexes:
+                    template, vars = Variable.parse_into_template(name)
+                    regexes[name] = regex_from_template(template)                                 
+                    
+            for rel in rels.values():
+                name = rel.name
+                if name not in regexes:
+                    template, vars = Variable.parse_into_template(name)
+                    regexes[name] = regex_from_template(template)
+            
+            search_query += " WHERE "
+            
+            for index, node in nodes.items():
+                search_query += f"{node_var}{index}.name =~ '{regexes[node.name]}' AND "
                 
-        else:  # An isolated node
-                node = path.nodes[0]
-                if node.uid in nodes:
-                    continue
-                search_query                
+            if rels:
+                for index, rel in rels.items():
+                    search_query += f"{rel_var}{index}.name =~ '{regexes[rel.name]}' AND "
                 
+            search_query = search_query[:-4]   # Remove AND except a space                
+            
+            #node_names = [node_name + str(i) for i in range(len(nodes))]
+            #rel_names = [rel_name + str(i) for i in range(len(rels))]
+            search_query += "RETURN n0"  # We only need n0 to get a diagram id at this stage of the app UX
+            
+            results, meta = db.cypher_query(search_query)
+            
+            if results and results[0]:
+                n0 = Object.inflate(results[0][0])
                 
+                diagram, meta = db.cypher_query(
+                    f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object) WHERE X.uid = '{n0.uid}' RETURN D")
                 
-            print(path[0].nodes)         # [0] is needed here
-            print()
-        
-        #context = {
-            #'rule_title' : rule.name,
-            #'key_diagram_id' : rule.key_diagram.single().uid,
-            #'result_diagram_id' : rule.result_diagram.single().uid,
-        #}
-        
+                if diagram and diagram[0]:
+                    diagram = Diagram.inflate(diagram[0][0])
+                    rules_query = \
+                        f"MATCH (R:DiagramRule)-[:KEY_DIAGRAM]->(D:Diagram) " + \
+                        f"WHERE D.uid = '{diagram.uid}' RETURN R" 
+                    
+                    #HERE'S WHERE WE INSERT ORDERING CODE also key / result search^^
+                    
+                    results, meta = db.cypher_query(rules_query)                
+                    
+                    for rule in results:
+                        rules.append(DiagramRule.inflate(rule[0]))
+                
         ascending = request.GET.get('asc', 'true')
         order_param = request.GET.get('ord', 'name')
         
@@ -190,22 +230,21 @@ def rule_search(request, diagram_id:str):
             raise ValueError(order_param + " is not a valid value to order by.")
         
         order_text = rule_search_order_map[order_param]
-        test_rule = DiagramRule.our_create(name="Rule Test Name")
         
         context = {
             'diagram_id' : diagram_id,
             'order_param' : order_param,
             'order_text' : order_text,
             'orders' : rule_search_orders,
-            'rules' : [test_rule],
+            'rules' : rules,
             'ascending' : ascending,
         }
         
         return render(request, 'rule_search.html', context)
         
     except Exception as e:
-        #if DEBUG:
-            #raise e
+        if DEBUG:
+            raise e
         return redirect('error', f'{full_qualname(e)}: {str(e)}')    
     
     

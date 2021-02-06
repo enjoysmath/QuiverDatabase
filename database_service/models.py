@@ -18,6 +18,7 @@ class Model:
 class Morphism(StructuredRel):
     #uid = StringProperty(default=Morphism.get_unique_id())
     name = StringProperty(max_length=MAX_TEXT_LENGTH)
+    diagram_index = IntegerProperty(requied=True)   # Diagram code needs to keep this updated
     
     # RE-DESIGN: TODO - these need to be independent of style and settable in an accompanying
     # panel to the editor.
@@ -60,9 +61,11 @@ class Morphism(StructuredRel):
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0)
     
-    def load_from_editor(self, format):  
+    def load_from_editor(self, format):         
         if len(format) > 2:
             self.name = format[2]
+        else:
+            self.name = ''   # BUGFIX: need this
         
         if len(format) > 3:
             self.alignment = format[3]
@@ -117,7 +120,7 @@ class Morphism(StructuredRel):
         self.save()
         
     def quiver_format(self):
-        format = [self.start_node().quiver_index, self.end_node().quiver_index]
+        format = [self.start_node().diagram_index, self.end_node().diagram_index]
         format.append(self.name if self.name is not None else '')
         format.append(self.alignment)
         options = {
@@ -155,7 +158,7 @@ class Object(StructuredNode, Model):
     name = StringProperty(max_length=MAX_TEXT_LENGTH)
     morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)    
     
-    quiver_index = IntegerProperty()
+    diagram_index = IntegerProperty(required=True)
 
     # Position & Color:
     x = IntegerProperty(default=0)
@@ -181,14 +184,12 @@ class Object(StructuredNode, Model):
            
     @staticmethod
     def create_from_editor(format, index:int):
-        o = Object()
+        o = Object(diagram_index=index)
         o.init_from_editor(format, index)
         return o
         
     def init_from_editor(self, format, index):
         o = self
-        
-        o.quiver_index = index
         o.x = format[0]
         o.y = format[1]
         
@@ -268,7 +269,7 @@ class Diagram(StructuredNode, Model):
         vertices = []
         
         objects = list(self.all_objects())
-        objects.sort(key=lambda x: x.quiver_index)        
+        objects.sort(key=lambda x: x.diagram_index)        
         
         for o in objects:
             vertices.append(o.quiver_format())
@@ -291,10 +292,10 @@ class Diagram(StructuredNode, Model):
         
         edges = format[2 + format[1]:]
             
-        for e in edges:
+        for k,e in enumerate(edges):
             A = obs[e[0]]
             B = obs[e[1]]
-            f = A.morphisms.connect(B)
+            f = A.morphisms.connect(B, {'diagram_index':k})
             f.load_from_editor(e)
             f.save()
             A.save()            

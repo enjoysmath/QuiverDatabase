@@ -93,7 +93,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                //alert("Success: " + JSON.stringify(data));
+                alert("Success: " + JSON.stringify(data));
             })
             .catch(error => {
                 alert(error);
@@ -128,7 +128,7 @@
             return response.text(); 
         })
         .then(text => {
-            // alert(text);
+            alert(text);
             window.ui.load_json_str_from_database(text);
         });
         
