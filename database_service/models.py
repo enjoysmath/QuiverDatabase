@@ -230,6 +230,7 @@ class Diagram(StructuredNode, Model):
     Otherwise basic seeming queries return all types in the hierarchy.
     Hence just StructuredNode here.
     """
+    uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH, required=True)
     objects = RelationshipTo('Object', 'CONTAINS')    
     category = RelationshipTo('Category', 'IN_CATEGORY', cardinality=One)

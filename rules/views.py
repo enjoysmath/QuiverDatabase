@@ -118,16 +118,64 @@ def rule_search(request, diagram_id:str):
             else:  # str
                 template_regex += escape_regex_str(piece)
         
-        query = f"MATCH (X:Object) " + \
-            f"WHERE X.name =~ '{template_regex}' " + \
-            f"AND D.uid = '{diagram_id}' " + \
-            f"RETURN X"        
-            
-        results, meta = db.cypher_query(query)  
-        # TODO: test code with doublequote in template_regex ^^^
+        # Starting from longest paths first should shorten the final search query (not this one)
+        paths_by_length = \
+            f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object), " + \
+            f"p=(X)-[:MAPS_TO*]->(:Object) " + \
+            f"WHERE D.uid = '{diagram_id}' " + \
+            f"RETURN p " + \
+            f"ORDER BY length(p) DESC" 
+        
+        paths_by_length, meta = db.cypher_query(paths_by_length)
                 
-        results = [Object.inflate(row[0]) for row in results]
-        print(results)
+        #results, meta = db.cypher_query(
+            #f"MATCH (X:Object) " +
+            #f"WHERE X.name =~ '{template_regex}' " +
+            #f"RETURN X")  
+        ## TODO: test code with doublequote in template_regex ^^^
+                
+        #results = [Object.inflate(row[0]) for row in results]
+        nodes = {
+            # keyed by Object.uid, value is (Object model, node_index)
+        }
+        search_query = "MATCH "
+        node_var = "n"
+        rel_var = "r"
+        rel_index = 0
+        node_index = None
+        
+        for path in paths_by_length:
+            path = path[0]
+            node = path.start
+            
+            if node.uid in nodes:
+                node_index = nodes[node.uid][1]
+            else:
+                node_index = len(nodes)
+                nodes[node.uid] = (node, node_index)
+                                        
+            search_query += f"({node_var}{node_index}:Object)"
+                        
+            for rel in path[0].relationships:
+                search_query += f"-[{rel_var}{rel_index}:MAPS_TO]->"
+                next_node = rel.end_node()
+                if next_node.uid in nodes:
+                    node_index = nodes[next_node.uid][1]
+                search_query += f"({node_var}{node_index}:Object)"
+                
+            search_query += ', '
+            
+                
+        else:  # An isolated node
+                node = path.nodes[0]
+                if node.uid in nodes:
+                    continue
+                search_query                
+                
+                
+                
+            print(path[0].nodes)         # [0] is needed here
+            print()
         
         #context = {
             #'rule_title' : rule.name,
