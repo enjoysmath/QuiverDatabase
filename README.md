@@ -119,6 +119,7 @@
 
 1. Saving/loading of a CD to/from a Neo4j database:
     - https://youtu.be/hyZbr8_K4h4
-2.Rule Search + Rule Apply with Variable Substitution: 
+    
+2. Rule Search + Rule Apply with Variable Substitution: 
     - https://youtu.be/kKJySXo9BDA
 
