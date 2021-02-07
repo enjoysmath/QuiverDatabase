@@ -60,13 +60,15 @@ def quiver_editor(request, diagram_id:str):
         view_only = request.GET.get('viewonly', 'no')
         if view_only != 'no':
             view_only = 'yes'
-                
+
+        diagram_data = json.dumps(diagram.quiver_format())
+        
         context = {
             'diagram_name' : diagram.name,
             'category_name' : category.name,
             'category_id' : category.uid,
             'diagram_id' : diagram.uid,
-            'quiver_str' : json.dumps(diagram.quiver_format()),
+            'quiver_str' : diagram_data,
             'logo' : logo,
             'view_only' : view_only,
             'commutes_text' : diagram.commutes_text,

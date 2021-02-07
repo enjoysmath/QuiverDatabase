@@ -1,6 +1,7 @@
 from .atomic_symbol import AtomicSymbol as Atom
 import re
 from .keyword import Keyword
+from QuiverDatabase.neo4j_tools import escape_regex_str, neo4j_escape_regex_str
 
 
 class Variable:
@@ -44,7 +45,7 @@ class Variable:
         Returns template, variable (a tuple).
         """
         template = []
-        variables = {}
+        variables = []  # List of variables as they occur left-to-right
                
         # Form the initial template composed of literal strings and Keywords
         start = 0
@@ -82,11 +83,7 @@ class Variable:
                             prefix = ''
                             
                         template.insert(k, V)
-                        
-                        if V not in variables:
-                            variables[V] = [k]
-                        else:
-                            variables[V].append(k)
+                        variables.append(V)
                         k += 1
                         
                     start = end
@@ -140,6 +137,43 @@ class Variable:
         
         return Variable(base, prime, subscript), pos  
                        
+    
+    @staticmethod
+    def flatten_template(template):
+        for i in range(len(template)):
+            piece = template[i]
+            
+            if isinstance(piece, (Variable, Keyword)):
+                template[i] = str(piece)
+                
+        return ''.join(template)
+    
+    @staticmethod
+    def subst_vars_into_template(template, var_map):
+        for i in range(len(template)):
+            piece = template[i]
+            if isinstance(piece, Keyword):
+                piece = str(piece)
+            elif isinstance(piece, Variable):
+                if piece in var_map:        # Some variable may not be matched and they're treated as literals
+                    template[i] = str(var_map[piece])
         
-        
-        
+        return template
+
+    @staticmethod 
+    def variable_match_regex(template):
+        regex = ''
+        var_count = 0    # variables are thus indexed left-to-right within a single name template
+        for piece in template:
+            if isinstance(piece, (Keyword, str)):
+                regex += escape_regex_str(str(piece))
+            elif isinstance(piece, Variable):
+                regex += f"(?P<V{var_count}>.+)"    # Use Vi here to not confuse with ni, ri used in querying code
+                var_count += 1
+            elif isinstance(piece, str):
+                regex += escape_regex_str(piece)
+            else:
+                assert(0)
+        # Exact match desired hence ^ $:
+        #return re.compile('^' + regex + '$'), var_count
+        return re.compile(regex), var_count

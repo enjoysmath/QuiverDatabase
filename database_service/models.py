@@ -6,6 +6,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from neomodel import db
 from QuiverDatabase.python_tools import deep_get, deep_set
 from QuiverDatabase.variable import Variable
+from QuiverDatabase.keyword import Keyword
+from QuiverDatabase.neo4j_tools import escape_regex_str, neo4j_escape_regex_str
 
 # Create your models here.
 
@@ -60,6 +62,27 @@ class Morphism(StructuredRel):
     color_sat = IntegerProperty(default=0)   # BUGFIX: default (black) is 0,0,0 in hsl, not 0,100,0
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0)
+    
+    def copy_properties_from(self, f, nodes_memo):
+        self.name = f.name
+        self.diagram_index = f.diagram_index
+        self.num_lines = f.num_lines
+        self.alignment = f.alignment
+        self.label_position = f.label_position
+        self.offset = f.offset
+        self.curve = f.curve
+        self.tail_shorten = f.tail_shorten
+        self.head_shorten = f.head_shorten
+        self.tail_style = f.tail_style
+        self.hook_tail_side = f.hook_tail_side
+        self.head_style = f.head_style
+        self.harpoon_head_side = f.harpoon_head_side
+        self.body_style = f.body_style
+        self.color_hue = f.color_hue
+        self.color_sat = f.color_sat
+        self.color_lum = f.color_lum
+        self.color_alph = f.color_alph
+        self.save()
     
     def load_from_editor(self, format):         
         if len(format) > 2:
@@ -156,8 +179,8 @@ class Morphism(StructuredRel):
 class Object(StructuredNode, Model):
     uid = UniqueIdProperty()
     name = StringProperty(max_length=MAX_TEXT_LENGTH)
-    morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)    
-    
+    morphisms = RelationshipTo('Object', 'MAPS_TO', model=Morphism)   
+        
     diagram_index = IntegerProperty(required=True)
 
     # Position & Color:
@@ -168,6 +191,34 @@ class Object(StructuredNode, Model):
     color_sat = IntegerProperty(default=0)
     color_lum = IntegerProperty(default=0)
     color_alph = FloatProperty(default=1.0) 
+    
+    @staticmethod
+    def our_create(**kwargs):
+        ob = Object(**kwargs).save()
+        return ob
+    
+    def copy(self, nodes_memo, **kwargs):
+        copy = Object.our_create(**kwargs, diagram_index=self.diagram_index)
+        nodes_memo[copy.diagram_index] = copy
+        copy.name = self.name
+        copy.x = self.x
+        copy.y = self.y
+        copy.color_hue = self.color_hue
+        copy.color_sat = self.color_sat
+        copy.color_lum = self.color_lum
+        copy.alph = self.color_alph
+                
+        for f in self.all_morphisms():
+            x = f.end_node()
+            if x.diagram_index not in nodes_memo:
+                x.copy(nodes_memo)
+            y = nodes_memo[x.diagram_index]
+            f1 = copy.morphisms.connect(y)
+            f1.copy_properties_from(f, nodes_memo)  # Calls save()
+            
+        copy.save()
+        
+        return copy    
     
     def __repr__(self):
         return f'Object("{self.name}")'
@@ -239,6 +290,21 @@ class Diagram(StructuredNode, Model):
     commutes = StringProperty(choices=COMMUTES, default='C')
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
+    def copy(self, **kwargs):
+        copy = Diagram.our_create(**kwargs)
+        
+        nodes_memo = {}
+        
+        for x in self.all_objects():
+            if x.diagram_index not in nodes_memo:
+                x.copy(nodes_memo)
+        
+        for x in nodes_memo.values():  # BUGFIX: need to consider all nodes added in subcalls, secondly
+            copy.objects.connect(x)
+            
+        copy.save()                    
+        return copy
+                
     @property
     def commutes_text(self):
         return self.COMMUTES[self.commutes]
@@ -316,7 +382,121 @@ class Diagram(StructuredNode, Model):
         for o in obs:
             self.objects.connect(o)
         self.save()
+        
+    @staticmethod
+    def get_paths_by_length(diagram_id):
+        paths_by_length = \
+            f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object), " + \
+            f"p=(X)-[:MAPS_TO*]->(:Object) " + \
+            f"WHERE D.uid = '{diagram_id}' " + \
+            f"RETURN p " + \
+            f"ORDER BY length(p) DESC" 
+        
+        paths_by_length, meta = db.cypher_query(paths_by_length)
+        
+        return paths_by_length
+                          
+        ## TODO: test code with doublequote in template_regex ^^^        
+        
+    @staticmethod
+    def build_query_from_paths(paths):
+        nodes = {
+            # Keyed by Object.diagram_index, value is Object
+        }
+        rels = {
+            # Keyed by Morphism.diagram_index, value is Morphism
+        }
 
+        search_query = ''
+               
+        for path in paths:
+            path = path[0]   # [0] is definitely needed here
+            node = Object.inflate(path.start_node)
+            
+            search_query += f"(n{node.diagram_index}:Object)"
+            
+            if node.diagram_index not in nodes:
+                nodes[node.diagram_index] = node
+            
+            add_query = ''
+            
+            for rel in path.relationships:
+                rel = Morphism.inflate(rel)
+                
+                if rel.diagram_index not in rels:
+                    rels[rel.diagram_index] = rel
+                    
+                    add_query += f"-[r{rel.diagram_index}:MAPS_TO]->"
+                    next_node = rel.end_node()  # BUGFIX: no need to inflate here
+                    add_query += f"(n{next_node.diagram_index}:Object)"
+                    
+                    # BUGFIX: don't forget to add the next node into nodes:
+                    if next_node.diagram_index not in nodes:
+                        nodes[next_node.diagram_index] = next_node
+            
+            if add_query:      
+                search_query += add_query
+                
+            search_query += ', '
+        
+        if search_query:
+            search_query = search_query[:-2]
+        return nodes, rels, search_query
+    
+    @staticmethod
+    def build_match_query(query, nodes, rels):
+        query = "MATCH " + query            
+        
+        template_regexes = {
+            # Keyed by node or relationship .name property, values are 
+            # (template, neo4j regex)
+        }
+        
+        var_mapping = {
+            # Keyed by variable object, value is list of tuples (node or rel, template_index)
+        }
+        
+        def neo4j_regex_from_template(template):
+            regex = ""
+            for piece in template:
+                if isinstance(piece, Variable):
+                    regex += ".+"
+                elif isinstance(piece, Keyword):
+                    regex += neo4j_escape_regex_str(str(piece))
+                else:  # str
+                    regex += neo4j_escape_regex_str(piece)                
+            return regex   
+                    
+        for node in nodes.values():
+            name = node.name
+            
+            if name not in template_regexes:
+                template, vars = Variable.parse_into_template(name)
+                regex = neo4j_regex_from_template(template)
+                template_regexes[name] = (template, regex)
+                
+        for rel in rels.values():
+            name = rel.name
+            
+            if name not in template_regexes:
+                template, vars = Variable.parse_into_template(name)
+                regex = neo4j_regex_from_template(template)
+                template_regexes[name] = (template, regex)       
+        
+        query += " WHERE "
+        
+        for index, node in nodes.items():
+            query += f"n{index}.name =~ '{template_regexes[node.name][1]}' AND "
+            
+        if rels:
+            for index, rel in rels.items():
+                query += f"r{index}.name =~ '{template_regexes[rel.name][1]}' AND "
+            
+        query = query[:-5]   # Remove AND      
+        
+        return template_regexes, query
+    
+    
 
 class NaturalMap(Morphism):
     pass

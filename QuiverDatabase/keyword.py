@@ -7,9 +7,10 @@ class Keyword:
         r'\\end\{[^\}]*\}|' +
         r'\\text{Hom}|' +
         r'\\textbf{Set}|' + 
-        r'\\lim|' +
-        r'\\otimes|' + 
-        r'\\bullet',
+        r'\\lim |' +            # Spaces are important here
+        r'\\otimes |' + 
+        r'\\times |' +
+        r'\\bullet ',
         flags=re.IGNORECASE)
     
     def __init__(self, keyword:str):

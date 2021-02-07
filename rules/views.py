@@ -14,6 +14,7 @@ from neomodel import db
 from QuiverDatabase.variable import Variable
 from QuiverDatabase.keyword import Keyword
 from QuiverDatabase.neo4j_tools import escape_regex_str
+from collections import OrderedDict
 
 # Create your views here.
 
@@ -94,140 +95,64 @@ rule_search_order_map = { param: text for param,text in rule_search_orders }
 
 @login_required
 def rule_search(request, diagram_id:str):
-    try:        
-        # Starting from longest paths first should shorten the final search query (not this one)
-        paths_by_length = \
-            f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object), " + \
-            f"p=(X)-[:MAPS_TO*]->(:Object) " + \
-            f"WHERE D.uid = '{diagram_id}' " + \
-            f"RETURN p " + \
-            f"ORDER BY length(p) DESC" 
+    try:  
+        ascending = request.GET.get('asc', 'true')
+        order_param = request.GET.get('ord', 'name')
+        one_to_one = request.GET.get('onetoone', '1')
         
-        paths_by_length, meta = db.cypher_query(paths_by_length)
-                
-        #results, meta = db.cypher_query(
-            #f"MATCH (X:Object) " +
-            #f"WHERE X.name =~ '{template_regex}' " +
-            #f"RETURN X")  
-            
-        ## TODO: test code with doublequote in template_regex ^^^
-                
-        nodes = {
-            # Keyed by Object.diagram_index, value is Object
-        }
-        rels = {
-            # Keyed by Morphism.diagram_index, value is Morphism
-        }
-
-        node_var = 'n'
-        rel_var = 'r'
-        search_query = ''
-               
-        for path in paths_by_length:
-            path = path[0]   # [0] is definitely needed here
-            node = Object.inflate(path.start_node)
-            
-            search_query += f"({node_var}{node.diagram_index}:Object)"
-            
-            if node.diagram_index not in nodes:
-                nodes[node.diagram_index] = node
-            
-            add_query = ''
-            
-            for rel in path.relationships:
-                rel = Morphism.inflate(rel)
-                
-                if rel.diagram_index not in rels:
-                    rels[rel.diagram_index] = rel
-                    
-                    add_query += f"-[{rel_var}{rel.diagram_index}:MAPS_TO]->"
-                    next_node = rel.end_node()  # BUGFIX: no need to inflate here
-                    add_query += f"({node_var}{next_node.diagram_index}:Object)"
-            
-            if add_query:      
-                search_query += add_query
-                
-            search_query += ', '
+        if ascending not in ('true', 'false'):
+            raise ValueError(f'Invalid order direction parameter (asc) value: {ascending}')
+        
+        if one_to_one not in ('0', '1'):
+            raise ValueError(f'Invalid one-to-one parameter (onetoone) value: {one_to_one}')
+        
+        if order_param not in rule_search_order_map:
+            raise ValueError(order_param + " is not a valid value to order by.")        
+        
+        # Starting from longest paths first should shorten the final search query (not this one)        
+        paths_by_length = Diagram.get_paths_by_length(diagram_id)          
+        nodes, rels, search_query = Diagram.build_query_from_paths(paths_by_length)
                         
         rules = []
         
         if search_query:
-            search_query = search_query[:-2]   # Remove last ', '
-            search_query = "MATCH " + search_query            
-            
-            regexes = {
-                # Keyed by node or relationship .name property, values are neo4j regexes
-            }
-            
-            variables = {
-                # Keyed by the actual variable object, values are tuples (Variable, occurences)
-                # where occurences is a list of (node or rel, template_index)
-            }
-            
-            def regex_from_template(template):
-                regex = ""
-                for piece in template:
-                    if isinstance(piece, Variable):
-                        regex += ".+"
-                    elif isinstance(piece, Keyword):
-                        regex += escape_regex_str(str(piece))
-                    else:  # str
-                        regex += escape_regex_str(piece)                
-                return regex           
-            
-            for node in nodes.values():
-                name = node.name
-                if name not in regexes:
-                    template, vars = Variable.parse_into_template(name)
-                    regexes[name] = regex_from_template(template)                                 
-                    
-            for rel in rels.values():
-                name = rel.name
-                if name not in regexes:
-                    template, vars = Variable.parse_into_template(name)
-                    regexes[name] = regex_from_template(template)
-            
-            search_query += " WHERE "
-            
-            for index, node in nodes.items():
-                search_query += f"{node_var}{index}.name =~ '{regexes[node.name]}' AND "
-                
-            if rels:
-                for index, rel in rels.items():
-                    search_query += f"{rel_var}{index}.name =~ '{regexes[rel.name]}' AND "
-                
-            search_query = search_query[:-4]   # Remove AND except a space                
-            
-            #node_names = [node_name + str(i) for i in range(len(nodes))]
-            #rel_names = [rel_name + str(i) for i in range(len(rels))]
+            regexes, search_query = Diagram.build_match_query(search_query, nodes, rels)
             search_query += "RETURN n0"  # We only need n0 to get a diagram id at this stage of the app UX
             
             results, meta = db.cypher_query(search_query)
             
-            if results and results[0]:
-                n0 = Object.inflate(results[0][0])
+            rule_memo = {
+                # To weed out duplicated results, keyed by rule.uid
+            }
+            
+            for result in results:
+                n0 = Object.inflate(result[0])
                 
-                diagram, meta = db.cypher_query(
-                    f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object) WHERE X.uid = '{n0.uid}' RETURN D")
+                diagram_results, meta = db.cypher_query(
+                    f"MATCH (D:Diagram)-[:CONTAINS]->(X:Object) WHERE X.uid = '{n0.uid}' RETURN D.uid")
                 
-                if diagram and diagram[0]:
-                    diagram = Diagram.inflate(diagram[0][0])
+                if diagram_results and diagram_results[0]:
+                    result_diagram_id = diagram_results[0][0]
                     rules_query = \
                         f"MATCH (R:DiagramRule)-[:KEY_DIAGRAM]->(D:Diagram) " + \
-                        f"WHERE D.uid = '{diagram.uid}' RETURN R" 
+                        f"WHERE D.uid = '{result_diagram_id}' RETURN R" 
                     
                     #HERE'S WHERE WE INSERT ORDERING CODE also key / result search^^
                     
                     results, meta = db.cypher_query(rules_query)                
                     
                     for rule in results:
-                        rules.append(DiagramRule.inflate(rule[0]))
-                
-        ascending = request.GET.get('asc', 'true')
-        order_param = request.GET.get('ord', 'name')
-        
-        if order_param not in rule_search_order_map:
-            raise ValueError(order_param + " is not a valid value to order by.")
+                        rule = DiagramRule.inflate(rule[0])
+                        
+                        key_diagram = rule.key_diagram.single()
+                        if one_to_one == '1':
+                            if len(key_diagram.objects) != len(nodes):
+                                continue
+                        
+                                                
+                        if rule.uid not in rule_memo:
+                            rule_memo[rule.uid] = rule
+                            rules.append(rule)                           
         
         order_text = rule_search_order_map[order_param]
         
@@ -238,6 +163,7 @@ def rule_search(request, diagram_id:str):
             'orders' : rule_search_orders,
             'rules' : rules,
             'ascending' : ascending,
+            'one_to_one' : one_to_one,
         }
         
         return render(request, 'rule_search.html', context)
@@ -250,19 +176,100 @@ def rule_search(request, diagram_id:str):
     
 @login_required
 @user_passes_test(is_editor)
-def apply_rule(request, rule_id:str, diagram_id:str):
-    try:
-        rule = get_model_by_uid(DiagramRule, uid=rule_id)
-        diagram = get_model_by_uid(Diagram, uid=diagram_id)
+def apply_rule(request, rule_id:str, diagram_id:str, overwrite:int):
+    try:  
+        # Starting from longest paths first should shorten the final search query (not this one)        
+        paths_by_length = Diagram.get_paths_by_length(diagram_id)      
+        print(paths_by_length)
+        nodes, rels, search_query = Diagram.build_query_from_paths(paths_by_length)
         
-        var_map = diagram.get_variable_mapping(rule.key_diagram.single())
+        if search_query:
+            search_query += ", (R:DiagramRule)-[:KEY_DIAGRAM]->(D:Diagram)-[:CONTAINS]->(n0)"
+            template_regexes, search_query = Diagram.build_match_query(search_query, nodes, rels)
+            search_query += f" AND R.uid = '{rule_id}'"
+            
+            node_vars = OrderedDict([('n' + str(i), nodes[i]) for i in range(len(nodes))])
+            rel_vars = OrderedDict([('r' + str(i), rels[i]) for i in range(len(rels))])
+            
+            search_query += " RETURN " + ','.join(node_vars.keys()) + ',' + ','.join(rel_vars.keys())
+                        
+            results, meta = db.cypher_query(search_query)
+                        
+            if results:  # Then rule_id is correct
+                results = results[0]  # Holds the unique list of all the various nodes, rels matched
+                
+                variable_map = {
+                    # Keyed by matched Variable objects
+                }                   
+                
+                def populate_variable_map(Model, model_vars, results):
+                    if Model == Object:
+                        var_name = 'n'
+                    elif Model == Morphism:
+                        var_name = 'r'
+                        
+                    for i in range(len(results)):
+                        query_node = model_vars[var_name + str(i)]
+                        
+                        matched_node = Model.inflate(results[i])
+                        matched_template, matched_vars = Variable.parse_into_template(matched_node.name)
+                        
+                        query_template = template_regexes[query_node.name][0]
+                        
+                        var_subst_regex, var_count = Variable.variable_match_regex(query_template)
+                        match = var_subst_regex.match(query_node.name)    # BUGFIX: query_node here not matched_node
+
+                        for i in range(var_count):
+                            Vi = match.group('V' + str(i))
+                            # Variables need to be matched consistently and we have to check this in both
+                            # the apply_rule and rule_search since the user can pass in an ultimately inconsistent
+                            # yet skeletally matched query diagram.                        
+                            matched_var = matched_vars[i]
+                            
+                            if matched_var in variable_map:
+                                if variable_map[matched_var] != Vi:
+                                    raise OperationalError("The diagram variables are not matched consitently.")
+                            else:
+                                variable_map[matched_var] = Vi
+                                                    
+                populate_variable_map(Object, node_vars, results[:len(node_vars)])
+                populate_variable_map(Morphism, rel_vars, results[len(node_vars):])
+                
+                output_names = {
+                    # Keyed by name, value is flattened template of that that name, after variable subst
+                }                 
+                
+                rule = get_model_by_uid(DiagramRule, uid=rule_id)
+                output_diagram = rule.result_diagram.single()                   
+                
+                # Create the new diagram
+                new_diagram = output_diagram.copy(name=rule.name, checked_out_by=request.user.username)                
+                
+                for X in new_diagram.all_objects():
+                    if X.name not in output_names:
+                        output_template, vars = Variable.parse_into_template(X.name)
+                        Variable.subst_vars_into_template(output_template, variable_map)
+                        output_names[X.name] = Variable.flatten_template(output_template)
+                    X.name = output_names[X.name]
+                    X.save()
+                    
+                    for f in X.all_morphisms():
+                        if f.name not in output_names:
+                            output_template, vars = Variable.parse_into_template(f.name)
+                            Variable.subst_vars_into_template(output_template, variable_map)
+                            output_names[f.name] = Variable.flatten_template(output_template)
+                        f.name = output_names[f.name]
+                        f.save()
+                
+                #new_diagram.save()
+                return redirect('diagram_editor', new_diagram.uid)
+            
+        redirect('error', 'That rule cannot be applied to this diagram.')
         
-        # Create a new diagram with rule applied and variables appropriately substituted.
-       
     except Exception as e:
-        #if DEBUG:
-            #raise e
-        redirect('error', f'{full_qualname(e)}: {str(e)}')
+        if DEBUG:
+            raise e
+        return redirect('error', f'{full_qualname(e)}: {str(e)}')
     
     
 def rule_viewer(request, rule_id):

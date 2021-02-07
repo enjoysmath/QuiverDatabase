@@ -47,17 +47,29 @@
             </ul>
         </div>
         {% if ascending == "true" %}
-            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=false"
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=false&onetoone={{ one_to_one }}"
                 id="sort-direction-button" style="margin-left:20px">
                 Descending
             </a>  
         {% else %}
-            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=true"
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc=true&onetoone={{ one_to_one }}"
                 id="sort-direction-button" style="margin-left:20px">
                 Ascending
             </a>  
         {% endif %}
-        <a class="btn btn-success" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}"
+        {% if one_to_one_match == "1" %}
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending}}&onetoone={{ one_to_one }}"
+                id="sort-direction-button" style="margin-left:20px">
+                Match Subgraph
+            </a>  
+        {% else %}
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}&onetoone={{ one_to_one }}"
+                id="sort-direction-button" style="margin-left:20px">
+                One-to-one Match
+            </a>  
+        {% endif %}
+        
+        <a class="btn btn-success" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}&onetoone={{ one_to_one }}"
             id="search-button" style="margin-left:20px">
             Search
         </a>  
@@ -90,7 +102,8 @@
                         <a class="btn btn-primary" href="{% url 'rule_viewer' rule.uid %}" target="_blank">
                             View
                         </a>  
-                        <a class="btn btn-success" href="{% url 'apply_rule' rule.uid diagram_id %}">
+                        <a class="btn btn-success" href="{% url 'apply_rule' rule.uid diagram_id %}?onetoone={{ one_to_one }}"
+                            target="_blank">
                             Apply
                         </a>  
                     </div>
