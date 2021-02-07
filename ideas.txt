@@ -1,9 +1,0 @@
-
-
-1. When on the Create Diagram page, if the given diagram name already exists, 
-    show the diagram with a link below the text edit.
-
-2. Variable mapping panel:
-    A_1 = B_2
-    S = a functor etc
-    

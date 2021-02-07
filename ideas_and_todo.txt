@@ -1,0 +1,24 @@
+
+
+1. When on the Create Diagram page, if the given diagram name already exists, 
+    show the diagram with a link below the text edit.
+
+2. Variable mapping panel:
+    A_1 = B_2
+    S = a functor etc
+    
+
+Must-have Features:
+--
+1. Arrow style (or "type") matching in Search widgets (toggle button).
+
+2. Order by dropdown implementation in rule_search().
+
+3. Usages, views, votes in DiagramRule and Diagram's across the board.
+    - Tied in with results display for a rule or diagram (create a diagram_result.html etc to modularize).
+    
+4. Created, edited dates as well as creator name in the DiagramRule and Diagrams.
+
+5. Pagination of Search Results
+
+6. Striping (normalizing) of user input (LaTeX) otherwise an extra space will cause non-match.
