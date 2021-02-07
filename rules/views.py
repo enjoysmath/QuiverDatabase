@@ -145,12 +145,11 @@ def rule_search(request, diagram_id:str):
                         rule = DiagramRule.inflate(rule[0])
                         
                         key_diagram = rule.key_diagram.single()
-                        if one_to_one == '1':
-                            if len(key_diagram.objects) != len(nodes):
-                                continue
-                        
-                                                
                         if rule.uid not in rule_memo:
+                            if one_to_one == '1':
+                                if len(key_diagram.objects) != len(nodes) or key_diagram.morphism_count() != len(rels):
+                                    continue                        
+
                             rule_memo[rule.uid] = rule
                             rules.append(rule)                           
         
@@ -176,8 +175,13 @@ def rule_search(request, diagram_id:str):
     
 @login_required
 @user_passes_test(is_editor)
-def apply_rule(request, rule_id:str, diagram_id:str, overwrite:int):
+def apply_rule(request, rule_id:str, diagram_id:str):
     try:  
+        one_to_one = request.GET.get('onetoone', '1')
+        
+        if one_to_one not in ('0', '1'):
+            raise ValueError(f'Invalid one-to-one parameter (onetoone) value: {one_to_one}')
+        
         # Starting from longest paths first should shorten the final search query (not this one)        
         paths_by_length = Diagram.get_paths_by_length(diagram_id)      
         print(paths_by_length)
@@ -231,16 +235,24 @@ def apply_rule(request, rule_id:str, diagram_id:str, overwrite:int):
                                     raise OperationalError("The diagram variables are not matched consitently.")
                             else:
                                 variable_map[matched_var] = Vi
+
+                rule = get_model_by_uid(DiagramRule, uid=rule_id)
+                
+                if one_to_one == '1':
+                    key_diagram = rule.key_diagram.single()
+                    
+                    if len(key_diagram.objects) != len(nodes) or key_diagram.morphism_count() != len(rels):
+                        raise OperationalError(
+                            "There is no one-to-one correspondence of the diagram's objects/morphisms with those of the rule.")
+                
+                output_diagram = rule.result_diagram.single()    
                                                     
                 populate_variable_map(Object, node_vars, results[:len(node_vars)])
                 populate_variable_map(Morphism, rel_vars, results[len(node_vars):])
                 
                 output_names = {
                     # Keyed by name, value is flattened template of that that name, after variable subst
-                }                 
-                
-                rule = get_model_by_uid(DiagramRule, uid=rule_id)
-                output_diagram = rule.result_diagram.single()                   
+                }                               
                 
                 # Create the new diagram
                 new_diagram = output_diagram.copy(name=rule.name, checked_out_by=request.user.username)                

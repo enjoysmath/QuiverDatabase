@@ -290,6 +290,12 @@ class Diagram(StructuredNode, Model):
     commutes = StringProperty(choices=COMMUTES, default='C')
     checked_out_by = StringProperty(max_length=MAX_TEXT_LENGTH)
     
+    def morphism_count(self):
+        count = 0
+        for x in self.all_objects():
+            count += len(x.morphisms)
+        return count
+    
     def copy(self, **kwargs):
         copy = Diagram.our_create(**kwargs)
         

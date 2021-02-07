@@ -57,13 +57,13 @@
                 Ascending
             </a>  
         {% endif %}
-        {% if one_to_one_match == "1" %}
-            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending}}&onetoone={{ one_to_one }}"
+        {% if one_to_one == "1" %}
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending}}&onetoone=0"
                 id="sort-direction-button" style="margin-left:20px">
                 Match Subgraph
             </a>  
         {% else %}
-            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}&onetoone={{ one_to_one }}"
+            <a class="btn btn-primary" href="{% url 'rule_search' diagram_id %}?ord={{ order_param }}&asc={{ ascending }}&onetoone=1"
                 id="sort-direction-button" style="margin-left:20px">
                 One-to-one Match
             </a>  
