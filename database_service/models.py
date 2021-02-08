@@ -590,7 +590,8 @@ class DiagramRule(StructuredNode, Model):
                 
     #def get_variable_template_regex(self, text:str) -> bidict:    
     
-class DiagramSequence:
+class DiagramSequence(StructuredNode):
+    pass
     
 
 model_str_to_class = {
