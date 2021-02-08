@@ -588,7 +588,10 @@ class DiagramRule(StructuredNode, Model):
         #for x in source.all_objects():
             #template, vars = Variable.parse_template(text)
                 
-    #def get_variable_template_regex(self, text:str) -> bidict:       
+    #def get_variable_template_regex(self, text:str) -> bidict:    
+    
+class DiagramSequence:
+    
 
 model_str_to_class = {
     'Category' : Category,

@@ -22,3 +22,9 @@ Must-have Features:
 5. Pagination of Search Results
 
 6. Striping (normalizing) of user input (LaTeX) otherwise an extra space will cause non-match.
+
+7. Work on design and initial code (using SQLite / standard user auth of Django)
+    a. Users will fill in a form containing their current MSE password.
+    b. Open auth capability will come later.
+    c. Users can post content to MSE at the click of a button.
+    
