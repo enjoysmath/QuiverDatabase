@@ -27,7 +27,7 @@
     - Use default settings for everything else such as the Neo4j version.
     ![Neo4j Create a Database Screenshot](./documentation/Neo4j_CreateADatabase.png)
 
-4. Clone this repository (I use TortoiseGit Shell extension on Windows).
+4. Clone this repository (I use [TortoiseGit](https://tortoisegit.org/) shell extension on Windows).
 
 5. Cd to to the project directory from the command line and do: `pip install -r requirements.txt`
     - This will install the various python libraries that this project uses.
